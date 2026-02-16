@@ -17,8 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import api from "@/lib/axios";
-import Cookies from "js-cookie";
+import { apiGet } from "@/lib/axios";
 
 interface UserProfile {
   id: number;
@@ -60,25 +59,25 @@ const UserProfilePage = () => {
     try {
       setLoading(true);
       
-      // Get CSRF cookie first
-      await api.get("/sanctum/csrf-cookie");
-      
-      const response = await api.get(`/usersinfo/${userId}`, {
-        headers: {
-          "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
-          "Content-Type": "application/json",
-        },
-      });
+      // Use apiGet wrapper - handles CSRF and caching automatically
+      const response = await apiGet(`/usersinfo/${userId}`, {}, false); // false to bypass cache for profile
 
-      const data = response.data?.data || response.data;
-      
-      if (!data) {
+      // Normalize API response
+      const userData = 
+        response?.data?.data?.user ??
+        response?.data?.user ??
+        response?.data?.data ??
+        response?.data ??
+        null;
+
+      if (!userData) {
         throw new Error("Failed to fetch user profile");
       }
 
-      const userData = data.user || data;
       setUser(userData);
     } catch (error: any) {
+      console.error("Failed to fetch user profile:", error);
+      toast.error(error.userMessage || "Failed to load user profile");
     } finally {
       setLoading(false);
     }
@@ -92,6 +91,16 @@ const UserProfilePage = () => {
         return "bg-blue-50 text-blue-700 border border-blue-200";
       case "staff":
         return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+      case "inventory clerk":
+        return "bg-orange-50 text-orange-700 border border-orange-200";
+      case "salesperson":
+        return "bg-cyan-50 text-cyan-700 border border-cyan-200";
+      case "purchasing officer":
+        return "bg-indigo-50 text-indigo-700 border border-indigo-200";
+      case "accountant":
+        return "bg-pink-50 text-pink-700 border border-pink-200";
+      case "viewer / auditor":
+        return "bg-teal-50 text-teal-700 border border-teal-200";
       default:
         return "bg-gray-50 text-gray-700 border border-gray-200";
     }
@@ -157,12 +166,11 @@ const UserProfilePage = () => {
                 className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors group"
               >
                 <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                 Back to Users
+                Back to Users
               </Link>
               <div className="h-6 w-px bg-gray-300 hidden sm:block"></div>
               <div>
-               <h2 className="text-3xl font-extrabold text-gray-900">User Profile</h2>
-
+                <h2 className="text-2xl font-bold text-gray-900">User Profile</h2>
                 <p className="text-gray-600 text-sm mt-1">
                   View user information
                 </p>

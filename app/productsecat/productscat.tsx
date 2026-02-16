@@ -1,6 +1,4 @@
-"use client"; // This directive marks this component as a Client Component in Next.js App Router
-// Client Components enable the use of React hooks, browser APIs, and interactive features
-
+"use client"; 
 import { withAuth } from "@/hoc/withAuth"; // Higher Order Component for authentication protection
 import { apiGet, apiPut } from "@/lib/axios"; // Custom HTTP client methods for GET and PUT requests
 import { apiPost } from "@/lib/axios"; // Custom HTTP client method for POST requests

@@ -1,7 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Shield, Save, User, Mail, Building, Calendar, ArrowLeft, Loader2, ChevronRight } from "lucide-react";
+import {
+  Shield,
+  Save,
+  User,
+  Mail,
+  Building,
+  Calendar,
+  ArrowLeft,
+  Loader2,
+  ChevronRight,
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
@@ -118,7 +128,9 @@ const ToggleRow = ({
         <label className="block text-sm font-semibold text-gray-900 truncate">
           {title}
         </label>
-        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{description}</p>
+        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+          {description}
+        </p>
       </div>
 
       <button
@@ -155,7 +167,6 @@ const PermissionSection = ({
   handleCategoryToggle: (keys: (keyof PermissionsState)[]) => void;
 }) => {
   const allEnabled = list.every((item) => permissions[item.key]);
-  const someEnabled = list.some((item) => permissions[item.key]);
 
   return (
     <div className="mb-8">
@@ -247,10 +258,12 @@ const PermissionsForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const params = useParams();
   const router = useRouter();
-  const id = params?.businesskey as string;
+  // The ID from the URL is already encrypted
+  const encryptedId = params?.businesskey as string;
 
   const getRoleBadgeColor = (role: string) => {
     switch (role?.toLowerCase()) {
@@ -287,13 +300,15 @@ const PermissionsForm = () => {
   // Fetch user information
   // -------------------------------
   const fetchUserInfo = async () => {
-    if (!id) return;
+    if (!encryptedId) return;
 
     try {
       setLoading(true);
+      setFetchError(null);
       await api.get("/sanctum/csrf-cookie");
 
-      const response = await api.get(`/usersinfo/${id}`, {
+      // Use the encrypted ID directly - backend will decrypt it
+      const response = await api.get(`/usersinfo/${encryptedId}`, {
         headers: {
           "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
           "Content-Type": "application/json",
@@ -301,7 +316,7 @@ const PermissionsForm = () => {
       });
 
       const data = response.data?.data || response.data;
-      
+
       if (!data) {
         throw new Error("Failed to fetch user profile");
       }
@@ -309,10 +324,9 @@ const PermissionsForm = () => {
       const userData = data.user || data;
       setUser(userData);
     } catch (error: any) {
-      console.error("Failed to load user information", error);
-      toast.error("Failed to load user information.");
-    } finally {
-      setLoading(false);
+      const errorMessage = error.response?.data?.message || "Failed to load user information.";
+      setFetchError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -320,37 +334,59 @@ const PermissionsForm = () => {
   // Fetch user permissions
   // -------------------------------
   const fetchPermissions = async () => {
+    if (!encryptedId) return;
+
     try {
       await api.get("/sanctum/csrf-cookie");
 
-      const res = await api.get(`/usersroles/${id}`, {
+      // Use the encrypted ID directly - backend will decrypt it
+      const res = await api.get(`/usersroles/${encryptedId}`, {
         headers: {
           "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
         },
       });
 
-      const data = res.data?.data || {};
+      // Handle the response structure from your Laravel backend
+      const responseData = res.data?.data || {};
+      // Update permissions state based on the response
+      if (responseData && typeof responseData === "object") {
+        const updatedState = Object.keys(permissions).reduce(
+          (acc, key) => {
+            // Check if the permission exists in response and has value "yes"
+            // Your backend might store permissions differently - adjust as needed
+            acc[key as keyof PermissionsState] = 
+              responseData[key] === "yes" || responseData[key] === true || false;
+            return acc;
+          },
+          {} as PermissionsState,
+        );
 
-      const updatedState: PermissionsState = Object.keys(permissions).reduce(
-        (acc, key) => {
-          acc[key as keyof PermissionsState] = data[key] === "yes";
-          return acc;
-        },
-        {} as PermissionsState
-      );
-
-      setPermissions(updatedState);
-    } catch (error) {
-      // console.error("Failed to load user permissions", error);
+        setPermissions(updatedState);
+      }
+    } catch (error: any) { 
+      // Handle specific error cases
+      if (error.response?.status === 400) {
+        const errorDetails = error.response?.data?.details || "";
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (id) {
-      fetchUserInfo();
-      fetchPermissions();
+    if (encryptedId) {
+      // Fetch both user info and permissions
+      const fetchData = async () => {
+        await fetchUserInfo();
+        await fetchPermissions();
+      };
+      
+      fetchData();
+    } else {
+      setLoading(false);
+      setFetchError("Invalid user ID");
     }
-  }, [id]);
+  }, [encryptedId]);
 
   // -------------------------------
   // Toggle functions
@@ -376,7 +412,7 @@ const PermissionsForm = () => {
   // -------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || !encryptedId) return;
 
     setIsSubmitting(true);
 
@@ -393,7 +429,8 @@ const PermissionsForm = () => {
 
       await api.get("/sanctum/csrf-cookie");
 
-      await api.post(`/permissions_update/${id}`, formData, {
+      // Use the encrypted ID in the URL
+      await api.post(`/permissions_update/${encryptedId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
@@ -402,7 +439,9 @@ const PermissionsForm = () => {
 
       toast.success("Permissions updated successfully!");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update permissions.");
+      toast.error(
+        err.response?.data?.message || "Failed to update permissions.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -413,84 +452,292 @@ const PermissionsForm = () => {
   // -------------------------------
   const permissionGroups = {
     general: [
-      { key: "permission" as keyof PermissionsState, label: "General Permission", description: "Overall access permission" },
+      {
+        key: "permission" as keyof PermissionsState,
+        label: "General Permission",
+        description: "Overall access permission",
+      },
     ],
     users: [
-      { key: "users_create" as keyof PermissionsState, label: "Create Users", description: "Can create new user accounts" },
-      { key: "users_read" as keyof PermissionsState, label: "View Users", description: "Can view user accounts" },
-      { key: "users_update" as keyof PermissionsState, label: "Edit Users", description: "Can modify user information" },
-      { key: "users_delete" as keyof PermissionsState, label: "Delete Users", description: "Can remove user accounts" },
+      {
+        key: "users_create" as keyof PermissionsState,
+        label: "Create Users",
+        description: "Can create new user accounts",
+      },
+      {
+        key: "users_read" as keyof PermissionsState,
+        label: "View Users",
+        description: "Can view user accounts",
+      },
+      {
+        key: "users_update" as keyof PermissionsState,
+        label: "Edit Users",
+        description: "Can modify user information",
+      },
+      {
+        key: "users_delete" as keyof PermissionsState,
+        label: "Delete Users",
+        description: "Can remove user accounts",
+      },
     ],
     subscriptions: [
-      { key: "subscriptions_read" as keyof PermissionsState, label: "View Subscriptions", description: "Can view subscription data" },
-      { key: "subscriptions_update" as keyof PermissionsState, label: "Manage Subscriptions", description: "Can update subscription plans" },
+      {
+        key: "subscriptions_read" as keyof PermissionsState,
+        label: "View Subscriptions",
+        description: "Can view subscription data",
+      },
+      {
+        key: "subscriptions_update" as keyof PermissionsState,
+        label: "Manage Subscriptions",
+        description: "Can update subscription plans",
+      },
     ],
     locations: [
-      { key: "locations_create" as keyof PermissionsState, label: "Create Locations", description: "Can create new locations" },
-      { key: "locations_read" as keyof PermissionsState, label: "View Locations", description: "Can view location information" },
-      { key: "locations_update" as keyof PermissionsState, label: "Edit Locations", description: "Can update stored location info" },
-      { key: "locations_delete" as keyof PermissionsState, label: "Delete Locations", description: "Can remove locations" },
-      { key: "locations_analytics" as keyof PermissionsState, label: "Location Analytics", description: "Can view analytics for locations" },
+      {
+        key: "locations_create" as keyof PermissionsState,
+        label: "Create Locations",
+        description: "Can create new locations",
+      },
+      {
+        key: "locations_read" as keyof PermissionsState,
+        label: "View Locations",
+        description: "Can view location information",
+      },
+      {
+        key: "locations_update" as keyof PermissionsState,
+        label: "Edit Locations",
+        description: "Can update stored location info",
+      },
+      {
+        key: "locations_delete" as keyof PermissionsState,
+        label: "Delete Locations",
+        description: "Can remove locations",
+      },
+      {
+        key: "locations_analytics" as keyof PermissionsState,
+        label: "Location Analytics",
+        description: "Can view analytics for locations",
+      },
     ],
     categories: [
-      { key: "category_create" as keyof PermissionsState, label: "Create Categories", description: "Can create product categories" },
-      { key: "category_read" as keyof PermissionsState, label: "View Categories", description: "Can view product categories" },
-      { key: "category_update" as keyof PermissionsState, label: "Edit Categories", description: "Can modify product categories" },
-      { key: "category_delete" as keyof PermissionsState, label: "Delete Categories", description: "Can remove product categories" },
+      {
+        key: "category_create" as keyof PermissionsState,
+        label: "Create Categories",
+        description: "Can create product categories",
+      },
+      {
+        key: "category_read" as keyof PermissionsState,
+        label: "View Categories",
+        description: "Can view product categories",
+      },
+      {
+        key: "category_update" as keyof PermissionsState,
+        label: "Edit Categories",
+        description: "Can modify product categories",
+      },
+      {
+        key: "category_delete" as keyof PermissionsState,
+        label: "Delete Categories",
+        description: "Can remove product categories",
+      },
     ],
     products: [
-      { key: "product_create" as keyof PermissionsState, label: "Create Products", description: "Can create new products" },
-      { key: "product_read" as keyof PermissionsState, label: "View Products", description: "Can view product information" },
-      { key: "product_update" as keyof PermissionsState, label: "Edit Products", description: "Can modify product details" },
-      { key: "product_delete" as keyof PermissionsState, label: "Delete Products", description: "Can remove products" },
+      {
+        key: "product_create" as keyof PermissionsState,
+        label: "Create Products",
+        description: "Can create new products",
+      },
+      {
+        key: "product_read" as keyof PermissionsState,
+        label: "View Products",
+        description: "Can view product information",
+      },
+      {
+        key: "product_update" as keyof PermissionsState,
+        label: "Edit Products",
+        description: "Can modify product details",
+      },
+      {
+        key: "product_delete" as keyof PermissionsState,
+        label: "Delete Products",
+        description: "Can remove products",
+      },
     ],
     units: [
-      { key: "unit_create" as keyof PermissionsState, label: "Create Units", description: "Can create measurement units" },
-      { key: "unit_read" as keyof PermissionsState, label: "View Units", description: "Can view unit information" },
-      { key: "unit_update" as keyof PermissionsState, label: "Edit Units", description: "Can modify unit details" },
-      { key: "unit_delete" as keyof PermissionsState, label: "Delete Units", description: "Can remove units" },
+      {
+        key: "unit_create" as keyof PermissionsState,
+        label: "Create Units",
+        description: "Can create measurement units",
+      },
+      {
+        key: "unit_read" as keyof PermissionsState,
+        label: "View Units",
+        description: "Can view unit information",
+      },
+      {
+        key: "unit_update" as keyof PermissionsState,
+        label: "Edit Units",
+        description: "Can modify unit details",
+      },
+      {
+        key: "unit_delete" as keyof PermissionsState,
+        label: "Delete Units",
+        description: "Can remove units",
+      },
     ],
     vendors: [
-      { key: "vendor_create" as keyof PermissionsState, label: "Create Vendors", description: "Can create new vendors" },
-      { key: "vendor_read" as keyof PermissionsState, label: "View Vendors", description: "Can view vendor information" },
-      { key: "vendor_update" as keyof PermissionsState, label: "Edit Vendors", description: "Can modify vendor details" },
-      { key: "vendor_delete" as keyof PermissionsState, label: "Delete Vendors", description: "Can remove vendors" },
+      {
+        key: "vendor_create" as keyof PermissionsState,
+        label: "Create Vendors",
+        description: "Can create new vendors",
+      },
+      {
+        key: "vendor_read" as keyof PermissionsState,
+        label: "View Vendors",
+        description: "Can view vendor information",
+      },
+      {
+        key: "vendor_update" as keyof PermissionsState,
+        label: "Edit Vendors",
+        description: "Can modify vendor details",
+      },
+      {
+        key: "vendor_delete" as keyof PermissionsState,
+        label: "Delete Vendors",
+        description: "Can remove vendors",
+      },
     ],
     purchases: [
-      { key: "purchase_create" as keyof PermissionsState, label: "Create Purchases", description: "Can create purchase orders" },
-      { key: "purchase_read" as keyof PermissionsState, label: "View Purchases", description: "Can view purchase history" },
-      { key: "purchase_update" as keyof PermissionsState, label: "Edit Purchases", description: "Can modify purchase orders" },
-      { key: "purchase_delete" as keyof PermissionsState, label: "Delete Purchases", description: "Can remove purchase records" },
+      {
+        key: "purchase_create" as keyof PermissionsState,
+        label: "Create Purchases",
+        description: "Can create purchase orders",
+      },
+      {
+        key: "purchase_read" as keyof PermissionsState,
+        label: "View Purchases",
+        description: "Can view purchase history",
+      },
+      {
+        key: "purchase_update" as keyof PermissionsState,
+        label: "Edit Purchases",
+        description: "Can modify purchase orders",
+      },
+      {
+        key: "purchase_delete" as keyof PermissionsState,
+        label: "Delete Purchases",
+        description: "Can remove purchase records",
+      },
     ],
     customers: [
-      { key: "customer_create" as keyof PermissionsState, label: "Create Customers", description: "Can create new customers" },
-      { key: "customer_read" as keyof PermissionsState, label: "View Customers", description: "Can view customer information" },
-      { key: "customer_update" as keyof PermissionsState, label: "Edit Customers", description: "Can modify customer details" },
-      { key: "customer_delete" as keyof PermissionsState, label: "Delete Customers", description: "Can remove customers" },
+      {
+        key: "customer_create" as keyof PermissionsState,
+        label: "Create Customers",
+        description: "Can create new customers",
+      },
+      {
+        key: "customer_read" as keyof PermissionsState,
+        label: "View Customers",
+        description: "Can view customer information",
+      },
+      {
+        key: "customer_update" as keyof PermissionsState,
+        label: "Edit Customers",
+        description: "Can modify customer details",
+      },
+      {
+        key: "customer_delete" as keyof PermissionsState,
+        label: "Delete Customers",
+        description: "Can remove customers",
+      },
     ],
     creditNotes: [
-      { key: "credit_note_create" as keyof PermissionsState, label: "Create Credit Notes", description: "Can create credit notes" },
-      { key: "credit_note_read" as keyof PermissionsState, label: "View Credit Notes", description: "Can view credit note history" },
-      { key: "credit_note_update" as keyof PermissionsState, label: "Edit Credit Notes", description: "Can modify credit notes" },
-      { key: "credit_note_delete" as keyof PermissionsState, label: "Delete Credit Notes", description: "Can remove credit notes" },
+      {
+        key: "credit_note_create" as keyof PermissionsState,
+        label: "Create Credit Notes",
+        description: "Can create credit notes",
+      },
+      {
+        key: "credit_note_read" as keyof PermissionsState,
+        label: "View Credit Notes",
+        description: "Can view credit note history",
+      },
+      {
+        key: "credit_note_update" as keyof PermissionsState,
+        label: "Edit Credit Notes",
+        description: "Can modify credit notes",
+      },
+      {
+        key: "credit_note_delete" as keyof PermissionsState,
+        label: "Delete Credit Notes",
+        description: "Can remove credit notes",
+      },
     ],
     expenses: [
-      { key: "expense_create" as keyof PermissionsState, label: "Create Expenses", description: "Can create expense records" },
-      { key: "expense_read" as keyof PermissionsState, label: "View Expenses", description: "Can view expense history" },
-      { key: "expense_update" as keyof PermissionsState, label: "Edit Expenses", description: "Can modify expense records" },
-      { key: "expense_delete" as keyof PermissionsState, label: "Delete Expenses", description: "Can remove expense records" },
+      {
+        key: "expense_create" as keyof PermissionsState,
+        label: "Create Expenses",
+        description: "Can create expense records",
+      },
+      {
+        key: "expense_read" as keyof PermissionsState,
+        label: "View Expenses",
+        description: "Can view expense history",
+      },
+      {
+        key: "expense_update" as keyof PermissionsState,
+        label: "Edit Expenses",
+        description: "Can modify expense records",
+      },
+      {
+        key: "expense_delete" as keyof PermissionsState,
+        label: "Delete Expenses",
+        description: "Can remove expense records",
+      },
     ],
     invoices: [
-      { key: "invoice_create" as keyof PermissionsState, label: "Create Invoices", description: "Can create new invoices" },
-      { key: "invoice_read" as keyof PermissionsState, label: "View Invoices", description: "Can view invoice history" },
-      { key: "invoice_update" as keyof PermissionsState, label: "Edit Invoices", description: "Can modify invoice details" },
-      { key: "invoice_delete" as keyof PermissionsState, label: "Delete Invoices", description: "Can remove invoices" },
+      {
+        key: "invoice_create" as keyof PermissionsState,
+        label: "Create Invoices",
+        description: "Can create new invoices",
+      },
+      {
+        key: "invoice_read" as keyof PermissionsState,
+        label: "View Invoices",
+        description: "Can view invoice history",
+      },
+      {
+        key: "invoice_update" as keyof PermissionsState,
+        label: "Edit Invoices",
+        description: "Can modify invoice details",
+      },
+      {
+        key: "invoice_delete" as keyof PermissionsState,
+        label: "Delete Invoices",
+        description: "Can remove invoices",
+      },
     ],
     pos: [
-      { key: "pos_create" as keyof PermissionsState, label: "Create POS", description: "Can create point of sale transactions" },
-      { key: "pos_read" as keyof PermissionsState, label: "View POS", description: "Can view POS transactions" },
-      { key: "pos_update" as keyof PermissionsState, label: "Edit POS", description: "Can modify POS transactions" },
-      { key: "pos_delete" as keyof PermissionsState, label: "Delete POS", description: "Can remove POS transactions" },
+      {
+        key: "pos_create" as keyof PermissionsState,
+        label: "Create POS",
+        description: "Can create point of sale transactions",
+      },
+      {
+        key: "pos_read" as keyof PermissionsState,
+        label: "View POS",
+        description: "Can view POS transactions",
+      },
+      {
+        key: "pos_update" as keyof PermissionsState,
+        label: "Edit POS",
+        description: "Can modify POS transactions",
+      },
+      {
+        key: "pos_delete" as keyof PermissionsState,
+        label: "Delete POS",
+        description: "Can remove POS transactions",
+      },
     ],
   };
 
@@ -505,13 +752,19 @@ const PermissionsForm = () => {
     );
   }
 
-  if (!user) {
+  if (fetchError || !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto px-4">
           <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-900 font-semibold text-lg">User not found</p>
-          <p className="text-gray-500 text-sm mt-1">The user profile you're looking for doesn't exist.</p>
+          <p className="text-gray-900 font-semibold text-lg">
+            {fetchError || "User not found"}
+          </p>
+          <p className="text-gray-500 text-sm mt-1">
+            {fetchError 
+              ? "There was an error loading the user profile."
+              : "The user profile you're looking for doesn't exist."}
+          </p>
           <Link
             href="/users"
             className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
@@ -566,13 +819,14 @@ const PermissionsForm = () => {
                     </div>
                   </div>
                   <p className="text-gray-600 text-base max-w-2xl">
-                    Manage access controls and permissions for this user across the organization
+                    Manage access controls and permissions for this user across
+                    the organization
                   </p>
                 </div>
               </div>
             </div>
           </div>
-          
+
           {/* Secondary Navigation */}
           <div className="border-t border-gray-100 mt-2 pt-4">
             <div className="flex space-x-6">
@@ -582,7 +836,7 @@ const PermissionsForm = () => {
               <button className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200">
                 Audit log
               </button>
-              <Link href={``}>
+              <Link href={`#`}>
                 <button className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200">
                   Settings
                 </button>
@@ -620,24 +874,23 @@ const PermissionsForm = () => {
                   <h2 className="text-lg font-bold text-gray-900">
                     {user.name}
                   </h2>
-                  <p className="text-gray-600 text-sm">
-                    {user.email}
-                  </p>
+                  <p className="text-gray-600 text-sm">{user.email}</p>
                 </div>
 
                 {/* Role and Status Badges */}
                 <div className="flex flex-wrap gap-2 justify-center">
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                      user.role
+                      user.role,
                     )}`}
                   >
                     <Shield className="h-3 w-3 mr-1" />
-                    {user.role?.charAt(0).toUpperCase() + user.role?.slice(1) || "User"}
+                    {user.role?.charAt(0).toUpperCase() + user.role?.slice(1) ||
+                      "User"}
                   </span>
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(
-                      user.is_active
+                      user.is_active,
                     )}`}
                   >
                     {user.is_active ? "Active" : "Inactive"}
@@ -662,7 +915,9 @@ const PermissionsForm = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-600">Email</p>
-                      <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
 
@@ -672,7 +927,9 @@ const PermissionsForm = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-600">Role</p>
-                      <p className="text-sm font-medium text-gray-900 capitalize">{user.role || "User"}</p>
+                      <p className="text-sm font-medium text-gray-900 capitalize">
+                        {user.role || "User"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -689,13 +946,20 @@ const PermissionsForm = () => {
                     <Shield className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-white">Access Control</h2>
-                    <p className="text-blue-200 text-sm">Toggle permissions on/off for {user.name}</p>
+                    <h2 className="text-lg font-semibold text-white">
+                      Access Control
+                    </h2>
+                    <p className="text-blue-200 text-sm">
+                      Toggle permissions on/off for {user.name}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+              <form
+                onSubmit={handleSubmit}
+                className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto"
+              >
                 <div className="space-y-8">
                   <PermissionSection
                     title="General"
