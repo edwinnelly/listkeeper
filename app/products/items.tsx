@@ -30,6 +30,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Import useRouter
 import { toast } from "react-hot-toast";
 import ShortTextWithTooltip from "../component/shorten_len";
 
@@ -70,6 +71,7 @@ interface ProductList {
   additional_info: any | null;
   created_at: string;
   updated_at: string;
+  encrypted_id: any | null;
 
   category?: {
     id: number;
@@ -110,6 +112,7 @@ const formatPrice = (price: string | number | null | undefined): string => {
 };
 
 const ManageProducts = () => {
+  const router = useRouter(); // Initialize router
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -151,6 +154,7 @@ const ManageProducts = () => {
     setIsLoading(true);
     try {
       const res = await apiGet("/products", {}, !forceRefreshProducts);
+      console.log(res.data);
       const productsArray =
         res.data?.data?.products ??
         res.data?.data ??
@@ -183,7 +187,6 @@ const ManageProducts = () => {
       setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
       if (forceRefreshCategories) setForceRefreshCategories(false);
     } catch (err: any) {
-      console.error("Failed to fetch categories:", err);
       setCategories([]);
     }
   };
@@ -202,7 +205,7 @@ const ManageProducts = () => {
       setProducts((prevProducts) =>
         prevProducts.filter((product) => product.id !== selectedProduct.id),
       );
-      await apiDelete(`/products-dels/${selectedProduct.id}`);
+      await apiDelete(`/products/${selectedProduct.id}`);
       toast.success("Product deleted successfully!");
       setDeleteModalOpen(false);
       setSelectedProduct(null);
@@ -220,11 +223,13 @@ const ManageProducts = () => {
   };
 
   const handleEditClick = (product: ProductList) => {
-    window.location.href = `/editproduct/${product.id}`;
+    // Use router.push for client-side navigation (NO PAGE REFRESH)
+    router.push(`/editproduct/${product.id}`);
   };
 
   const handleHistoryClick = (product: ProductList) => {
-    window.location.href = `/products/${product.id}/history`;
+    // Use router.push for client-side navigation (NO PAGE REFRESH)
+    router.push(`/products/${product.id}/history`);
   };
 
   const handleMoreClick = (product: ProductList) => {
@@ -618,7 +623,7 @@ const ManageProducts = () => {
                                 <div className="min-w-0 flex-1">
                                   <div className="font-semibold text-stone-900 truncate group-hover:text-[#1e3a5f] transition-colors">
                                     <ShortTextWithTooltip
-                                      text={`Code: ${product.name}`}
+                                      text={`${product.name}`}
                                       max={20}
                                     />
                                   </div>
@@ -655,7 +660,6 @@ const ManageProducts = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-1">
-                                  <DollarSign className="h-4 w-4 text-stone-400" />
                                   <span className="font-semibold text-stone-900">
                                     ${formatPrice(product.price)}
                                   </span>

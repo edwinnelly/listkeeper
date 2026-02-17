@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
@@ -9,26 +9,14 @@ import {
   Package,
   Tag,
   DollarSign,
-  Hash,
-  Star,
-  Percent,
   Image as ImageIcon,
-  FolderTree,
-  Truck,
   ArrowLeft,
   Plus,
   Loader2,
-  CheckCircle,
   XCircle,
   Save,
-  Scale,
-  Box,
-  Calendar,
-  Weight,
-  Ruler,
-  ChevronDown,
-  Upload,
-  BarChart3,
+  Edit,
+  AlertCircle,
 } from "lucide-react";
 import { withAuth } from "@/hoc/withAuth";
 
@@ -88,12 +76,6 @@ interface Category {
   name: string;
 }
 
-interface Unit {
-  id: number;
-  name: string;
-  symbol: string;
-}
-
 interface Supplier {
   id: string;
   vid: number;
@@ -104,33 +86,47 @@ interface Supplier {
   is_active?: boolean;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  description: string | null;
+  category_id: number;
+  products_measurements: string | null;
+  price: number;
+  cost_price: number | null;
+  sale_price: number | null;
+  stock_quantity: number;
+  low_stock_threshold: number | null;
+  discount_percentage: number | null;
+  discount_start_date: string | null;
+  discount_end_date: string | null;
+  manufactured_at: string | null;
+  expires_at: string | null;
+  weight: number | null;
+  length: number | null;
+  width: number | null;
+  height: number | null;
+  supplier_id: number | null;
+  is_active: boolean;
+  is_featured: boolean;
+  is_on_sale: boolean;
+  image: string | null;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const staticUnits: Unit[] = [
-  { id: 1, name: "Piece", symbol: "pc" },
-  { id: 2, name: "Kilogram", symbol: "kg" },
-  { id: 3, name: "Gram", symbol: "g" },
-  { id: 4, name: "Liter", symbol: "L" },
-  { id: 5, name: "Milliliter", symbol: "mL" },
-  { id: 6, name: "Meter", symbol: "m" },
-  { id: 7, name: "Centimeter", symbol: "cm" },
-  { id: 8, name: "Dozen", symbol: "dz" },
-  { id: 9, name: "Pack", symbol: "pk" },
-  { id: 10, name: "Box", symbol: "bx" },
-  { id: 11, name: "Bottle", symbol: "btl" },
-  { id: 12, name: "Carton", symbol: "ctn" },
-  { id: 13, name: "Pair", symbol: "pr" },
-  { id: 14, name: "Set", symbol: "set" },
-  { id: 15, name: "Roll", symbol: "roll" },
-];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
-const AddProductPage = () => {
+const EditProductPage = () => {
+  const params = useParams();
+  const productId = params.id as string;
   // ==========================================================================
   // STATE MANAGEMENT
   // ==========================================================================
@@ -164,12 +160,15 @@ const AddProductPage = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [categories, setCategories] = useState<Category[]>([]);
-  const [units] = useState<Unit[]>(staticUnits);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const router = useRouter();
 
@@ -184,32 +183,86 @@ const AddProductPage = () => {
   const errorTextClass = "text-red-600 text-xs mt-1.5 flex items-center gap-1";
 
   // ==========================================================================
+  // HELPER FUNCTIONS
+  // ==========================================================================
+  const getFullImageUrl = (imagePath: string | null): string | null => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_BASE_URL}/storage/${imagePath}`;
+  };
+
+  // Format number to remove decimal places for integers
+  const formatIntegerString = (value: string): string => {
+    if (!value) return '';
+    // Remove any decimal points and everything after
+    return value.split('.')[0];
+  };
+
+  // ==========================================================================
   // LIFECYCLE METHODS
   // ==========================================================================
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchAllData();
+  }, [productId]);
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
     return () => {
-      if (imagePreview) {
+      if (imagePreview && imagePreview !== originalImageUrl) {
         URL.revokeObjectURL(imagePreview);
       }
     };
-  }, [imagePreview]);
+  }, [imagePreview, originalImageUrl]);
+
+  // Track form changes
+  useEffect(() => {
+    if (product) {
+      const formData = { ...form };
+      const productData = {
+        name: product.name,
+        sku: product.sku,
+        description: product.description || "",
+        category_id: product.category_id?.toString() || "",
+        products_measurements: product.products_measurements || "",
+        price: product.price?.toString() || "",
+        cost_price: product.cost_price?.toString() || "",
+        sale_price: product.sale_price?.toString() || "",
+        stock_quantity: product.stock_quantity?.toString() || "",
+        low_stock_threshold: product.low_stock_threshold?.toString() || "",
+        discount_percentage: product.discount_percentage?.toString() || "",
+        discount_start_date: product.discount_start_date || "",
+        discount_end_date: product.discount_end_date || "",
+        manufactured_at: product.manufactured_at || "",
+        expires_at: product.expires_at || "",
+        weight: product.weight?.toString() || "",
+        length: product.length?.toString() || "",
+        width: product.width?.toString() || "",
+        height: product.height?.toString() || "",
+        supplier_id: product.supplier_id?.toString() || "",
+        is_active: product.is_active,
+        is_featured: product.is_featured,
+        is_on_sale: product.is_on_sale,
+        image: product.image,
+      };
+
+      const hasFormChanges = JSON.stringify(formData) !== JSON.stringify(productData);
+      setHasChanges(hasFormChanges || imageFile !== null);
+    }
+  }, [form, product, imageFile]);
 
   // ==========================================================================
   // DATA FETCHING
   // ==========================================================================
-  const fetchData = async () => {
+  const fetchAllData = async () => {
     setIsLoadingData(true);
+    setIsLoadingProduct(true);
     try {
-      await Promise.all([fetchCategories(), fetchSuppliers()]);
+      await Promise.all([fetchCategories(), fetchSuppliers(), fetchProduct()]);
     } catch (err: any) {
       toast.error("Failed to load required data");
     } finally {
       setIsLoadingData(false);
+      setIsLoadingProduct(false);
     }
   };
 
@@ -220,6 +273,7 @@ const AddProductPage = () => {
         res.data?.data?.product_categories ?? res.data?.data ?? [];
       setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
     } catch (err) {
+      console.error("Error fetching categories:", err);
       setCategories([]);
     }
   };
@@ -229,7 +283,7 @@ const AddProductPage = () => {
       const res = await apiGet("/vendors");
       const suppliersArray = res.data?.data?.vendors ?? res.data?.data ?? [];
       const transformedSuppliers = Array.isArray(suppliersArray)
-        ? suppliersArray.map((vendor) => ({
+        ? suppliersArray.map((vendor: any) => ({
             id: vendor.id,
             vid: vendor.vid,
             vendor_name: vendor.vendor_name || vendor.name || "",
@@ -241,7 +295,76 @@ const AddProductPage = () => {
         : [];
       setSuppliers(transformedSuppliers);
     } catch (err) {
+      console.error("Error fetching suppliers:", err);
       setSuppliers([]);
+    }
+  };
+
+  const fetchProduct = async () => {
+    try {
+      const res = await apiGet(`/products/${productId}`);
+      console.log("Product data:", res.data);
+      
+      const productData = res.data?.data || res.data;
+      
+      if (productData) {
+        setProduct(productData);
+        
+        // Format dates for input fields (YYYY-MM-DD)
+        const formatDateForInput = (dateString: string | null): string => {
+          if (!dateString) return "";
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return "";
+          return date.toISOString().split('T')[0];
+        };
+
+        // Format integers without decimal places
+        const formatInteger = (value: number | null): string => {
+          if (value === null || value === undefined) return "";
+          return Math.floor(value).toString(); // Ensure it's an integer
+        };
+
+        // Get full image URL
+        const imageUrl = getFullImageUrl(productData.image);
+
+        setForm({
+          name: productData.name || "",
+          sku: productData.sku || "",
+          description: productData.description || "",
+          category_id: productData.category_id?.toString() || "",
+          products_measurements: productData.products_measurements || "",
+          price: productData.price?.toString() || "",
+          cost_price: productData.cost_price?.toString() || "",
+          sale_price: productData.sale_price?.toString() || "",
+          stock_quantity: formatInteger(productData.stock_quantity),
+          low_stock_threshold: formatInteger(productData.low_stock_threshold),
+          discount_percentage: productData.discount_percentage?.toString() || "",
+          discount_start_date: formatDateForInput(productData.discount_start_date),
+          discount_end_date: formatDateForInput(productData.discount_end_date),
+          manufactured_at: formatDateForInput(productData.manufactured_at),
+          expires_at: formatDateForInput(productData.expires_at),
+          weight: productData.weight?.toString() || "",
+          length: productData.length?.toString() || "",
+          width: productData.width?.toString() || "",
+          height: productData.height?.toString() || "",
+          supplier_id: productData.supplier_id?.toString() || "",
+          is_active: productData.is_active ?? false,
+          is_featured: productData.is_featured ?? false,
+          is_on_sale: productData.is_on_sale ?? false,
+          image: imageUrl,
+        });
+
+        if (imageUrl) {
+          setOriginalImageUrl(imageUrl);
+          setImagePreview(imageUrl);
+        }
+      } else {
+        toast.error("Product not found");
+        router.push("/products");
+      }
+    } catch (err: any) {
+      toast.error("Failed to load product");
+      router.push("/products");
     }
   };
 
@@ -267,10 +390,18 @@ const AddProductPage = () => {
 
     setImageFile(file);
     
-    // Create preview URL
+    // Create preview URL for new upload
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
-    setForm((prev) => ({ ...prev, image: previewUrl }));
+    // Don't update form.image here as it's handled separately in submission
+  };
+
+  const removeImage = () => {
+    if (imagePreview && imagePreview !== originalImageUrl) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImageFile(null);
+    setImagePreview(originalImageUrl);
   };
 
   // ==========================================================================
@@ -278,11 +409,22 @@ const AddProductPage = () => {
   // ==========================================================================
   const handleInputChange = (
     field: keyof ProductFormData,
-    value: string | boolean | number,
+    value: string | boolean,
   ) => {
+    // Special handling for integer fields to prevent decimal points
+    let processedValue = value;
+    
+    if (field === 'stock_quantity' || field === 'low_stock_threshold') {
+      // For integer fields, remove any decimal points
+      if (typeof value === 'string') {
+        // Remove any non-digit characters except empty string
+        processedValue = value.replace(/[^\d]/g, '');
+      }
+    }
+
     setForm((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: processedValue,
     }));
 
     if (errors[field]) {
@@ -335,12 +477,6 @@ const AddProductPage = () => {
         }
         return undefined;
 
-      case "products_measurements":
-        if (!value || value === "") {
-          return "Unit is required";
-        }
-        return undefined;
-
       case "price":
         if (!value || value.toString().trim().length === 0) {
           return "Price is required";
@@ -357,21 +493,30 @@ const AddProductPage = () => {
         if (!value || value.toString().trim().length === 0) {
           return "Stock quantity is required";
         }
-        if (isNaN(parseInt(value.toString()))) {
+        if (isNaN(parseInt(value.toString(), 10))) {
           return "Stock quantity must be a valid number";
         }
-        if (parseInt(value.toString()) < 0) {
+        const stockInt = parseInt(value.toString(), 10);
+        if (stockInt < 0) {
           return "Stock quantity cannot be negative";
+        }
+        // Check if it's not an integer (has decimal places)
+        if (value.toString().includes('.')) {
+          return "Stock quantity must be a whole number";
         }
         return undefined;
 
       case "low_stock_threshold":
         if (value && value.toString().trim().length > 0) {
-          if (isNaN(parseInt(value.toString()))) {
+          if (isNaN(parseInt(value.toString(), 10))) {
             return "Low stock threshold must be a valid number";
           }
-          if (parseInt(value.toString()) < 0) {
+          const thresholdInt = parseInt(value.toString(), 10);
+          if (thresholdInt < 0) {
             return "Low stock threshold cannot be negative";
+          }
+          if (value.toString().includes('.')) {
+            return "Low stock threshold must be a whole number";
           }
         }
         return undefined;
@@ -409,6 +554,9 @@ const AddProductPage = () => {
     let isValid = true;
 
     (Object.keys(form) as Array<keyof ProductFormData>).forEach((field) => {
+      // Skip validation for fields that are not required
+      if (field === 'description' || field === 'image' || field === 'products_measurements') return;
+      
       const error = validateField(field, form[field]);
       if (error) {
         newErrors[field] = error;
@@ -461,17 +609,18 @@ const AddProductPage = () => {
   };
 
   // ==========================================================================
-  // FORM SUBMISSION - FIXED VERSION
+  // FORM SUBMISSION
   // ==========================================================================
-  const prepareFormData = () => {
+  const prepareFormData = (): FormData => {
     const formData = new FormData();
+    formData.append('_method', 'PUT'); // For Laravel or similar frameworks
     
     // Basic Information
     formData.append('name', form.name.trim());
     formData.append('sku', form.sku.trim());
     if (form.description.trim()) formData.append('description', form.description.trim());
     
-    // Category and Unit
+    // Category
     if (form.category_id) formData.append('category_id', form.category_id.toString());
     if (form.products_measurements) formData.append('products_measurements', form.products_measurements);
     
@@ -480,9 +629,11 @@ const AddProductPage = () => {
     if (form.cost_price) formData.append('cost_price', form.cost_price);
     if (form.sale_price) formData.append('sale_price', form.sale_price);
     
-    // Inventory
-    formData.append('stock_quantity', form.stock_quantity || '0');
-    if (form.low_stock_threshold) formData.append('low_stock_threshold', form.low_stock_threshold);
+    // Inventory - Ensure integer values
+    formData.append('stock_quantity', form.stock_quantity ? parseInt(form.stock_quantity, 10).toString() : '0');
+    if (form.low_stock_threshold) {
+      formData.append('low_stock_threshold', parseInt(form.low_stock_threshold, 10).toString());
+    }
     
     // Discount
     if (form.discount_percentage) formData.append('discount_percentage', form.discount_percentage);
@@ -507,15 +658,9 @@ const AddProductPage = () => {
     formData.append('is_featured', form.is_featured ? '1' : '0');
     formData.append('is_on_sale', form.is_on_sale ? '1' : '0');
     
-    // Image - IMPORTANT: Append the actual File object, not base64
+    // Image - Only append if a new image is selected
     if (imageFile) {
       formData.append('image', imageFile);
-    }
-    
-    // Log FormData contents for debugging
-    console.log('FormData prepared:');
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ': ' + (pair[0] === 'image' ? '[FILE]' : pair[1]));
     }
     
     return formData;
@@ -523,7 +668,7 @@ const AddProductPage = () => {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted");
+    console.log("Form submitted for update");
     
     if (isSubmitting) return;
 
@@ -538,7 +683,6 @@ const AddProductPage = () => {
       const firstError = Object.values(errors).find((error) => error);
       if (firstError) {
         toast.error(firstError);
-        console.log("Validation errors:", errors);
       }
       return;
     }
@@ -548,8 +692,7 @@ const AddProductPage = () => {
     try {
       const formData = prepareFormData();
 
-      // Use apiPost with headers: 'Content-Type': 'multipart/form-data'
-      const response = await apiPost("addproducts", formData, {
+      const response = await apiPost(`products/${productId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -558,58 +701,23 @@ const AddProductPage = () => {
       console.log("API Response:", response);
 
       if (response.success || response.data) {
-        toast.success("Product created successfully!", {
-          id: "create-product",
+        toast.success("Product updated successfully!", {
+          id: "update-product",
         });
-
-        // Reset form
-        setForm({
-          name: "",
-          sku: "",
-          description: "",
-          category_id: "",
-          products_measurements: "",
-          price: "",
-          cost_price: "",
-          sale_price: "",
-          stock_quantity: "",
-          low_stock_threshold: "",
-          discount_percentage: "",
-          discount_start_date: "",
-          discount_end_date: "",
-          manufactured_at: "",
-          expires_at: "",
-          weight: "",
-          length: "",
-          width: "",
-          height: "",
-          supplier_id: "",
-          is_active: true,
-          is_featured: false,
-          is_on_sale: false,
-          image: null,
-        });
-        setErrors({});
-        setTouched({});
-        setImageFile(null);
-        setImagePreview(null);
 
         setTimeout(() => {
           router.push("/products");
         }, 1500);
       } else {
-        toast.error("Failed to create product. Invalid response.");
+        toast.error("Failed to update product. Invalid response.");
       }
     } catch (err: any) {
       console.error("Full API Error:", err);
-      console.error("Error response data:", err.response?.data);
-      console.error("Error response status:", err.response?.status);
 
       const status = err.response?.status;
       if (status === 422) {
         const errors = err.response?.data?.errors;
-        console.log("Validation errors from API:", errors);
-
+        
         if (errors) {
           const formErrors: FormErrors = {};
           Object.keys(errors).forEach((key) => {
@@ -620,7 +728,6 @@ const AddProductPage = () => {
           });
           setErrors(formErrors);
 
-          // Show first error
           const firstErrorKey = Object.keys(errors)[0];
           if (firstErrorKey && errors[firstErrorKey]) {
             const firstError = Array.isArray(errors[firstErrorKey])
@@ -631,22 +738,28 @@ const AddProductPage = () => {
         } else {
           toast.error("Validation failed. Please check the form.");
         }
+      } else if (status === 404) {
+        toast.error("Product not found");
+        router.push("/products");
       } else if (status === 500) {
         const errorMessage =
           err.response?.data?.message ||
           err.response?.data?.error ||
           "Internal server error";
-        console.error("Server error details:", errorMessage);
         toast.error(`Server error: ${errorMessage}`);
       } else {
         toast.error(
           err.response?.data?.message ||
-            "Failed to create product. Please try again.",
+            "Failed to update product. Please try again.",
         );
       }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCancel = () => {
+     router.push("/products");
   };
 
   // ==========================================================================
@@ -657,64 +770,84 @@ const AddProductPage = () => {
     form.sku.trim().length > 0 &&
     form.category_id !== "" &&
     form.category_id !== 0 &&
-    form.products_measurements !== "" &&
     form.price !== "" &&
     form.stock_quantity !== "" &&
     !errors.name &&
     !errors.sku &&
     !errors.category_id &&
-    !errors.products_measurements &&
     !errors.price &&
     !errors.stock_quantity;
 
   // ==========================================================================
   // RENDER
   // ==========================================================================
+  if (isLoadingProduct) {
+    return (
+      <div className="min-h-screen bg-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center py-16">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+              <p className="text-gray-600 font-medium">Loading product...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/dashboard"
+          <button
+            onClick={handleCancel}
             className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Link>
+            Back to Products
+          </button>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Add New Product
+                Edit Product
               </h1>
               <p className="text-gray-600 mt-1">
-                Add a new product to your inventory
+                Update product information for SKU: <span className="font-semibold">{form.sku}</span>
               </p>
             </div>
-            <Link
-              href="/products"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Manage Products
-            </Link>
+            <div className="flex items-center gap-3">
+              {hasChanges && (
+                <span className="flex items-center text-amber-600 text-sm bg-amber-50 px-3 py-1.5 rounded-lg">
+                  <AlertCircle className="h-4 w-4 mr-1.5" />
+                  Unsaved changes
+                </span>
+              )}
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Form Card */}
         <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl">
           {/* Card Header */}
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
+          <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-5">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/10 rounded-lg">
-                <Package className="h-5 w-5 text-white" />
+                <Edit className="h-5 w-5 text-white" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">
-                  Product Information
+                  Edit Product: {form.name || "Product"}
                 </h2>
-                <p className="text-gray-300 text-sm">
-                  Complete your product details
+                <p className="text-blue-200 text-sm">
+                  Modify the product details below
                 </p>
               </div>
             </div>
@@ -785,7 +918,7 @@ const AddProductPage = () => {
                           onClick={handleGenerateSKU}
                           className="px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-sm"
                         >
-                          Generate
+                          Generate New
                         </button>
                       </div>
                       {errors.sku && (
@@ -822,41 +955,6 @@ const AddProductPage = () => {
                         <div className={errorTextClass}>
                           <XCircle size={12} />
                           {errors.category_id}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className={labelClass}>
-                        Unit <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={form.products_measurements}
-                        onChange={(e) =>
-                          handleInputChange(
-                            "products_measurements",
-                            e.target.value,
-                          )
-                        }
-                        onBlur={() => handleBlur("products_measurements")}
-                        required
-                        className={
-                          errors.products_measurements
-                            ? errorInputClass
-                            : inputClass
-                        }
-                      >
-                        <option value="">Select unit</option>
-                        {units.map((unit) => (
-                          <option key={unit.id} value={unit.name}>
-                            {unit.name} ({unit.symbol})
-                          </option>
-                        ))}
-                      </select>
-                      {errors.products_measurements && (
-                        <div className={errorTextClass}>
-                          <XCircle size={12} />
-                          {errors.products_measurements}
                         </div>
                       )}
                     </div>
@@ -905,7 +1003,7 @@ const AddProductPage = () => {
                       <div className="flex flex-col items-center justify-center space-y-3">
                         <ImageIcon className="h-10 w-10 text-gray-400" />
                         <p className="text-sm font-medium text-gray-600">
-                          Click to upload product image
+                          Click to upload new product image
                         </p>
                         <p className="text-xs text-gray-500">
                           PNG, JPG, WEBP, AVIF up to 2MB
@@ -913,31 +1011,43 @@ const AddProductPage = () => {
                       </div>
                     </label>
                   </div>
+                  
+                  {/* Image Preview */}
                   {imagePreview && (
                     <div className="mt-4 flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <img
-                        src={imagePreview}
-                        alt="Product preview"
-                        className="w-16 h-16 rounded object-cover border border-blue-300"
-                      />
+                      <div className="w-16 h-16 rounded overflow-hidden border border-blue-300 bg-white">
+                        <img
+                          src={imagePreview}
+                          alt="Product preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.src = 'https://via.placeholder.com/64?text=No+Image';
+                          }}
+                        />
+                      </div>
                       <div>
                         <span className="text-sm text-gray-700 block">
-                          {imageFile?.name}
+                          {imageFile ? imageFile.name : "Current image"}
                         </span>
-                        <span className="text-xs text-gray-500">
-                          {(imageFile?.size || 0) / 1024 < 1024 
-                            ? `${((imageFile?.size || 0) / 1024).toFixed(1)} KB` 
-                            : `${((imageFile?.size || 0) / (1024 * 1024)).toFixed(1)} MB`}
-                        </span>
+                        {imageFile && (
+                          <span className="text-xs text-gray-500">
+                            {(imageFile?.size || 0) / 1024 < 1024 
+                              ? `${((imageFile?.size || 0) / 1024).toFixed(1)} KB` 
+                              : `${((imageFile?.size || 0) / (1024 * 1024)).toFixed(1)} MB`}
+                          </span>
+                        )}
+                        {!imageFile && originalImageUrl && (
+                          <span className="text-xs text-gray-500">
+                            Existing image
+                          </span>
+                        )}
                       </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview(null);
-                          setForm((prev) => ({ ...prev, image: null }));
-                        }}
+                        onClick={removeImage}
                         className="ml-auto text-red-500 hover:text-red-700"
+                        title="Remove image"
                       >
                         <XCircle size={18} />
                       </button>
@@ -1116,7 +1226,7 @@ const AddProductPage = () => {
                       </label>
                       <input
                         type="number"
-                        step="1"
+                        step="1" // This ensures only integers can be entered via spinner
                         min="0"
                         value={form.stock_quantity}
                         onChange={(e) =>
@@ -1128,6 +1238,8 @@ const AddProductPage = () => {
                         }
                         placeholder="0"
                         required
+                        pattern="[0-9]*" // Only allow digits
+                        inputMode="numeric" // Show numeric keyboard on mobile
                       />
                       {errors.stock_quantity && (
                         <div className={errorTextClass}>
@@ -1141,7 +1253,7 @@ const AddProductPage = () => {
                       <label className={labelClass}>Low Stock Alert</label>
                       <input
                         type="number"
-                        step="1"
+                        step="1" // This ensures only integers can be entered via spinner
                         min="0"
                         value={form.low_stock_threshold}
                         onChange={(e) =>
@@ -1157,6 +1269,8 @@ const AddProductPage = () => {
                             : inputClass
                         }
                         placeholder="5"
+                        pattern="[0-9]*" // Only allow digits
+                        inputMode="numeric" // Show numeric keyboard on mobile
                       />
                       {errors.low_stock_threshold && (
                         <div className={errorTextClass}>
@@ -1414,18 +1528,18 @@ const AddProductPage = () => {
                 <div className="flex justify-end pt-6 border-t border-gray-200">
                   <button
                     type="submit"
-                    disabled={!isFormValid || isSubmitting}
-                    className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    disabled={!isFormValid || isSubmitting || !hasChanges}
+                    className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating...
+                        Updating...
                       </>
                     ) : (
                       <>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Product
+                        <Save className="h-4 w-4 mr-2" />
+                        Update Product
                       </>
                     )}
                   </button>
@@ -1439,4 +1553,4 @@ const AddProductPage = () => {
   );
 };
 
-export default withAuth(AddProductPage);
+export default withAuth(EditProductPage);

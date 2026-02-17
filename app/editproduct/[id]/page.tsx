@@ -1,10 +1,8 @@
 'use client';
 import { useState } from "react";
-import Manageunit from "../newproduct/newproducts";
+import Manageunit from "../../editproduct/[id]/editproducts";
 
 export default function DashboardPage() {
-  // const [sidebarOpen, setSidebarOpen] = useState(false);
-  
   return (
     <div className="flex h-screen bg-gray-100">
     
