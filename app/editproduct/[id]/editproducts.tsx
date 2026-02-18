@@ -118,7 +118,7 @@ interface Product {
 // CONSTANTS
 // ============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ============================================================================
 // MAIN COMPONENT
@@ -187,15 +187,15 @@ const EditProductPage = () => {
   // ==========================================================================
   const getFullImageUrl = (imagePath: string | null): string | null => {
     if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith("http")) return imagePath;
     return `${API_BASE_URL}/storage/${imagePath}`;
   };
 
   // Format number to remove decimal places for integers
   const formatIntegerString = (value: string): string => {
-    if (!value) return '';
+    if (!value) return "";
     // Remove any decimal points and everything after
-    return value.split('.')[0];
+    return value.split(".")[0];
   };
 
   // ==========================================================================
@@ -245,7 +245,8 @@ const EditProductPage = () => {
         image: product.image,
       };
 
-      const hasFormChanges = JSON.stringify(formData) !== JSON.stringify(productData);
+      const hasFormChanges =
+        JSON.stringify(formData) !== JSON.stringify(productData);
       setHasChanges(hasFormChanges || imageFile !== null);
     }
   }, [form, product, imageFile]);
@@ -261,8 +262,8 @@ const EditProductPage = () => {
     } catch (err: any) {
       toast.error("Failed to load required data");
     } finally {
-      setIsLoadingData(false);
-      setIsLoadingProduct(false);
+       setIsLoadingData(false);
+        setIsLoadingProduct(false);
     }
   };
 
@@ -304,18 +305,18 @@ const EditProductPage = () => {
     try {
       const res = await apiGet(`/products/${productId}`);
       console.log("Product data:", res.data);
-      
+
       const productData = res.data?.data || res.data;
-      
+
       if (productData) {
         setProduct(productData);
-        
+
         // Format dates for input fields (YYYY-MM-DD)
         const formatDateForInput = (dateString: string | null): string => {
           if (!dateString) return "";
           const date = new Date(dateString);
           if (isNaN(date.getTime())) return "";
-          return date.toISOString().split('T')[0];
+          return date.toISOString().split("T")[0];
         };
 
         // Format integers without decimal places
@@ -338,8 +339,11 @@ const EditProductPage = () => {
           sale_price: productData.sale_price?.toString() || "",
           stock_quantity: formatInteger(productData.stock_quantity),
           low_stock_threshold: formatInteger(productData.low_stock_threshold),
-          discount_percentage: productData.discount_percentage?.toString() || "",
-          discount_start_date: formatDateForInput(productData.discount_start_date),
+          discount_percentage:
+            productData.discount_percentage?.toString() || "",
+          discount_start_date: formatDateForInput(
+            productData.discount_start_date,
+          ),
           discount_end_date: formatDateForInput(productData.discount_end_date),
           manufactured_at: formatDateForInput(productData.manufactured_at),
           expires_at: formatDateForInput(productData.expires_at),
@@ -375,7 +379,12 @@ const EditProductPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/avif",
+    ];
     const maxSize = 2 * 1024 * 1024; // 2MB
 
     if (!allowedTypes.includes(file.type)) {
@@ -389,7 +398,7 @@ const EditProductPage = () => {
     }
 
     setImageFile(file);
-    
+
     // Create preview URL for new upload
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
@@ -413,12 +422,12 @@ const EditProductPage = () => {
   ) => {
     // Special handling for integer fields to prevent decimal points
     let processedValue = value;
-    
-    if (field === 'stock_quantity' || field === 'low_stock_threshold') {
+
+    if (field === "stock_quantity" || field === "low_stock_threshold") {
       // For integer fields, remove any decimal points
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         // Remove any non-digit characters except empty string
-        processedValue = value.replace(/[^\d]/g, '');
+        processedValue = value.replace(/[^\d]/g, "");
       }
     }
 
@@ -501,7 +510,7 @@ const EditProductPage = () => {
           return "Stock quantity cannot be negative";
         }
         // Check if it's not an integer (has decimal places)
-        if (value.toString().includes('.')) {
+        if (value.toString().includes(".")) {
           return "Stock quantity must be a whole number";
         }
         return undefined;
@@ -515,7 +524,7 @@ const EditProductPage = () => {
           if (thresholdInt < 0) {
             return "Low stock threshold cannot be negative";
           }
-          if (value.toString().includes('.')) {
+          if (value.toString().includes(".")) {
             return "Low stock threshold must be a whole number";
           }
         }
@@ -555,8 +564,13 @@ const EditProductPage = () => {
 
     (Object.keys(form) as Array<keyof ProductFormData>).forEach((field) => {
       // Skip validation for fields that are not required
-      if (field === 'description' || field === 'image' || field === 'products_measurements') return;
-      
+      if (
+        field === "description" ||
+        field === "image" ||
+        field === "products_measurements"
+      )
+        return;
+
       const error = validateField(field, form[field]);
       if (error) {
         newErrors[field] = error;
@@ -613,63 +627,74 @@ const EditProductPage = () => {
   // ==========================================================================
   const prepareFormData = (): FormData => {
     const formData = new FormData();
-    formData.append('_method', 'PUT'); // For Laravel or similar frameworks
-    
+    formData.append("_method", "PUT"); // For Laravel or similar frameworks
+
     // Basic Information
-    formData.append('name', form.name.trim());
-    formData.append('sku', form.sku.trim());
-    if (form.description.trim()) formData.append('description', form.description.trim());
-    
+    formData.append("name", form.name.trim());
+    formData.append("sku", form.sku.trim());
+    if (form.description.trim())
+      formData.append("description", form.description.trim());
+
     // Category
-    if (form.category_id) formData.append('category_id', form.category_id.toString());
-    if (form.products_measurements) formData.append('products_measurements', form.products_measurements);
-    
+    if (form.category_id)
+      formData.append("category_id", form.category_id.toString());
+    if (form.products_measurements)
+      formData.append("products_measurements", form.products_measurements);
+
     // Pricing
-    formData.append('price', form.price || '0');
-    if (form.cost_price) formData.append('cost_price', form.cost_price);
-    if (form.sale_price) formData.append('sale_price', form.sale_price);
-    
+    formData.append("price", form.price || "0");
+    if (form.cost_price) formData.append("cost_price", form.cost_price);
+    if (form.sale_price) formData.append("sale_price", form.sale_price);
+
     // Inventory - Ensure integer values
-    formData.append('stock_quantity', form.stock_quantity ? parseInt(form.stock_quantity, 10).toString() : '0');
+    formData.append(
+      "stock_quantity",
+      form.stock_quantity ? parseInt(form.stock_quantity, 10).toString() : "0",
+    );
     if (form.low_stock_threshold) {
-      formData.append('low_stock_threshold', parseInt(form.low_stock_threshold, 10).toString());
+      formData.append(
+        "low_stock_threshold",
+        parseInt(form.low_stock_threshold, 10).toString(),
+      );
     }
-    
+
     // Discount
-    if (form.discount_percentage) formData.append('discount_percentage', form.discount_percentage);
-    if (form.discount_start_date) formData.append('discount_start_date', form.discount_start_date);
-    if (form.discount_end_date) formData.append('discount_end_date', form.discount_end_date);
-    
+    if (form.discount_percentage)
+      formData.append("discount_percentage", form.discount_percentage);
+    if (form.discount_start_date)
+      formData.append("discount_start_date", form.discount_start_date);
+    if (form.discount_end_date)
+      formData.append("discount_end_date", form.discount_end_date);
+
     // Dates
-    if (form.manufactured_at) formData.append('manufactured_at', form.manufactured_at);
-    if (form.expires_at) formData.append('expires_at', form.expires_at);
-    
+    if (form.manufactured_at)
+      formData.append("manufactured_at", form.manufactured_at);
+    if (form.expires_at) formData.append("expires_at", form.expires_at);
+
     // Dimensions
-    if (form.weight) formData.append('weight', form.weight);
-    if (form.length) formData.append('length', form.length);
-    if (form.width) formData.append('width', form.width);
-    if (form.height) formData.append('height', form.height);
-    
+    if (form.weight) formData.append("weight", form.weight);
+    if (form.length) formData.append("length", form.length);
+    if (form.width) formData.append("width", form.width);
+    if (form.height) formData.append("height", form.height);
+
     // Supplier
-    if (form.supplier_id) formData.append('supplier_id', form.supplier_id);
-    
+    if (form.supplier_id) formData.append("supplier_id", form.supplier_id);
+
     // Status - Send as strings '1' or '0'
-    formData.append('is_active', form.is_active ? '1' : '0');
-    formData.append('is_featured', form.is_featured ? '1' : '0');
-    formData.append('is_on_sale', form.is_on_sale ? '1' : '0');
-    
+    formData.append("is_active", form.is_active ? "1" : "0");
+    formData.append("is_featured", form.is_featured ? "1" : "0");
+    formData.append("is_on_sale", form.is_on_sale ? "1" : "0");
+
     // Image - Only append if a new image is selected
     if (imageFile) {
-      formData.append('image', imageFile);
+      formData.append("image", imageFile);
     }
-    
+
     return formData;
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted for update");
-    
     if (isSubmitting) return;
 
     // Mark all fields as touched
@@ -694,10 +719,10 @@ const EditProductPage = () => {
 
       const response = await apiPost(`products/${productId}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
-      
+
       console.log("API Response:", response);
 
       if (response.success || response.data) {
@@ -717,7 +742,7 @@ const EditProductPage = () => {
       const status = err.response?.status;
       if (status === 422) {
         const errors = err.response?.data?.errors;
-        
+
         if (errors) {
           const formErrors: FormErrors = {};
           Object.keys(errors).forEach((key) => {
@@ -759,7 +784,7 @@ const EditProductPage = () => {
   };
 
   const handleCancel = () => {
-     router.push("/products");
+    router.push("/products");
   };
 
   // ==========================================================================
@@ -810,11 +835,10 @@ const EditProductPage = () => {
           </button>
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Edit Product
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
               <p className="text-gray-600 mt-1">
-                Update product information for SKU: <span className="font-semibold">{form.sku}</span>
+                Update product information for SKU:{" "}
+                <span className="font-semibold">{form.sku}</span>
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -1011,7 +1035,7 @@ const EditProductPage = () => {
                       </div>
                     </label>
                   </div>
-                  
+
                   {/* Image Preview */}
                   {imagePreview && (
                     <div className="mt-4 flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -1022,7 +1046,8 @@ const EditProductPage = () => {
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             // Fallback if image fails to load
-                            e.currentTarget.src = 'https://via.placeholder.com/64?text=No+Image';
+                            e.currentTarget.src =
+                              "https://via.placeholder.com/64?text=No+Image";
                           }}
                         />
                       </div>
@@ -1032,8 +1057,8 @@ const EditProductPage = () => {
                         </span>
                         {imageFile && (
                           <span className="text-xs text-gray-500">
-                            {(imageFile?.size || 0) / 1024 < 1024 
-                              ? `${((imageFile?.size || 0) / 1024).toFixed(1)} KB` 
+                            {(imageFile?.size || 0) / 1024 < 1024
+                              ? `${((imageFile?.size || 0) / 1024).toFixed(1)} KB`
                               : `${((imageFile?.size || 0) / (1024 * 1024)).toFixed(1)} MB`}
                           </span>
                         )}
