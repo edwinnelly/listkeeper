@@ -100,6 +100,11 @@ interface PermissionsState {
   pos_read: boolean;
   pos_update: boolean;
   pos_delete: boolean;
+
+  can_edit_price: boolean;
+  can_adjust_stock: boolean;
+  can_transfer_stock: boolean;
+  can_view_cost: boolean;
 }
 
 type PermissionItem = {
@@ -253,6 +258,12 @@ const PermissionsForm = () => {
     pos_read: false,
     pos_update: false,
     pos_delete: false,
+
+    can_edit_price: false,
+    can_adjust_stock: false,
+    can_transfer_stock: false,
+    can_view_cost: false,
+
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -427,6 +438,11 @@ const PermissionsForm = () => {
       });
       formData.append("selected_permissions", JSON.stringify(selected));
 
+    //     // ✅ Proper payload logging
+    // console.log("=== FormData Payload ===");
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
       await api.get("/sanctum/csrf-cookie");
 
       // Use the encrypted ID in the URL
@@ -737,6 +753,29 @@ const PermissionsForm = () => {
         key: "pos_delete" as keyof PermissionsState,
         label: "Delete POS",
         description: "Can remove POS transactions",
+      },
+    ],
+
+    productse: [
+      {
+        key: "can_edit_price" as keyof PermissionsState,
+        label: "Create Price",
+        description: "Can edit price of products",
+      },
+      {
+        key: "can_adjust_stock" as keyof PermissionsState,
+        label: "Adjust Stock",
+        description: "Can adjust stock quantity",
+      },
+      {
+        key: "can_transfer_stock" as keyof PermissionsState,
+        label: "Transfer stock",
+        description: "Can transfer stock",
+      },
+      {
+        key: "can_view_cost" as keyof PermissionsState,
+        label: "View Cost",
+        description: "Can view cost price",
       },
     ],
   };
@@ -1055,6 +1094,13 @@ const PermissionsForm = () => {
                   <PermissionSection
                     title="Point of Sale (POS)"
                     list={permissionGroups.pos}
+                    permissions={permissions}
+                    handleToggle={handleToggle}
+                    handleCategoryToggle={handleCategoryToggle}
+                  />
+                  <PermissionSection
+                    title="Manage Products"
+                    list={permissionGroups.productse}
                     permissions={permissions}
                     handleToggle={handleToggle}
                     handleCategoryToggle={handleCategoryToggle}

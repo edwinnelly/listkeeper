@@ -8,7 +8,7 @@ interface ShortTextProps {
 
 const ShortTextWithTooltip: React.FC<ShortTextProps> = ({ text, max = 20 }) => {
   const displayText = text.length > max ? text.slice(0, max) + "…" : text;
-  return <div title={text}>{displayText}</div>;
+  return <span title={text}>{displayText}</span>;
 };
 
 export default ShortTextWithTooltip;

@@ -6,41 +6,172 @@ const getCache: Record<string, any> = {};
 const cacheExpiry: Record<string, number> = {};
 const CACHE_TTL = 1000 * 60 * 1; // 1 minute TTL
 
-// Helper: ensure CSRF cookie is set
+// CSRF state tracking
+let csrfFetchInProgress: Promise<void> | null = null;
+let csrfFetchTimeoutId: NodeJS.Timeout | null = null;
+let csrfLastFetchAttempt = 0;
+const CSRF_FETCH_TIMEOUT = 5000; // 5 seconds timeout for CSRF fetch
+const CSRF_RETRY_DELAY = 1000; // 1 second delay between retries
+const MAX_CSRF_RETRIES = 3;
+
+// Create separate axios instances
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
+  timeout: 30000, // 30 second timeout for all requests
 });
 
-// Function to ensure CSRF token is set
-export const ensureCsrfToken = async (): Promise<void> => {
-  try {
-    // Check if token already exists in cookies
-    const existingToken = Cookies.get("XSRF-TOKEN");
-    
-    // Only fetch new token if it doesn't exist
-    if (!existingToken) {
-      await api.get("/sanctum/csrf-cookie");
-    }
-    
-    // Get the token (either existing or newly fetched)
-    const token = Cookies.get("XSRF-TOKEN");
-    if (token) {
-      api.defaults.headers.common["X-XSRF-TOKEN"] = token;
-    }
-  } catch (err) {
-    console.error("Failed to ensure CSRF token:", err);
-    throw err;
+// Create a separate instance for Sanctum (without /api prefix)
+const sanctumApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || "http://localhost:8000",
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+  timeout: 10000, // 10 second timeout for CSRF endpoint
+});
+
+// Function to ensure CSRF token is set with timeout racing and retry logic
+export const ensureCsrfToken = async (retryCount = 0): Promise<void> => {
+  // Check if a fetch is already in progress
+  if (csrfFetchInProgress) {
+    return csrfFetchInProgress;
   }
+
+  // Check if token already exists in cookies
+  const existingToken = Cookies.get("XSRF-TOKEN");
+  if (existingToken) {
+    // Set token on both instances
+    api.defaults.headers.common["X-XSRF-TOKEN"] = existingToken;
+    sanctumApi.defaults.headers.common["X-XSRF-TOKEN"] = existingToken;
+    return;
+  }
+
+  // Clear any existing timeout
+  if (csrfFetchTimeoutId) {
+    clearTimeout(csrfFetchTimeoutId);
+    csrfFetchTimeoutId = null;
+  }
+
+  // Create a new fetch promise with timeout racing
+  csrfFetchInProgress = new Promise(async (resolve, reject) => {
+    try {
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        csrfFetchTimeoutId = setTimeout(() => {
+          reject(new Error(`CSRF token fetch timeout after ${CSRF_FETCH_TIMEOUT}ms`));
+        }, CSRF_FETCH_TIMEOUT);
+      });
+
+      // Race between fetch and timeout
+      await Promise.race([
+        sanctumApi.get("/sanctum/csrf-cookie"),
+        timeoutPromise
+      ]);
+
+      // Clear timeout if fetch succeeded
+      if (csrfFetchTimeoutId) {
+        clearTimeout(csrfFetchTimeoutId);
+        csrfFetchTimeoutId = null;
+      }
+
+      // Small delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Get the token
+      const token = Cookies.get("XSRF-TOKEN");
+      if (token) {
+        // Set token on both instances
+        api.defaults.headers.common["X-XSRF-TOKEN"] = token;
+        sanctumApi.defaults.headers.common["X-XSRF-TOKEN"] = token;
+        csrfLastFetchAttempt = Date.now();
+        resolve();
+      } else {
+        throw new Error("CSRF token not found in cookies after fetch");
+      }
+    } catch (err) {
+      // Clear timeout on error
+      if (csrfFetchTimeoutId) {
+        clearTimeout(csrfFetchTimeoutId);
+        csrfFetchTimeoutId = null;
+      }
+
+      // Retry logic for network errors or timeouts
+      if (retryCount < MAX_CSRF_RETRIES) {
+        console.log(`CSRF fetch attempt ${retryCount + 1} failed, retrying...`, {
+          error: err.message,
+          retryCount: retryCount + 1
+        });
+        
+        // Exponential backoff
+        const delay = CSRF_RETRY_DELAY * Math.pow(2, retryCount);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Clear the in-progress flag before retry
+        csrfFetchInProgress = null;
+        
+        // Retry
+        return ensureCsrfToken(retryCount + 1);
+      }
+
+      console.error("Failed to ensure CSRF token after retries:", {
+        error: err,
+        message: err.response?.data || err.message,
+        status: err.response?.status
+      });
+      throw err;
+    } finally {
+      // Clear the in-progress flag
+      csrfFetchInProgress = null;
+    }
+  });
+
+  return csrfFetchInProgress;
 };
 
-export const withCsrf = async (requestFn: () => Promise<any>) => {
+// Function to clear CSRF state (useful for logout)
+export const clearCsrfState = () => {
+  Cookies.remove("XSRF-TOKEN");
+  delete api.defaults.headers.common["X-XSRF-TOKEN"];
+  delete sanctumApi.defaults.headers.common["X-XSRF-TOKEN"];
+  
+  if (csrfFetchTimeoutId) {
+    clearTimeout(csrfFetchTimeoutId);
+    csrfFetchTimeoutId = null;
+  }
+  csrfFetchInProgress = null;
+};
+
+export const withCsrf = async (requestFn: () => Promise<any>, retryCount = 0) => {
   try {
     // Ensure CSRF token is available before making the request
     await ensureCsrfToken();
     return await requestFn();
   } catch (err) {
+    // Check for 419 CSRF mismatch or network errors
+    const isCsrfMismatch = err.response?.status === 419;
+    const isNetworkError = !err.response && err.code !== "ECONNABORTED";
+    const isTimeoutError = err.code === "ECONNABORTED";
+    
+    // Retry on 419 (CSRF mismatch), network errors, or timeouts
+    if ((isCsrfMismatch || isNetworkError || isTimeoutError) && retryCount < MAX_CSRF_RETRIES) {
+      console.log(`Request failed (${err.response?.status || 'network'}), retrying...`, {
+        retryCount: retryCount + 1,
+        error: err.message
+      });
+
+      // Clear CSRF state on 419 or network errors to force a new token fetch
+      if (isCsrfMismatch || isNetworkError) {
+        clearCsrfState();
+      }
+
+      // Exponential backoff
+      const delay = CSRF_RETRY_DELAY * Math.pow(2, retryCount);
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      // Retry the request
+      return withCsrf(requestFn, retryCount + 1);
+    }
+
     console.error("API request failed:", err);
     throw err;
   }
@@ -54,11 +185,12 @@ const invalidateCache = (urls: string[] = []) => {
   });
 };
 
-
-// Response interceptor for better error handling
+// Response interceptor for better error handling (only for main api instance)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     // Network / CORS / timeout errors (no response)
     if (!error.response) {
       error.userMessage =
@@ -69,6 +201,24 @@ api.interceptors.response.use(
     }
 
     const { status, data } = error.response;
+
+    // Handle 419 CSRF mismatch - but let withCsrf handle retries
+    if (status === 419) {
+      error.userMessage = "Session expired. Please try again.";
+      // Clear CSRF token to force refresh on next request
+      clearCsrfState();
+      return Promise.reject(error);
+    }
+
+    // Handle 401 Unauthorized - token expired
+    if (status === 401) {
+      clearCsrfState();
+      
+      // Optionally redirect to login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth?expired=true';
+      }
+    }
 
     switch (status) {
       case 400:
@@ -136,8 +286,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-
 
 // GET request with caching
 export const apiGet = async (url: string, config = {}, useCache = true) =>

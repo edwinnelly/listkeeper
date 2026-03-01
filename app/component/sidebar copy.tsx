@@ -32,7 +32,6 @@ import {
 import Cookies from "js-cookie";
 import api from "@/lib/axios";
 import { withAuth } from "@/hoc/withAuth";
-import { Cart16Filled } from "@fluentui/react-icons";
 
 // -------------------- Types --------------------
 interface Business {
@@ -250,7 +249,6 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
           <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
           <NavItem href="/business" label="Business List" icon={Building2} />
           <NavItem href="/locations" label="Locations" icon={Clipboard} />
-          <NavItem href="/pos" label="POS" icon={Cart16Filled} />
         </NavSection>
 
         <NavSection title="Sales" sectionKey="sales">
@@ -264,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
           <NavItem href="/productsecat" label="Products Category" icon={BadgeCheck} />
           <NavItem href="/sales" label="Internal Stock Transfer" icon={ShoppingCart} />
           <NavItem href="/invoices" label="Manage Product Ai" icon={FileText} />
-          <NavItem href="/addproductlocations" label="Upload Branch Products" icon={Users} />
+          <NavItem href="/customers" label="Branch Products" icon={Users} />
           <NavItem href="/product-units" label="Products Units" icon={Users} />
         </NavSection>
 

@@ -97,16 +97,6 @@ interface Statistics {
   pendingLocations: number;
 }
 
-interface FormErrors {
-  location_name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  phone?: string;
-  country?: string;
-  postal_code?: string;
-}
-
 const useDebounce = <T,>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -939,7 +929,6 @@ const LocationForm: React.FC<{
   labelClass: string;
   countries: string[];
   staffs?: Staff[];
-  errors?: FormErrors;
 }> = ({
   form,
   handleInputChange,
@@ -947,7 +936,6 @@ const LocationForm: React.FC<{
   labelClass,
   countries,
   staffs = [],
-  errors = {},
 }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div className="sm:col-span-2">
@@ -958,13 +946,11 @@ const LocationForm: React.FC<{
         type="text"
         value={form.location_name}
         onChange={(e) => handleInputChange("location_name", e.target.value)}
-        className={`${inputClass} ${errors.location_name ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
+        required
+        className={inputClass}
         placeholder="Enter location name"
         maxLength={70}
       />
-      {errors.location_name && (
-        <p className="text-xs text-rose-500 mt-1">{errors.location_name}</p>
-      )}
       <div className="text-xs text-gray-400 mt-1 text-right">
         {form.location_name.length}/70
       </div>
@@ -977,13 +963,11 @@ const LocationForm: React.FC<{
         type="text"
         value={form.address}
         onChange={(e) => handleInputChange("address", e.target.value)}
-        className={`${inputClass} ${errors.address ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
+        required
+        className={inputClass}
         placeholder="Enter full address"
         maxLength={100}
       />
-      {errors.address && (
-        <p className="text-xs text-rose-500 mt-1">{errors.address}</p>
-      )}
       <div className="text-xs text-gray-400 mt-1 text-right">
         {form.address.length}/100
       </div>
@@ -996,13 +980,11 @@ const LocationForm: React.FC<{
         type="text"
         value={form.city}
         onChange={(e) => handleInputChange("city", e.target.value)}
-        className={`${inputClass} ${errors.city ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
+        required
+        className={inputClass}
         placeholder="Enter city"
         maxLength={50}
       />
-      {errors.city && (
-        <p className="text-xs text-rose-500 mt-1">{errors.city}</p>
-      )}
       <div className="text-xs text-gray-400 mt-1 text-right">
         {form.city.length}/50
       </div>
@@ -1015,13 +997,11 @@ const LocationForm: React.FC<{
         type="text"
         value={form.state}
         onChange={(e) => handleInputChange("state", e.target.value)}
-        className={`${inputClass} ${errors.state ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
+        required
+        className={inputClass}
         placeholder="Enter state/province"
         maxLength={50}
       />
-      {errors.state && (
-        <p className="text-xs text-rose-500 mt-1">{errors.state}</p>
-      )}
       <div className="text-xs text-gray-400 mt-1 text-right">
         {form.state.length}/50
       </div>
@@ -1048,7 +1028,8 @@ const LocationForm: React.FC<{
       <select
         value={form.country}
         onChange={(e) => handleInputChange("country", e.target.value)}
-        className={`${inputClass} ${errors.country ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
+        required
+        className={inputClass}
       >
         {countries.map((c: string) => (
           <option key={c} value={c}>
@@ -1056,9 +1037,6 @@ const LocationForm: React.FC<{
           </option>
         ))}
       </select>
-      {errors.country && (
-        <p className="text-xs text-rose-500 mt-1">{errors.country}</p>
-      )}
     </div>
     <div>
       <label className={labelClass}>Postal Code</label>
@@ -1066,13 +1044,10 @@ const LocationForm: React.FC<{
         type="text"
         value={form.postal_code}
         onChange={(e) => handleInputChange("postal_code", e.target.value)}
-        className={`${inputClass} ${errors.postal_code ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
+        className={inputClass}
         placeholder="Enter postal code"
         maxLength={20}
       />
-      {errors.postal_code && (
-        <p className="text-xs text-rose-500 mt-1">{errors.postal_code}</p>
-      )}
       <div className="text-xs text-gray-400 mt-1 text-right">
         {form.postal_code.length}/20
       </div>
@@ -1085,13 +1060,11 @@ const LocationForm: React.FC<{
         type="tel"
         value={form.phone}
         onChange={(e) => handleInputChange("phone", e.target.value)}
-        className={`${inputClass} ${errors.phone ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
+        required
+        className={inputClass}
         placeholder="+234 800 000 0000"
         maxLength={20}
       />
-      {errors.phone && (
-        <p className="text-xs text-rose-500 mt-1">{errors.phone}</p>
-      )}
       <div className="text-xs text-gray-400 mt-1 text-right">
         {form.phone.length}/20
       </div>
@@ -1160,7 +1133,6 @@ const ManageLocations = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   const [form, setForm] = useState<LocationFormData>({
     location_name: "",
@@ -1206,97 +1178,29 @@ const ManageLocations = () => {
     toast.success("Data refreshed");
   };
 
-  const validateForm = (fd: LocationFormData): { isValid: boolean; errors: FormErrors } => {
-    const errors: FormErrors = {};
-    
-    // Location name validation
-    if (!fd.location_name?.trim()) {
-      errors.location_name = "Location name is required";
-    } else if (fd.location_name.length > 100) {
-      errors.location_name = "Location name must not exceed 100 characters";
-    } else if (fd.location_name.length < 2) {
-      errors.location_name = "Location name must be at least 2 characters";
-    }
-
-    // Address validation
-    if (!fd.address?.trim()) {
-      errors.address = "Address is required";
-    } else if (fd.address.length > 200) {
-      errors.address = "Address must not exceed 200 characters";
-    } else if (fd.address.length < 5) {
-      errors.address = "Address must be at least 5 characters";
-    }
-
-    // City validation
-    if (!fd.city?.trim()) {
-      errors.city = "City is required";
-    } else if (fd.city.length > 100) {
-      errors.city = "City must not exceed 100 characters";
-    } else if (fd.city.length < 2) {
-      errors.city = "City must be at least 2 characters";
-    }
-
-    // State validation
-    if (!fd.state?.trim()) {
-      errors.state = "State is required";
-    } else if (fd.state.length > 100) {
-      errors.state = "State must not exceed 100 characters";
-    } else if (fd.state.length < 2) {
-      errors.state = "State must be at least 2 characters";
-    }
-
-    // Phone validation
-    if (!fd.phone?.trim()) {
-      errors.phone = "Phone number is required";
-    } else {
-      // Enhanced phone validation
-      const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,5}[-\s\.]?[0-9]{1,5}$/;
-      if (!phoneRegex.test(fd.phone.replace(/\s/g, ''))) {
-        errors.phone = "Please enter a valid phone number";
-      }
-      if (fd.phone.replace(/[^0-9]/g, '').length < 8) {
-        errors.phone = "Phone number must have at least 8 digits";
-      }
-      if (fd.phone.replace(/[^0-9]/g, '').length > 15) {
-        errors.phone = "Phone number must not exceed 15 digits";
-      }
-    }
-
-    // Country validation
-    if (!fd.country?.trim()) {
-      errors.country = "Country is required";
-    } else if (!countries.includes(fd.country)) {
-      errors.country = "Please select a valid country from the list";
-    }
-
-    // Postal code validation (optional but if provided, validate format)
-    if (fd.postal_code?.trim()) {
-      const postalCodeRegex = /^[A-Z0-9\s\-]{3,10}$/i;
-      if (!postalCodeRegex.test(fd.postal_code.trim())) {
-        errors.postal_code = "Please enter a valid postal code format";
-      }
-    }
-
-    return { isValid: Object.keys(errors).length === 0, errors };
+  const validateForm = (fd: LocationFormData) => {
+    const errors: string[] = [];
+    if (!fd.location_name?.trim()) errors.push("Location name is required");
+    else if (fd.location_name.length > 100)
+      errors.push("Location name must not exceed 100 characters");
+    if (!fd.address?.trim()) errors.push("Address is required");
+    if (!fd.city?.trim()) errors.push("City is required");
+    if (!fd.state?.trim()) errors.push("State is required");
+    if (!fd.phone?.trim()) errors.push("Phone number is required");
+    else if (!/^\+?[\d\s\-()]+$/.test(fd.phone))
+      errors.push("Phone number format is invalid.");
+    if (!fd.country?.trim()) errors.push("Country is required");
+    return { passes: errors.length === 0, errors };
   };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    
-    // Clear previous errors
-    setFormErrors({});
-    
-    // Validate form
-    const validation = validateForm(form);
-    if (!validation.isValid) {
-      setFormErrors(validation.errors);
-      // Show first error as toast
-      const firstError = Object.values(validation.errors)[0];
-      if (firstError) toast.error(firstError);
+    const v = validateForm(form);
+    if (!v.passes) {
+      v.errors.forEach((err) => toast.error(err));
       return;
     }
-    
     setIsSubmitting(true);
     try {
       await apiPost(
@@ -1327,20 +1231,11 @@ const ManageLocations = () => {
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !selectedLocation) return;
-    
-    // Clear previous errors
-    setFormErrors({});
-    
-    // Validate form
-    const validation = validateForm(form);
-    if (!validation.isValid) {
-      setFormErrors(validation.errors);
-      // Show first error as toast
-      const firstError = Object.values(validation.errors)[0];
-      if (firstError) toast.error(firstError);
+    const v = validateForm(form);
+    if (!v.passes) {
+      v.errors.forEach((err) => toast.error(err));
       return;
     }
-    
     setIsSubmitting(true);
     try {
       await apiPut(
@@ -1389,7 +1284,7 @@ const ManageLocations = () => {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = () =>
     setForm({
       location_name: "",
       address: "",
@@ -1400,17 +1295,8 @@ const ManageLocations = () => {
       postal_code: "",
       staffs: "",
     });
-    setFormErrors({});
-  };
-  
-  const handleInputChange = (field: keyof LocationFormData, value: string) => {
+  const handleInputChange = (field: keyof LocationFormData, value: string) =>
     setForm((p) => ({ ...p, [field]: value }));
-    // Clear error for this field when user starts typing
-    if (formErrors[field]) {
-      setFormErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-  
   const handleFilterChange = <K extends keyof FilterState>(
     key: K,
     value: FilterState[K],
@@ -1435,10 +1321,8 @@ const ManageLocations = () => {
       postal_code: loc.postal_code || "",
       staffs: loc.staffs || "",
     });
-    setFormErrors({});
     setEditModalOpen(true);
   };
-  
   const openDeleteModal = (loc: Location) => {
     setSelectedLocation(loc);
     setDeleteModalOpen(true);
@@ -1906,7 +1790,6 @@ const ManageLocations = () => {
               labelClass={labelClass}
               countries={countries}
               staffs={staffs}
-              errors={formErrors}
             />
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-5 pt-5 border-t border-gray-200">
               <button
@@ -1976,7 +1859,6 @@ const ManageLocations = () => {
               labelClass={labelClass}
               countries={countries}
               staffs={staffs}
-              errors={formErrors}
             />
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-5 pt-5 border-t border-gray-200">
               <button

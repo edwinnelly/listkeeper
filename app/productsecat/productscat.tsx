@@ -547,7 +547,7 @@ const ManageProductCategories = () => {
   return (
     <div className="min-h-screen bg-gray-50/30">
       {/* Header Section */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-8xl mx-auto px-6 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="space-y-2">
@@ -560,7 +560,7 @@ const ManageProductCategories = () => {
                   Back to Dashboard
                 </Link>
                 <div className="h-6 w-px bg-gray-300"></div>
-                <h1 className="text-2xl font-normal text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900">
                   Product Categories
                 </h1>
               </div>

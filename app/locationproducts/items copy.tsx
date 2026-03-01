@@ -1380,7 +1380,8 @@ const ManageProducts = ({ user }) => {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const res = await apiGet("/products", {}, false);
+      const res = await apiGet("/product-locations", {}, false);
+      console.log(res.data);
       const productsArray =
         res.data?.data?.products ??
         res.data?.data ??

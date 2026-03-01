@@ -8,6 +8,11 @@
     @apply bg-white text-gray-900 antialiased;
   }
 
+
+   html {
+    font-size: 110%; /* increases all rem-based text by 20% */
+  }
+
   h1 {
     @apply text-2xl font-semibold;
   }

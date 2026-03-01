@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
+import Cookies from "js-cookie";
 import { toast } from "react-hot-toast";
 import { apiGet, apiPost, apiDelete } from "@/lib/axios";
 
@@ -95,22 +97,6 @@ interface UserFormData {
   about: string;
 }
 
-interface FormErrors {
-  name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  role?: string;
-  password?: string;
-  password_confirmation?: string;
-  location_id?: string;
-  state?: string;
-  city?: string;
-  country?: string;
-  about?: string;
-  photo?: string;
-}
-
 interface Location {
   id: number;
   location_name: string;
@@ -154,15 +140,6 @@ const LABEL_CLASS = "block text-sm font-semibold text-gray-700 mb-2";
 
 const validateEmail = (email: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
-
-const validatePhone = (phone: string): boolean => {
-  // Allow empty phone (optional field)
-  if (!phone.trim()) return true;
-  // Enhanced phone validation - allows international formats
-  const phoneRegex =
-    /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,5}[-\s\.]?[0-9]{1,5}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ""));
 };
 
 const validateImageFile = (file: File): string | null => {
@@ -223,11 +200,11 @@ export const useUsers = () => {
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
       // Use apiGet wrapper - it handles CSRF and caching automatically
       const res = await apiGet("/users", {}, true); // true enables caching
-
+      
       // Normalize API response to always be an array (matching your working pattern)
       const usersArray =
         res?.data?.data?.users ??
@@ -237,15 +214,12 @@ export const useUsers = () => {
         [];
 
       const normalizedUsers = Array.isArray(usersArray) ? usersArray : [];
-
+      
       setUsers(normalizedUsers);
     } catch (err: any) {
       // Use userMessage from interceptor if available
-      const errorMessage =
-        err.userMessage ||
-        err.response?.data?.message ||
-        "Failed to fetch users";
-
+      const errorMessage = err.userMessage || err.response?.data?.message || "Failed to fetch users";
+      
       console.error("Failed to fetch users:", err);
       setError(errorMessage);
       toast.error(errorMessage);
@@ -257,6 +231,7 @@ export const useUsers = () => {
 
   return { users, isLoading, error, fetchUsers, setUsers };
 };
+
 
 export const useLocations = () => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -513,9 +488,6 @@ const ManageUsers = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [openRow, setOpenRow] = useState<number | null>(null);
 
-  // Form errors state
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-
   // Modal states
   const [modalState, setModalState] = useState<{
     type: "add" | "edit" | "delete" | null;
@@ -603,128 +575,22 @@ const ManageUsers = () => {
     [users],
   );
 
-  // Validation function
-  const validateForm = useCallback(
-    (
-      formData: UserFormData,
-      isEdit: boolean = false,
-    ): { isValid: boolean; errors: FormErrors } => {
-      const errors: FormErrors = {};
-
-      // Name validation
-      if (!formData.name.trim()) {
-        errors.name = "Name is required";
-      } else if (formData.name.length < 2) {
-        errors.name = "Name must be at least 2 characters";
-      } else if (formData.name.length > 100) {
-        errors.name = "Name must not exceed 100 characters";
-      }
-
-      // Email validation
-      if (!formData.email.trim()) {
-        errors.email = "Email is required";
-      } else if (!validateEmail(formData.email)) {
-        errors.email = "Please enter a valid email address";
-      }
-
-      // Phone validation (optional)
-      if (formData.phone && !validatePhone(formData.phone)) {
-        errors.phone = "Please enter a valid phone number";
-      }
-
-      // Password validation (only for new users or when password is provided in edit)
-      if (!isEdit) {
-        if (!formData.password) {
-          errors.password = "Password is required";
-        } else if (formData.password.length < 8) {
-          errors.password = "Password must be at least 8 characters";
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-          errors.password =
-            "Password must contain at least one uppercase letter, one lowercase letter, and one number";
-        }
-
-        if (formData.password !== formData.password_confirmation) {
-          errors.password_confirmation = "Passwords do not match";
-        }
-      } else {
-        // In edit mode, only validate password if it's provided
-        if (formData.password) {
-          if (formData.password.length < 8) {
-            errors.password = "Password must be at least 8 characters";
-          } else if (
-            !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)
-          ) {
-            errors.password =
-              "Password must contain at least one uppercase letter, one lowercase letter, and one number";
-          }
-
-          if (formData.password !== formData.password_confirmation) {
-            errors.password_confirmation = "Passwords do not match";
-          }
-        }
-      }
-
-      // Location validation (if provided)
-      if (formData.location_id && isNaN(Number(formData.location_id))) {
-        errors.location_id = "Please select a valid location";
-      }
-
-      // Address fields validation (optional but if provided, check length)
-      if (formData.address && formData.address.length > 200) {
-        errors.address = "Address must not exceed 200 characters";
-      }
-
-      if (formData.state && formData.state.length > 100) {
-        errors.state = "State must not exceed 100 characters";
-      }
-
-      if (formData.city && formData.city.length > 100) {
-        errors.city = "City must not exceed 100 characters";
-      }
-
-      if (formData.country && formData.country.length > 100) {
-        errors.country = "Country must not exceed 100 characters";
-      }
-
-      if (formData.about && formData.about.length > 500) {
-        errors.about = "About section must not exceed 500 characters";
-      }
-
-      return { isValid: Object.keys(errors).length === 0, errors };
-    },
-    [],
-  );
-
   // Handlers
   const handleFileChange = useCallback(
     (file: File | null) => {
-      // Clear previous photo error
-      if (formErrors.photo) {
-        setFormErrors((prev) => ({ ...prev, photo: undefined }));
-      }
-
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
 
       setSelectedFile(file);
       if (file) {
-        // Validate file immediately
-        const error = validateImageFile(file);
-        if (error) {
-          setFormErrors((prev) => ({ ...prev, photo: error }));
-          toast.error(error);
-          setSelectedFile(null);
-          setPreviewUrl(null);
-          return;
-        }
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
       } else {
         setPreviewUrl(null);
       }
     },
-    [previewUrl, formErrors.photo],
+    [previewUrl],
   );
 
   const resetForm = useCallback(() => {
@@ -744,18 +610,37 @@ const ManageUsers = () => {
     });
     setSelectedFile(null);
     setPreviewUrl(null);
-    setFormErrors({});
   }, []);
 
   const handleInputChange = useCallback(
     (field: keyof UserFormData, value: string) => {
       setForm((prev) => ({ ...prev, [field]: value }));
-      // Clear error for this field when user starts typing
-      if (formErrors[field]) {
-        setFormErrors((prev) => ({ ...prev, [field]: undefined }));
-      }
     },
-    [formErrors],
+    [],
+  );
+
+  const validateForm = useCallback(
+    (formData: UserFormData, isEdit: boolean = false): string[] => {
+      const errors: string[] = [];
+      if (!formData.name.trim()) errors.push("Name is required");
+      if (!formData.email.trim()) {
+        errors.push("Email is required");
+      } else if (!validateEmail(formData.email)) {
+        errors.push("Email format is invalid");
+      }
+      if (!isEdit && !formData.password) errors.push("Password is required");
+      if (!isEdit && formData.password !== formData.password_confirmation) {
+        errors.push("Passwords do not match");
+      }
+      if (formData.password && formData.password.length < 8) {
+        errors.push("Password must be at least 8 characters");
+      }
+      if (formData.location_id && isNaN(Number(formData.location_id))) {
+        errors.push("Location must be valid");
+      }
+      return errors;
+    },
+    [],
   );
 
   const handleAddUser = useCallback(
@@ -764,27 +649,10 @@ const ManageUsers = () => {
 
       if (isSubmitting) return;
 
-      // Clear previous errors
-      setFormErrors({});
-
-      // Validate form
-      const validation = validateForm(form);
-      if (!validation.isValid) {
-        setFormErrors(validation.errors);
-        // Show first error as toast
-        const firstError = Object.values(validation.errors)[0];
-        if (firstError) toast.error(firstError);
+      const errors = validateForm(form);
+      if (errors.length > 0) {
+        errors.forEach((error) => toast.error(error));
         return;
-      }
-
-      // Validate photo if selected
-      if (selectedFile) {
-        const photoError = validateImageFile(selectedFile);
-        if (photoError) {
-          setFormErrors((prev) => ({ ...prev, photo: photoError }));
-          toast.error(photoError);
-          return;
-        }
       }
 
       setIsSubmitting(true);
@@ -816,6 +684,11 @@ const ManageUsers = () => {
         );
 
         if (selectedFile) {
+          const error = validateImageFile(selectedFile);
+          if (error) {
+            toast.error(error);
+            return;
+          }
           formData.append("photo", selectedFile);
         }
 
@@ -839,23 +712,8 @@ const ManageUsers = () => {
           toast.error(
             "User limit reached for your current subscription plan. Please upgrade your plan to add more users.",
           );
-        } else if (err.response?.status === 422) {
-          // Handle validation errors from API
-          const apiErrors = err.response?.data?.errors;
-          if (apiErrors) {
-            const newErrors: FormErrors = {};
-            Object.keys(apiErrors).forEach((key) => {
-              const errorMessage = Array.isArray(apiErrors[key])
-                ? apiErrors[key][0]
-                : apiErrors[key];
-              newErrors[key as keyof FormErrors] = errorMessage;
-              toast.error(`${key}: ${errorMessage}`);
-            });
-            setFormErrors(newErrors);
-          }
-        } else {
-          toast.error(err.response?.data?.message || "Failed to create user");
         }
+        // handleApiError(err);
       } finally {
         setIsSubmitting(false);
         setIsUploading(false);
@@ -870,27 +728,10 @@ const ManageUsers = () => {
 
       if (isSubmitting || !modalState.user) return;
 
-      // Clear previous errors
-      setFormErrors({});
-
-      // Validate form (pass true for isEdit)
-      const validation = validateForm(form, true);
-      if (!validation.isValid) {
-        setFormErrors(validation.errors);
-        // Show first error as toast
-        const firstError = Object.values(validation.errors)[0];
-        if (firstError) toast.error(firstError);
+      const errors = validateForm(form, true);
+      if (errors.length > 0) {
+        errors.forEach((error) => toast.error(error));
         return;
-      }
-
-      // Validate photo if selected
-      if (selectedFile) {
-        const photoError = validateImageFile(selectedFile);
-        if (photoError) {
-          setFormErrors((prev) => ({ ...prev, photo: photoError }));
-          toast.error(photoError);
-          return;
-        }
       }
 
       setIsSubmitting(true);
@@ -913,13 +754,17 @@ const ManageUsers = () => {
           form.location_id ? String(form.location_id) : "",
         );
 
-        // Only include password if it's provided
         if (form.password) {
           formData.append("password", form.password);
           formData.append("password_confirmation", form.password_confirmation);
         }
 
         if (selectedFile) {
+          const error = validateImageFile(selectedFile);
+          if (error) {
+            toast.error(error);
+            return;
+          }
           formData.append("photo", selectedFile);
         }
 
@@ -943,23 +788,7 @@ const ManageUsers = () => {
           await fetchUsers();
         }
       } catch (err: any) {
-        if (err.response?.status === 422) {
-          // Handle validation errors from API
-          const apiErrors = err.response?.data?.errors;
-          if (apiErrors) {
-            const newErrors: FormErrors = {};
-            Object.keys(apiErrors).forEach((key) => {
-              const errorMessage = Array.isArray(apiErrors[key])
-                ? apiErrors[key][0]
-                : apiErrors[key];
-              newErrors[key as keyof FormErrors] = errorMessage;
-              toast.error(`${key}: ${errorMessage}`);
-            });
-            setFormErrors(newErrors);
-          }
-        } else {
-          toast.error(err.response?.data?.message || "Failed to update user");
-        }
+        handleApiError(err);
       } finally {
         setIsSubmitting(false);
         setIsUploading(false);
@@ -998,6 +827,41 @@ const ManageUsers = () => {
     }
   }, [modalState.user, isSubmitting, fetchUsers]);
 
+  const handleApiError = (err: any) => {
+    if (err.code === "ECONNABORTED") {
+      toast.error("Request timeout. Please try again with a smaller image.");
+    } else if (err.response?.status === 413) {
+      toast.error("Image too large. Please upload an image smaller than 2MB.");
+    } else if (err.response?.status === 422) {
+      const errors = err.response?.data?.errors;
+      if (errors) {
+        Object.keys(errors).forEach((key) => {
+          const errorMessage = Array.isArray(errors[key])
+            ? errors[key][0]
+            : errors[key];
+          toast.error(`${key}: ${errorMessage}`);
+        });
+      } else {
+        toast.error(
+          err.response?.data?.message ||
+            "Validation failed. Please check the form.",
+        );
+      }
+    } else if (err.response?.status === 404) {
+      toast.error("API endpoint not found. Please check the URL.");
+    } else if (err.response?.status === 500) {
+      toast.error(
+        `Server error: ${err.response?.data?.message || "Internal server error"}`,
+      );
+    } else if (err.code === "ERR_NETWORK") {
+      toast.error("Network error. Please try again.");
+    } else {
+      toast.error(
+        err.response?.data?.message || "Operation failed. Please try again.",
+      );
+    }
+  };
+
   const handleEditClick = useCallback((user: User) => {
     setForm({
       name: user.name || "",
@@ -1013,7 +877,6 @@ const ManageUsers = () => {
       about: user.about || "",
       address: user.address || "",
     });
-    setFormErrors({});
     setModalState({ type: "edit", user });
   }, []);
 
@@ -1037,7 +900,7 @@ const ManageUsers = () => {
   return (
     <div className="min-h-screen bg-gray-50/30">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-8xl mx-auto px-6 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="space-y-2">
@@ -1273,7 +1136,6 @@ const ManageUsers = () => {
               isEdit={modalState.type === "edit"}
               previewUrl={previewUrl}
               isUploading={isUploading}
-              errors={formErrors}
             />
             <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
               <button
@@ -1421,7 +1283,6 @@ const UserForm = React.memo(
     isEdit = false,
     previewUrl,
     isUploading = false,
-    errors = {},
   }: any) => (
     <div className="space-y-6">
       {/* Photo Upload Section */}
@@ -1429,9 +1290,7 @@ const UserForm = React.memo(
         <label className={labelClass}>Profile Photo</label>
 
         <div className="relative group">
-          <div
-            className={`w-24 h-24 rounded-2xl border-2 border-dashed ${errors.photo ? "border-red-300 bg-red-50" : "border-gray-300"} overflow-hidden bg-gray-50 flex items-center justify-center group-hover:border-gray-400 transition-colors`}
-          >
+          <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center group-hover:border-gray-400 transition-colors">
             {previewUrl ? (
               <img
                 src={previewUrl}
@@ -1462,8 +1321,6 @@ const UserForm = React.memo(
             Uploading photo...
           </div>
         )}
-
-        {errors.photo && <p className="text-sm text-red-500">{errors.photo}</p>}
 
         <div className="text-center">
           <p className="text-sm text-gray-500">
@@ -1496,12 +1353,10 @@ const UserForm = React.memo(
             type="text"
             value={form.name}
             onChange={(e) => handleInputChange("name", e.target.value)}
-            className={`${inputClass} ${errors.name ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            required
+            className={inputClass}
             placeholder="Enter full name"
           />
-          {errors.name && (
-            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
-          )}
         </div>
 
         <div className="md:col-span-2">
@@ -1512,12 +1367,10 @@ const UserForm = React.memo(
             type="email"
             value={form.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
-            className={`${inputClass} ${errors.email ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            required
+            className={inputClass}
             placeholder="Enter email address"
           />
-          {errors.email && (
-            <p className="text-xs text-red-500 mt-1">{errors.email}</p>
-          )}
         </div>
 
         <div>
@@ -1526,12 +1379,9 @@ const UserForm = React.memo(
             type="tel"
             value={form.phone}
             onChange={(e) => handleInputChange("phone", e.target.value)}
-            className={`${inputClass} ${errors.phone ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
             placeholder="+234 800 000 0000"
           />
-          {errors.phone && (
-            <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
-          )}
         </div>
 
         <div>
@@ -1554,7 +1404,7 @@ const UserForm = React.memo(
           <select
             value={form.location_id || ""}
             onChange={(e) => handleInputChange("location_id", e.target.value)}
-            className={`${inputClass} ${errors.location_id ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
           >
             <option value="">No location assigned</option>
             {locations.map((location: Location) => (
@@ -1563,9 +1413,6 @@ const UserForm = React.memo(
               </option>
             ))}
           </select>
-          {errors.location_id && (
-            <p className="text-xs text-red-500 mt-1">{errors.location_id}</p>
-          )}
         </div>
 
         <div>
@@ -1574,12 +1421,9 @@ const UserForm = React.memo(
             type="text"
             value={form.address}
             onChange={(e) => handleInputChange("address", e.target.value)}
-            className={`${inputClass} ${errors.address ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
             placeholder="Enter your address"
           />
-          {errors.address && (
-            <p className="text-xs text-red-500 mt-1">{errors.address}</p>
-          )}
         </div>
 
         <div>
@@ -1588,12 +1432,9 @@ const UserForm = React.memo(
             type="text"
             value={form.state}
             onChange={(e) => handleInputChange("state", e.target.value)}
-            className={`${inputClass} ${errors.state ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
             placeholder="Enter state"
           />
-          {errors.state && (
-            <p className="text-xs text-red-500 mt-1">{errors.state}</p>
-          )}
         </div>
 
         <div>
@@ -1602,12 +1443,9 @@ const UserForm = React.memo(
             type="text"
             value={form.city}
             onChange={(e) => handleInputChange("city", e.target.value)}
-            className={`${inputClass} ${errors.city ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
             placeholder="Enter city"
           />
-          {errors.city && (
-            <p className="text-xs text-red-500 mt-1">{errors.city}</p>
-          )}
         </div>
 
         <div>
@@ -1616,12 +1454,9 @@ const UserForm = React.memo(
             type="text"
             value={form.country}
             onChange={(e) => handleInputChange("country", e.target.value)}
-            className={`${inputClass} ${errors.country ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
             placeholder="Enter country"
           />
-          {errors.country && (
-            <p className="text-xs text-red-500 mt-1">{errors.country}</p>
-          )}
         </div>
 
         <div className="md:col-span-2">
@@ -1629,13 +1464,10 @@ const UserForm = React.memo(
           <textarea
             value={form.about}
             onChange={(e) => handleInputChange("about", e.target.value)}
-            className={`${inputClass} resize-none ${errors.about ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={`${inputClass} resize-none`}
             placeholder="Tell us about this user..."
             rows={3}
           />
-          {errors.about && (
-            <p className="text-xs text-red-500 mt-1">{errors.about}</p>
-          )}
         </div>
 
         <div>
@@ -1647,15 +1479,12 @@ const UserForm = React.memo(
             type="password"
             value={form.password}
             onChange={(e) => handleInputChange("password", e.target.value)}
-            className={`${inputClass} ${errors.password ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
             placeholder={
               isEdit ? "Leave blank to keep current" : "Enter password"
             }
             minLength={8}
           />
-          {errors.password && (
-            <p className="text-xs text-red-500 mt-1">{errors.password}</p>
-          )}
         </div>
 
         <div>
@@ -1669,17 +1498,12 @@ const UserForm = React.memo(
             onChange={(e) =>
               handleInputChange("password_confirmation", e.target.value)
             }
-            className={`${inputClass} ${errors.password_confirmation ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
+            className={inputClass}
             placeholder={
               isEdit ? "Leave blank to keep current" : "Confirm password"
             }
             minLength={8}
           />
-          {errors.password_confirmation && (
-            <p className="text-xs text-red-500 mt-1">
-              {errors.password_confirmation}
-            </p>
-          )}
         </div>
       </div>
     </div>

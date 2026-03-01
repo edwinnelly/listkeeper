@@ -861,7 +861,7 @@ const EditProductPage = () => {
         {/* Form Card */}
         <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl">
           {/* Card Header */}
-          <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-5">
+          <div className="bg-gradient-to-r from-gray-900 to-blue-800 px-6 py-5">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/10 rounded-lg">
                 <Edit className="h-5 w-5 text-white" />
@@ -1554,7 +1554,7 @@ const EditProductPage = () => {
                   <button
                     type="submit"
                     disabled={!isFormValid || isSubmitting || !hasChanges}
-                    className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                   >
                     {isSubmitting ? (
                       <>
