@@ -19,6 +19,7 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { withAuth } from "@/hoc/withAuth";
 
@@ -63,6 +64,13 @@ interface FormErrors {
   state?: string;
   city?: string;
   postal_code?: string;
+  dob?: string;
+  gender?: string;
+  total_purchases?: string;
+  outstanding_balance?: string;
+  loyalty_points?: string;
+  address?: string;
+  customer_code?: string;
   [key: string]: string | undefined;
 }
 
@@ -139,7 +147,7 @@ const CSS_CLASSES = {
  */
 const validateEmail = (email: string): boolean => {
   if (!email) return true; // Empty is allowed
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 };
 
@@ -148,8 +156,14 @@ const validateEmail = (email: string): boolean => {
  */
 const validatePhone = (phone: string): boolean => {
   if (!phone) return true; // Empty is allowed
-  const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
-  return phoneRegex.test(phone);
+  // Enhanced phone validation - allows international formats
+  const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,5}[-\s\.]?[0-9]{1,5}$/;
+  const cleaned = phone.replace(/\s/g, '');
+  if (!phoneRegex.test(cleaned)) return false;
+  
+  // Check digit count (minimum 10, maximum 15)
+  const digitCount = cleaned.replace(/[^0-9]/g, '').length;
+  return digitCount >= 10 && digitCount <= 15;
 };
 
 /**
@@ -157,7 +171,78 @@ const validatePhone = (phone: string): boolean => {
  */
 const validatePostalCode = (postalCode: string): boolean => {
   if (!postalCode) return true; // Empty is allowed
-  return postalCode.length >= 3 && postalCode.length <= 10;
+  // Allow alphanumeric postal codes with spaces and hyphens
+  const postalCodeRegex = /^[A-Za-z0-9\s\-]{3,10}$/;
+  return postalCodeRegex.test(postalCode);
+};
+
+/**
+ * Validates name format
+ */
+const validateName = (name: string, fieldName: string): string | undefined => {
+  if (!name || name.trim().length === 0) {
+    return `${fieldName} is required`;
+  }
+  const trimmed = name.trim();
+  if (trimmed.length < 2) {
+    return `${fieldName} must be at least 2 characters`;
+  }
+  if (trimmed.length > 30) {
+    return `${fieldName} must be less than 30 characters`;
+  }
+  if (!/^[a-zA-Z\s\-']+$/.test(trimmed)) {
+    return `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`;
+  }
+  return undefined;
+};
+
+/**
+ * Validates date of birth
+ */
+const validateDateOfBirth = (dob: string): string | undefined => {
+  if (!dob) return undefined; // Optional
+  
+  const date = new Date(dob);
+  const today = new Date();
+  
+  if (isNaN(date.getTime())) {
+    return "Please enter a valid date";
+  }
+  
+  if (date > today) {
+    return "Date of birth cannot be in the future";
+  }
+  
+  const age = today.getFullYear() - date.getFullYear();
+  if (age > 120) {
+    return "Please enter a valid date of birth";
+  }
+  
+  return undefined;
+};
+
+/**
+ * Validates numeric fields
+ */
+const validateNumericField = (
+  value: string,
+  fieldName: string,
+  min: number = 0,
+  max: number = 999999999.99
+): string | undefined => {
+  if (!value) return undefined; // Optional
+  
+  const num = parseFloat(value);
+  if (isNaN(num)) {
+    return `${fieldName} must be a valid number`;
+  }
+  if (num < min) {
+    return `${fieldName} cannot be negative`;
+  }
+  if (num > max) {
+    return `${fieldName} exceeds maximum allowed value`;
+  }
+  return undefined;
 };
 
 /**
@@ -287,7 +372,14 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
       ...prev,
       [field]: true,
     }));
-    validateField(field, form[field as keyof CustomerFormData]);
+    
+    const error = validateField(field, form[field as keyof CustomerFormData]);
+    if (error) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: error,
+      }));
+    }
   };
 
   /**
@@ -296,47 +388,23 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
   const validateField = (field: string, value: any): string | undefined => {
     switch (field) {
       case "first_name":
-        if (
-          !value ||
-          (typeof value === "string" && value.trim().length === 0)
-        ) {
-          return "First name is required";
-        }
-        if (typeof value === "string" && value.trim().length < 2) {
-          return "First name must be at least 2 characters";
-        }
-        if (typeof value === "string" && value.trim().length > 30) {
-          return "First name must be less than 30 characters";
-        }
-        return undefined;
+        return validateName(value, "First name");
 
       case "last_name":
-        if (
-          !value ||
-          (typeof value === "string" && value.trim().length === 0)
-        ) {
-          return "Last name is required";
-        }
-        if (typeof value === "string" && value.trim().length < 2) {
-          return "Last name must be at least 2 characters";
-        }
-        if (typeof value === "string" && value.trim().length > 30) {
-          return "Last name must be less than 30 characters";
-        }
-        return undefined;
+        return validateName(value, "Last name");
 
       case "email":
         if (value && !validateEmail(value.toString())) {
-          return "Please enter a valid email address";
+          return "Please enter a valid email address (e.g., name@example.com)";
         }
         if (typeof value === "string" && value.trim().length > 100) {
-          return "email address must be less than 100 characters";
+          return "Email address must be less than 100 characters";
         }
         return undefined;
 
       case "phone":
         if (value && !validatePhone(value.toString())) {
-          return "Please enter a valid phone number";
+          return "Please enter a valid phone number (10-15 digits)";
         }
         return undefined;
 
@@ -347,26 +415,56 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
         return undefined;
 
       case "state":
-        if (value && typeof value === "string" && value.trim().length < 2) {
-          return "State must be at least 2 characters";
-        }
-        if (typeof value === "string" && value.trim().length > 30) {
-          return "State must be less than 30 characters";
+        if (value && typeof value === "string" && value.trim().length > 0) {
+          const trimmed = value.trim();
+          if (trimmed.length < 2) {
+            return "State must be at least 2 characters";
+          }
+          if (trimmed.length > 30) {
+            return "State must be less than 30 characters";
+          }
+          if (!/^[a-zA-Z\s\-']+$/.test(trimmed)) {
+            return "State can only contain letters, spaces, hyphens, and apostrophes";
+          }
         }
         return undefined;
 
       case "city":
-        if (value && typeof value === "string" && value.trim().length < 2) {
-          return "City must be at least 2 characters";
-        }
-        if (typeof value === "string" && value.trim().length > 30) {
-          return "City must be less than 30 characters";
+        if (value && typeof value === "string" && value.trim().length > 0) {
+          const trimmed = value.trim();
+          if (trimmed.length < 2) {
+            return "City must be at least 2 characters";
+          }
+          if (trimmed.length > 50) {
+            return "City must be less than 50 characters";
+          }
+          if (!/^[a-zA-Z\s\-']+$/.test(trimmed)) {
+            return "City can only contain letters, spaces, hyphens, and apostrophes";
+          }
         }
         return undefined;
 
       case "postal_code":
         if (value && !validatePostalCode(value.toString())) {
-          return "Postal code must be 3-10 characters";
+          return "Postal code must be 3-10 alphanumeric characters";
+        }
+        return undefined;
+
+      case "dob":
+        return validateDateOfBirth(value);
+
+      case "total_purchases":
+        return validateNumericField(value, "Total purchases");
+
+      case "outstanding_balance":
+        return validateNumericField(value, "Outstanding balance");
+
+      case "loyalty_points":
+        return validateNumericField(value, "Loyalty points", 0, 9999999);
+
+      case "address":
+        if (value && typeof value === "string" && value.trim().length > 200) {
+          return "Address must be less than 200 characters";
         }
         return undefined;
 
@@ -400,8 +498,9 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
    */
   const generateCustomerCode = (): string => {
     const prefix = "CUST";
-    const randomNum = Math.floor(100000 + Math.random() * 9000000);
-    return `${prefix}${randomNum}`;
+    const timestamp = Date.now().toString().slice(-8);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${prefix}${timestamp}${random}`;
   };
 
   /**
@@ -410,12 +509,22 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
   const handleGenerateCode = () => {
     const code = generateCustomerCode();
     setForm((prev) => ({ ...prev, customer_code: code }));
+    if (errors.customer_code) {
+      setErrors((prev) => ({ ...prev, customer_code: undefined }));
+    }
   };
 
   /**
    * Validates form data before submission
    */
   const validateForm = (): boolean => {
+    // Mark all fields as touched
+    const allTouched: Record<string, boolean> = {};
+    (Object.keys(form) as Array<keyof CustomerFormData>).forEach((field) => {
+      allTouched[field] = true;
+    });
+    setTouched(allTouched);
+
     const isValid = validateAllFields();
 
     if (!isValid) {
@@ -466,13 +575,6 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
     e.preventDefault();
 
     if (isSubmitting) return;
-
-    // Mark all fields as touched on submit
-    const allTouched: Record<string, boolean> = {};
-    (Object.keys(form) as Array<keyof CustomerFormData>).forEach((field) => {
-      allTouched[field] = true;
-    });
-    setTouched(allTouched);
 
     if (!validateForm()) return;
 
@@ -528,24 +630,28 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
       if (status === 403) {
         toast.error("You do not have permission to create customers");
       } else if (status === 422) {
-        const errors = err.response?.data?.errors;
-        if (errors) {
+        const apiErrors = err.response?.data?.errors;
+        if (apiErrors) {
           // Map backend errors to form errors
           const formErrors: FormErrors = {};
-          Object.keys(errors).forEach((key) => {
+          Object.keys(apiErrors).forEach((key) => {
             const field = key as keyof FormErrors;
-            formErrors[field] = errors[key][0];
+            formErrors[field] = Array.isArray(apiErrors[key]) 
+              ? apiErrors[key][0] 
+              : apiErrors[key];
           });
           setErrors(formErrors);
 
           // Show first error in toast
-          const firstError = Object.values(errors)[0];
+          const firstError = Object.values(apiErrors)[0];
           if (firstError && Array.isArray(firstError)) {
             toast.error(firstError[0]);
           }
         } else {
           toast.error("Validation failed. Please check your input.");
         }
+      } else if (status === 409) {
+        toast.error("A customer with this email already exists");
       } else {
         toast.error("Failed to create customer. Please try again.");
       }
@@ -558,10 +664,12 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
   // FORM VALIDATION
   // ==========================================================================
 
-  const isFormValid =
-    form.first_name.trim().length > 0 &&
-    form.last_name.trim().length > 0 &&
+  const isFormValid = 
+    form.first_name.trim().length >= 2 &&
+    form.last_name.trim().length >= 2 &&
     form.location_id !== "" &&
+    (!form.email || validateEmail(form.email)) &&
+    (!form.phone || validatePhone(form.phone)) &&
     !errors.first_name &&
     !errors.last_name &&
     !errors.email &&
@@ -588,7 +696,7 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                   Back to Customers
                 </Link>
                 <div className="h-6 w-px bg-gray-300"></div>
-                <h1 className="text-2xl font-normal text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900">
                   Create New Customer
                 </h1>
               </div>
@@ -732,15 +840,15 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                       onBlur={() => handleBlur("first_name")}
                       required
                       className={
-                        errors.first_name
+                        errors.first_name && touched.first_name
                           ? CSS_CLASSES.INPUT_ERROR
                           : CSS_CLASSES.INPUT
                       }
                       placeholder="Enter first name"
                     />
-                    {errors.first_name && (
+                    {errors.first_name && touched.first_name && (
                       <div className={CSS_CLASSES.ERROR_TEXT}>
-                        <XCircle size={12} />
+                        <AlertCircle size={12} />
                         {errors.first_name}
                       </div>
                     )}
@@ -762,15 +870,15 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                       onBlur={() => handleBlur("last_name")}
                       required
                       className={
-                        errors.last_name
+                        errors.last_name && touched.last_name
                           ? CSS_CLASSES.INPUT_ERROR
                           : CSS_CLASSES.INPUT
                       }
                       placeholder="Enter last name"
                     />
-                    {errors.last_name && (
+                    {errors.last_name && touched.last_name && (
                       <div className={CSS_CLASSES.ERROR_TEXT}>
-                        <XCircle size={12} />
+                        <AlertCircle size={12} />
                         {errors.last_name}
                       </div>
                     )}
@@ -783,7 +891,12 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                       onChange={(e) =>
                         handleInputChange("gender", e.target.value)
                       }
-                      className={CSS_CLASSES.SELECT}
+                      onBlur={() => handleBlur("gender")}
+                      className={
+                        errors.gender && touched.gender
+                          ? CSS_CLASSES.SELECT_ERROR
+                          : CSS_CLASSES.SELECT
+                      }
                     >
                       {genderOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -791,18 +904,37 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                         </option>
                       ))}
                     </select>
+                    {errors.gender && touched.gender && (
+                      <div className={CSS_CLASSES.ERROR_TEXT}>
+                        <AlertCircle size={12} />
+                        {errors.gender}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className={CSS_CLASSES.LABEL}>Date of Birth</label>
+                    <label className={`${errors.dob ? CSS_CLASSES.LABEL_ERROR : CSS_CLASSES.LABEL}`}>
+                      Date of Birth
+                    </label>
                     <input
                       type="date"
                       value={form.dob}
                       onChange={(e) => handleInputChange("dob", e.target.value)}
-                      className={CSS_CLASSES.INPUT}
+                      onBlur={() => handleBlur("dob")}
+                      className={
+                        errors.dob && touched.dob
+                          ? CSS_CLASSES.INPUT_ERROR
+                          : CSS_CLASSES.INPUT
+                      }
                     />
+                    {errors.dob && touched.dob && (
+                      <div className={CSS_CLASSES.ERROR_TEXT}>
+                        <AlertCircle size={12} />
+                        {errors.dob}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -835,13 +967,15 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     onBlur={() => handleBlur("email")}
                     className={
-                      errors.email ? CSS_CLASSES.INPUT_ERROR : CSS_CLASSES.INPUT
+                      errors.email && touched.email
+                        ? CSS_CLASSES.INPUT_ERROR
+                        : CSS_CLASSES.INPUT
                     }
                     placeholder="customer@example.com"
                   />
-                  {errors.email && (
+                  {errors.email && touched.email && (
                     <div className={CSS_CLASSES.ERROR_TEXT}>
-                      <XCircle size={12} />
+                      <AlertCircle size={12} />
                       {errors.email}
                     </div>
                   )}
@@ -863,15 +997,17 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                         e.target.value.replace(/[^\d+ ]/g, "").slice(0, 18),
                       )
                     }
-                     onBlur={() => handleBlur("phone")}
+                    onBlur={() => handleBlur("phone")}
                     className={
-                      errors.phone ? CSS_CLASSES.INPUT_ERROR : CSS_CLASSES.INPUT
+                      errors.phone && touched.phone
+                        ? CSS_CLASSES.INPUT_ERROR
+                        : CSS_CLASSES.INPUT
                     }
                     placeholder="+234 800 000 0000"
                   />
-                  {errors.phone && (
+                  {errors.phone && touched.phone && (
                     <div className={CSS_CLASSES.ERROR_TEXT}>
-                      <XCircle size={12} />
+                      <AlertCircle size={12} />
                       {errors.phone}
                     </div>
                   )}
@@ -907,13 +1043,15 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                     onChange={(e) => handleInputChange("state", e.target.value)}
                     onBlur={() => handleBlur("state")}
                     className={
-                      errors.state ? CSS_CLASSES.INPUT_ERROR : CSS_CLASSES.INPUT
+                      errors.state && touched.state
+                        ? CSS_CLASSES.INPUT_ERROR
+                        : CSS_CLASSES.INPUT
                     }
                     placeholder="Enter state"
                   />
-                  {errors.state && (
+                  {errors.state && touched.state && (
                     <div className={CSS_CLASSES.ERROR_TEXT}>
-                      <XCircle size={12} />
+                      <AlertCircle size={12} />
                       {errors.state}
                     </div>
                   )}
@@ -932,13 +1070,15 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                     onChange={(e) => handleInputChange("city", e.target.value)}
                     onBlur={() => handleBlur("city")}
                     className={
-                      errors.city ? CSS_CLASSES.INPUT_ERROR : CSS_CLASSES.INPUT
+                      errors.city && touched.city
+                        ? CSS_CLASSES.INPUT_ERROR
+                        : CSS_CLASSES.INPUT
                     }
                     placeholder="Enter city"
                   />
-                  {errors.city && (
+                  {errors.city && touched.city && (
                     <div className={CSS_CLASSES.ERROR_TEXT}>
-                      <XCircle size={12} />
+                      <AlertCircle size={12} />
                       {errors.city}
                     </div>
                   )}
@@ -959,22 +1099,24 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                     }
                     onBlur={() => handleBlur("postal_code")}
                     className={
-                      errors.postal_code
+                      errors.postal_code && touched.postal_code
                         ? CSS_CLASSES.INPUT_ERROR
                         : CSS_CLASSES.INPUT
                     }
                     placeholder="100001"
                   />
-                  {errors.postal_code && (
+                  {errors.postal_code && touched.postal_code && (
                     <div className={CSS_CLASSES.ERROR_TEXT}>
-                      <XCircle size={12} />
+                      <AlertCircle size={12} />
                       {errors.postal_code}
                     </div>
                   )}
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className={CSS_CLASSES.LABEL}>Address</label>
+                  <label className={`${errors.address ? CSS_CLASSES.LABEL_ERROR : CSS_CLASSES.LABEL}`}>
+                    Address
+                  </label>
                   <textarea
                     rows={2}
                     maxLength={100}
@@ -982,9 +1124,16 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                     onChange={(e) =>
                       handleInputChange("address", e.target.value)
                     }
-                    className={`${CSS_CLASSES.INPUT} resize-none`}
+                    onBlur={() => handleBlur("address")}
+                    className={`${errors.address && touched.address ? CSS_CLASSES.INPUT_ERROR : CSS_CLASSES.INPUT} resize-none`}
                     placeholder="Enter full address"
                   />
+                  {errors.address && touched.address && (
+                    <div className={CSS_CLASSES.ERROR_TEXT}>
+                      <AlertCircle size={12} />
+                      {errors.address}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1017,7 +1166,7 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                       }
                       onBlur={() => handleBlur("location_id")}
                       required
-                      className={`${errors.location_id ? CSS_CLASSES.SELECT_ERROR : CSS_CLASSES.SELECT} ${isLoadingLocations ? "opacity-50" : ""}`}
+                      className={`${errors.location_id && touched.location_id ? CSS_CLASSES.SELECT_ERROR : CSS_CLASSES.SELECT} ${isLoadingLocations ? "opacity-50" : ""}`}
                       disabled={isLoadingLocations}
                     >
                       <option value="">Select location</option>
@@ -1036,16 +1185,18 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                         ))
                       )}
                     </select>
-                    {errors.location_id && (
+                    {errors.location_id && touched.location_id && (
                       <div className={CSS_CLASSES.ERROR_TEXT}>
-                        <XCircle size={12} />
+                        <AlertCircle size={12} />
                         {errors.location_id}
                       </div>
                     )}
                   </div>
 
                   <div>
-                    <label className={CSS_CLASSES.LABEL}>Customer Code</label>
+                    <label className={`${errors.customer_code ? CSS_CLASSES.LABEL_ERROR : CSS_CLASSES.LABEL}`}>
+                      Customer Code
+                    </label>
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -1054,7 +1205,12 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                         onChange={(e) =>
                           handleInputChange("customer_code", e.target.value)
                         }
-                        className={CSS_CLASSES.INPUT}
+                        onBlur={() => handleBlur("customer_code")}
+                        className={
+                          errors.customer_code && touched.customer_code
+                            ? CSS_CLASSES.INPUT_ERROR
+                            : CSS_CLASSES.INPUT
+                        }
                         placeholder="Auto-generated"
                       />
                       <button
@@ -1065,6 +1221,12 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                         Generate
                       </button>
                     </div>
+                    {errors.customer_code && touched.customer_code && (
+                      <div className={CSS_CLASSES.ERROR_TEXT}>
+                        <AlertCircle size={12} />
+                        {errors.customer_code}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1126,7 +1288,7 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className={CSS_CLASSES.LABEL}>
+                      <label className={`${errors.total_purchases ? CSS_CLASSES.LABEL_ERROR : CSS_CLASSES.LABEL}`}>
                         Total Purchases (₦)
                       </label>
                       <input
@@ -1137,13 +1299,24 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                         onChange={(e) =>
                           handleInputChange("total_purchases", e.target.value)
                         }
-                        className={CSS_CLASSES.INPUT}
+                        onBlur={() => handleBlur("total_purchases")}
+                        className={
+                          errors.total_purchases && touched.total_purchases
+                            ? CSS_CLASSES.INPUT_ERROR
+                            : CSS_CLASSES.INPUT
+                        }
                         placeholder="0.00"
                       />
+                      {errors.total_purchases && touched.total_purchases && (
+                        <div className={CSS_CLASSES.ERROR_TEXT}>
+                          <AlertCircle size={12} />
+                          {errors.total_purchases}
+                        </div>
+                      )}
                     </div>
 
                     <div>
-                      <label className={CSS_CLASSES.LABEL}>
+                      <label className={`${errors.outstanding_balance ? CSS_CLASSES.LABEL_ERROR : CSS_CLASSES.LABEL}`}>
                         Outstanding Balance (₦)
                       </label>
                       <input
@@ -1157,13 +1330,24 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                             e.target.value,
                           )
                         }
-                        className={CSS_CLASSES.INPUT}
+                        onBlur={() => handleBlur("outstanding_balance")}
+                        className={
+                          errors.outstanding_balance && touched.outstanding_balance
+                            ? CSS_CLASSES.INPUT_ERROR
+                            : CSS_CLASSES.INPUT
+                        }
                         placeholder="0.00"
                       />
+                      {errors.outstanding_balance && touched.outstanding_balance && (
+                        <div className={CSS_CLASSES.ERROR_TEXT}>
+                          <AlertCircle size={12} />
+                          {errors.outstanding_balance}
+                        </div>
+                      )}
                     </div>
 
                     <div>
-                      <label className={CSS_CLASSES.LABEL}>
+                      <label className={`${errors.loyalty_points ? CSS_CLASSES.LABEL_ERROR : CSS_CLASSES.LABEL}`}>
                         Loyalty Points
                       </label>
                       <input
@@ -1173,9 +1357,20 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                         onChange={(e) =>
                           handleInputChange("loyalty_points", e.target.value)
                         }
-                        className={CSS_CLASSES.INPUT}
+                        onBlur={() => handleBlur("loyalty_points")}
+                        className={
+                          errors.loyalty_points && touched.loyalty_points
+                            ? CSS_CLASSES.INPUT_ERROR
+                            : CSS_CLASSES.INPUT
+                        }
                         placeholder="0"
                       />
+                      {errors.loyalty_points && touched.loyalty_points && (
+                        <div className={CSS_CLASSES.ERROR_TEXT}>
+                          <AlertCircle size={12} />
+                          {errors.loyalty_points}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

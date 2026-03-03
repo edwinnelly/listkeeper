@@ -715,7 +715,7 @@ const ProductTableRow: React.FC<{
                 className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100"
               >
                 <Edit className="h-4 w-4 text-[#1e3a5f]" />
-                Edit Product
+                Update Stock
               </button>
               <button
                 onClick={() => {
@@ -824,7 +824,7 @@ const ProductGridCard: React.FC<{
             <button
               onClick={() => onEdit(product.id)}
               className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center"
-              title="Edit Product"
+              title="Adjust Stock"
             >
               <Edit className="h-4 w-4" />
             </button>
@@ -1328,7 +1328,7 @@ const ViewProductModal: React.FC<{
           )}
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-stone-200">
+          {/* <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-stone-200">
             <button
               onClick={onClose}
               className="px-6 py-3 text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
@@ -1353,7 +1353,7 @@ const ViewProductModal: React.FC<{
               <Edit className="h-4 w-4" />
               Edit Product
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
@@ -1419,7 +1419,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
     try {
       // Fixed the API endpoint - removed {id} placeholder
       const res = await apiGet(`/product-locations/${id}`, {}, false);
-      
+
       // Extract location_name from the response
       if (res.data?.location_name) {
         setLocationName(res.data.location_name);
@@ -1648,7 +1648,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Header - Now scrolls normally with the page (sticky removed) */}
-      <header className="bg-white border-b border-stone-200 shadow-sm">
+      <header className="bg-white border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -1660,7 +1660,10 @@ const ManageProducts = ({ user }: { user?: any }) => {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-stone-900">
-                   <ShortTextWithTooltip text= {locationName || "Products"} max={30} />
+                  <ShortTextWithTooltip
+                    text={locationName || "Products"}
+                    max={30}
+                  />
                 </h1>
                 <p className="text-sm text-stone-500">
                   Manage your product inventory
@@ -1945,7 +1948,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
                         setSelectedProduct(product);
                         setViewModalOpen(true);
                       }}
-                      onEdit={(id) => router.push(`/editproduct/${id}`)}
+                      onEdit={(id) => router.push(`/updatestock/${id}`)}
                       onDelete={(product) => {
                         setSelectedProduct(product);
                         setDeleteModalOpen(true);
@@ -2043,7 +2046,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
           setSelectedProduct(null);
         }}
         product={selectedProduct}
-        onEdit={(id) => router.push(`/editproduct/${id}`)}
+        onEdit={(id) => router.push(`/updatestock/${id}`)}
         onHistory={(id) => router.push(`/products/${id}/history`)}
         formatCurrency={formatCurrency}
       />
