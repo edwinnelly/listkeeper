@@ -43,9 +43,9 @@ import {
   Scale,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import ShortTextWithTooltip from "../../component/shorten_len";
+import ShortTextWithTooltip from "../component/shorten_len";
 
 // ==============================================
 // TypeScript Interfaces
@@ -55,9 +55,7 @@ interface Product {
   id: number;
   owner_id: number;
   business_key: string;
-  encrypted_pid: any | null;
   name: string;
-  location_name: string;
   sku: string;
   description: string | null;
   slug: string | null;
@@ -90,20 +88,7 @@ interface Product {
   created_at: string;
   updated_at: string;
   encrypted_id: any | null;
-  product?: {
-    name: string;
-    image: string;
-    sku: string;
-    description?: string;
-    dimensions?: string;
-    weight?: string | number;
-    length?: string | null;
-    width?: string | null;
-    height?: string | null;
-    unit?: {
-      symbol: string;
-    };
-  };
+
   category?: {
     id: number;
     name: string;
@@ -627,11 +612,6 @@ const ProductTableRow: React.FC<{
   onToggleOpen,
   formatCurrency,
 }) => {
-  // Get product name from either product.name or product.product?.name
-  const productName = product.product?.name || product.name || "";
-  const productSku = product.product?.sku || product.sku || "";
-  const productImage = product.product?.image || product.image || null;
-
   return (
     <tr className="hover:bg-stone-50/50 transition-colors group">
       <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
@@ -639,21 +619,21 @@ const ProductTableRow: React.FC<{
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <ProductImage src={productImage} alt={productName} />
+          <ProductImage src={product.image} alt={product.name} />
           <div>
             <div className="font-medium text-stone-900">
-              <ShortTextWithTooltip text={productName} max={30} />
+              <ShortTextWithTooltip text={product.name} max={30} />
             </div>
             <div className="text-xs text-stone-500 flex items-center gap-1 mt-0.5">
               <Hash className="h-3 w-3" />
-              {productSku}
+              {product.sku}
             </div>
           </div>
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
         <code className="text-xs bg-stone-100 px-2 py-1 rounded font-mono">
-          {productSku}
+          {product.sku}
         </code>
       </td>
       <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
@@ -710,17 +690,17 @@ const ProductTableRow: React.FC<{
               </button>
               <button
                 onClick={() => {
-                  onEdit(product.encrypted_id);
+                  onEdit(product.id);
                   onToggleOpen(null);
                 }}
                 className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100"
               >
                 <Edit className="h-4 w-4 text-[#1e3a5f]" />
-                Update Stock
+                Edit Product
               </button>
               <button
                 onClick={() => {
-                  onHistory(product.encrypted_pid);
+                  onHistory(product.id);
                   onToggleOpen(null);
                 }}
                 className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100"
@@ -754,21 +734,15 @@ const ProductGridCard: React.FC<{
   onDelete: (product: Product) => void;
   formatCurrency: (amount: number) => string;
 }> = ({ product, onView, onEdit, onDelete, formatCurrency }) => {
-  // Get product name from either product.name or product.product?.name
-  const productName = product.product?.name || product.name || "";
-  const productSku = product.product?.sku || product.sku || "";
-  const productImage = product.product?.image || product.image || null;
-  const categoryName = product.category?.name || "Uncategorized";
-
   return (
     <div className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all group">
       <div className="p-5">
         <div className="relative mb-4">
           <div className="aspect-square bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden">
-            {productImage ? (
+            {product.image ? (
               <img
-                src={`http://localhost:8000/storage/${productImage}`}
-                alt={productName}
+                src={`http://localhost:8000/storage/${product.image}`}
+                alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
@@ -792,15 +766,18 @@ const ProductGridCard: React.FC<{
         <div className="space-y-3">
           <div>
             <h3 className="font-semibold text-stone-900">
-              <ShortTextWithTooltip text={productName} max={25} />
+              <ShortTextWithTooltip text={product.name} max={25} />
             </h3>
-            <p className="text-xs text-stone-500 mt-0.5">SKU: {productSku}</p>
+            <p className="text-xs text-stone-500 mt-0.5">SKU: {product.sku}</p>
           </div>
 
           <div className="flex items-center gap-1 text-xs text-stone-600">
             <Layers className="h-3 w-3" />
             <span>
-              <ShortTextWithTooltip text={categoryName} max={11} />
+              <ShortTextWithTooltip
+                text={product.category?.name || "Uncategorized"}
+                max={15}
+              />
             </span>
           </div>
 
@@ -825,7 +802,7 @@ const ProductGridCard: React.FC<{
             <button
               onClick={() => onEdit(product.id)}
               className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center"
-              title="Adjust Stock"
+              title="Edit Product"
             >
               <Edit className="h-4 w-4" />
             </button>
@@ -1043,34 +1020,21 @@ const ViewProductModal: React.FC<{
 }> = ({ isOpen, onClose, product, onEdit, onHistory, formatCurrency }) => {
   if (!isOpen || !product) return null;
 
-  // Get product details safely
-  const productName = product.product?.name || product.name || "";
-  const productSku = product.product?.sku || product.sku || "";
-  const productImage = product.product?.image || product.image || null;
-  const productDescription =
-    product.product?.description || product.description || "No description";
-  const productDimensions =
-    product.product?.dimensions || product.dimensions || null;
-  const productWeight = product.product?.weight || product.weight || null;
-  const productLength = product.product?.length || product.length || null;
-  const productWidth = product.product?.width || product.width || null;
-  const productHeight = product.product?.height || product.height || null;
-
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-scaleIn">
         <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <ProductImage
-              src={productImage}
-              alt={productName}
+              src={product.image}
+              alt={product.name}
               className="w-12 h-12"
             />
             <div>
               <h2 className="text-xl font-bold text-stone-900">
-                {productName}
+                {product.name}
               </h2>
-              <p className="text-sm text-stone-500">SKU: {productSku}</p>
+              <p className="text-sm text-stone-500">SKU: {product.sku}</p>
             </div>
           </div>
           <button
@@ -1094,7 +1058,7 @@ const ViewProductModal: React.FC<{
                   <div className="flex justify-between">
                     <span className="text-sm text-stone-600">Description</span>
                     <span className="text-sm text-stone-900 text-right max-w-[200px]">
-                      {productDescription}
+                      {product.description || "No description"}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -1229,44 +1193,44 @@ const ViewProductModal: React.FC<{
                 </div>
               </div>
 
-              {(productDimensions ||
-                productWeight ||
-                productLength ||
-                productWidth ||
-                productHeight) && (
+              {(product.dimensions ||
+                product.weight ||
+                product.length ||
+                product.width ||
+                product.height) && (
                 <div>
                   <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2">
                     <Scale className="h-4 w-4" />
                     Dimensions & Weight
                   </h3>
                   <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                    {productDimensions && (
+                    {product.dimensions && (
                       <div className="flex justify-between">
                         <span className="text-sm text-stone-600">
                           Dimensions
                         </span>
                         <span className="text-sm text-stone-900">
-                          {productDimensions}
+                          {product.dimensions}
                         </span>
                       </div>
                     )}
-                    {productWeight && (
+                    {product.weight && (
                       <div className="flex justify-between">
                         <span className="text-sm text-stone-600">Weight</span>
                         <span className="text-sm text-stone-900">
-                          {formatNumber(productWeight)}{" "}
+                          {formatNumber(product.weight)}{" "}
                           {product.unit?.symbol || "kg"}
                         </span>
                       </div>
                     )}
-                    {(productLength || productWidth || productHeight) && (
+                    {(product.length || product.width || product.height) && (
                       <div className="flex justify-between">
                         <span className="text-sm text-stone-600">
                           Size (L×W×H)
                         </span>
                         <span className="text-sm text-stone-900">
-                          {productLength || "0"} × {productWidth || "0"} ×{" "}
-                          {productHeight || "0"}
+                          {product.length || "0"} × {product.width || "0"} ×{" "}
+                          {product.height || "0"}
                         </span>
                       </div>
                     )}
@@ -1329,7 +1293,7 @@ const ViewProductModal: React.FC<{
           )}
 
           {/* Actions */}
-          {/* <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-stone-200">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-stone-200">
             <button
               onClick={onClose}
               className="px-6 py-3 text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
@@ -1354,7 +1318,7 @@ const ViewProductModal: React.FC<{
               <Edit className="h-4 w-4" />
               Edit Product
             </Link>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
@@ -1365,10 +1329,8 @@ const ViewProductModal: React.FC<{
 // Main Component
 // ==============================================
 
-const ManageProducts = ({ user }: { user?: any }) => {
+const ManageProducts = ({ user }) => {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
 
   // Format currency with user's preferred currency symbol
   const formatCurrency = (amount: number): string => {
@@ -1390,7 +1352,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
     status: "all",
     category: "all",
     stock: "all",
-    priceRange: [0, 1000000], // INCREASED MAX PRICE TO 1,000,000
+    priceRange: [0, 10000],
     sortBy: "name",
     sortOrder: "asc",
   });
@@ -1406,67 +1368,53 @@ const ManageProducts = ({ user }: { user?: any }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-  const [locationName, setLocationName] = useState<string>("");
-  const [maxPrice, setMaxPrice] = useState<number>(1000000);
+
   const debouncedSearch = useDebounce(filters.search, 300);
 
-  // Update price range when products load
+  // Fetch data
   useEffect(() => {
-    if (products.length > 0) {
-      const prices = products
-        .map(p => toNumber(p.price))
-        .filter(p => p > 0);
-      if (prices.length > 0) {
-        const max = Math.max(...prices);
-        setMaxPrice(max);
-        setFilters(prev => ({ ...prev, priceRange: [0, max] }));
-        console.log("Max price detected:", max);
-      }
-    }
-  }, [products]);
+    fetchProducts();
+    fetchCategories();
+  }, []);
 
-  // Helper function used for both initial load and refresh
-  const loadData = async () => {
-    if (!id) return;
+  const fetchProducts = async () => {
     setIsLoading(true);
-
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
-        apiGet(`/product-locations/${id}`, {}, false),
-        apiGet("/product-categories", {}, false),
-      ]);
-
-      // Extract products & location
-      const newLocationName = productsRes?.data?.location_name ?? "";
-      // The products are in data.data based on your console.log
-      const newProducts = productsRes?.data?.data ?? [];
-    
-      // Extract categories
-      const newCategories =
-        categoriesRes?.data?.product_categories ??
-        categoriesRes?.data?.data ??
+      const res = await apiGet("/products", {}, false);
+      console.log(res.data);
+      const productsArray =
+        res.data?.data?.products ??
+        res.data?.data ??
+        res.data?.products ??
+        res.data ??
         [];
-
-      // Only update state after both APIs are done
-      setLocationName(newLocationName);
-      setProducts(Array.isArray(newProducts) ? newProducts : []);
-      setCategories(Array.isArray(newCategories) ? newCategories : []);
-    } catch (error) {
-      // console.error("Error loading data:", error);
-      toast.error("Failed to load data");
+      setProducts(Array.isArray(productsArray) ? productsArray : []);
+    } catch (err: any) {
+      toast.error("Failed to fetch products");
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  const fetchCategories = async () => {
+    try {
+      const res = await apiGet("/product-categories", {}, false);
+      const categoriesArray =
+        res.data?.data?.product_categories ??
+        res.data?.product_categories ??
+        res.data?.data ??
+        res.data ??
+        [];
+      setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
+    } catch (err: any) {
+      setCategories([]);
+    }
+  };
 
-  // Refresh handler
-  const handleRefresh = async () => {
-    await loadData(); // reuses the same helper
+  const handleRefresh = () => {
+    fetchProducts();
+    fetchCategories();
     toast.success("Data refreshed");
   };
 
@@ -1475,10 +1423,14 @@ const ManageProducts = ({ user }: { user?: any }) => {
     setIsSubmitting(true);
 
     try {
-       toast.error("Product can not be deleted from this account level");
+      await apiDelete(`/products/${selectedProduct.id}`);
+      setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
+      toast.success("Product deleted successfully!");
+      setDeleteModalOpen(false);
+      setSelectedProduct(null);
     } catch (err: any) {
       toast.error("Failed to delete product");
-      await loadData(); // reuses the same helper
+      fetchProducts();
     } finally {
       setIsSubmitting(false);
     }
@@ -1498,7 +1450,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
       status: "all",
       category: "all",
       stock: "all",
-      priceRange: [0, maxPrice],
+      priceRange: [0, 10000],
       sortBy: "name",
       sortOrder: "asc",
     });
@@ -1514,28 +1466,20 @@ const ManageProducts = ({ user }: { user?: any }) => {
     if (filters.sortBy !== "name") count++;
     if (filters.sortOrder !== "asc") count++;
     if (filters.search) count++;
-    // Count price range if it's not the default
-    if (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) count++;
     return count;
-  }, [filters, maxPrice]);
+  }, [filters]);
 
   // Filtered and sorted products
   const filteredProducts = useMemo(() => {
-    const filtered = products
+    return products
       .filter((product) => {
         if (!product) return false;
 
-        const productName = product.product?.name || product.name || "";
-        const productSku = product.product?.sku || product.sku || "";
-        const productDescription =
-          product.product?.description || product.description || "";
-        const categoryName = product.category?.name || "";
-
         const searchableText = [
-          productName,
-          productSku,
-          productDescription,
-          categoryName,
+          product.name || "",
+          product.sku || "",
+          product.description || "",
+          product.category?.name || "",
         ]
           .join(" ")
           .toLowerCase();
@@ -1581,12 +1525,9 @@ const ManageProducts = ({ user }: { user?: any }) => {
       .sort((a, b) => {
         let comparison = 0;
 
-        const aName = a.product?.name || a.name || "";
-        const bName = b.product?.name || b.name || "";
-
         switch (filters.sortBy) {
           case "name":
-            comparison = aName.localeCompare(bName);
+            comparison = (a.name || "").localeCompare(b.name || "");
             break;
           case "price":
             comparison = toNumber(a.price) - toNumber(b.price);
@@ -1604,9 +1545,6 @@ const ManageProducts = ({ user }: { user?: any }) => {
 
         return filters.sortOrder === "asc" ? comparison : -comparison;
       });
-    
-    console.log(`Filtered ${products.length} products to ${filtered.length}`);
-    return filtered;
   }, [products, debouncedSearch, filters]);
 
   // Pagination
@@ -1657,24 +1595,19 @@ const ManageProducts = ({ user }: { user?: any }) => {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      {/* Header */}
-      <header className="bg-white border-b border-stone-200">
+      {/* Header - Now scrolls normally with the page (sticky removed) */}
+      <header className="bg-white border-b border-stone-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <Link
-                href="/locations"
+                href="/dashboard"
                 className="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-stone-900">
-                  <ShortTextWithTooltip
-                    text={locationName || "Products"}
-                    max={30}
-                  />
-                </h1>
+                <h1 className="text-2xl font-bold text-stone-900">Product Catalogs</h1>
                 <p className="text-sm text-stone-500">
                   Manage your product inventory
                 </p>
@@ -1703,7 +1636,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
               </button>
 
               <Link
-                href="/addproductlocations"
+                href="/newproduct"
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1e3a5f] text-white text-sm font-medium rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20"
               >
                 <Plus className="h-4 w-4" />
@@ -1791,9 +1724,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
             active={
               filters.status === "all" &&
               filters.stock === "all" &&
-              filters.category === "all" &&
-              filters.priceRange[0] === 0 &&
-              filters.priceRange[1] === maxPrice
+              filters.category === "all"
             }
             onClick={() => clearFilters()}
           />
@@ -1856,22 +1787,22 @@ const ManageProducts = ({ user }: { user?: any }) => {
         {/* Empty State */}
         {!isLoading && currentItems.length === 0 && (
           <EmptyState
-            title={filters.search || activeFilterCount > 0 ? "No products found" : "No products yet"}
+            title={filters.search ? "No products found" : "No products yet"}
             description={
-              filters.search || activeFilterCount > 0
+              filters.search
                 ? "Try adjusting your search terms or filters"
                 : "Get started by adding your first product to the inventory"
             }
             icon={Package}
             action={
-              filters.search || activeFilterCount > 0
+              filters.search
                 ? {
                     label: "Clear Filters",
                     onClick: clearFilters,
                   }
                 : {
                     label: "Add Your First Product",
-                    href: "/addproductlocations",
+                    href: "/newproduct",
                   }
             }
           />
@@ -1960,14 +1891,12 @@ const ManageProducts = ({ user }: { user?: any }) => {
                         setSelectedProduct(product);
                         setViewModalOpen(true);
                       }}
-                      onEdit={(encrypted_id) =>
-                        router.push(`/updatestock/${encrypted_id}`)
-                      }
+                      onEdit={(id) => router.push(`/editproduct/${id}`)}
                       onDelete={(product) => {
                         setSelectedProduct(product);
                         setDeleteModalOpen(true);
                       }}
-                      onHistory={(encrypted_pid) => router.push(`/locationprodhist/${encrypted_pid}`)}
+                      onHistory={(id) => router.push(`/products/${id}/history`)}
                       isOpen={openRow === product.id}
                       onToggleOpen={setOpenRow}
                       formatCurrency={formatCurrency}
@@ -2046,9 +1975,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
           setSelectedProduct(null);
         }}
         onConfirm={handleDelete}
-        productName={
-          selectedProduct?.product?.name || selectedProduct?.name || ""
-        }
+        productName={selectedProduct?.name || ""}
         isSubmitting={isSubmitting}
       />
 
@@ -2060,8 +1987,8 @@ const ManageProducts = ({ user }: { user?: any }) => {
           setSelectedProduct(null);
         }}
         product={selectedProduct}
-        onEdit={(encrypted_id) => router.push(`/updatestock/${encrypted_id}`)}
-        onHistory={(encrypted_pid) => router.push(`/products/${encrypted_pid}/history`)}
+        onEdit={(id) => router.push(`/editproduct/${id}`)}
+        onHistory={(id) => router.push(`/products/${id}/history`)}
         formatCurrency={formatCurrency}
       />
     </div>

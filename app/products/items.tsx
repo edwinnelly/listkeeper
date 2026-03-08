@@ -1352,7 +1352,7 @@ const ManageProducts = ({ user }) => {
     status: "all",
     category: "all",
     stock: "all",
-    priceRange: [0, 10000],
+    priceRange: [0, 900000000], // Increased max price to 100,000,000 to include all products
     sortBy: "name",
     sortOrder: "asc",
   });
@@ -1368,6 +1368,7 @@ const ManageProducts = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [maxPrice, setMaxPrice] = useState(1000000);
 
   const debouncedSearch = useDebounce(filters.search, 300);
 
@@ -1377,24 +1378,41 @@ const ManageProducts = ({ user }) => {
     fetchCategories();
   }, []);
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    try {
-      const res = await apiGet("/products", {}, false);
-      const productsArray =
-        res.data?.data?.products ??
-        res.data?.data ??
-        res.data?.products ??
-        res.data ??
-        [];
-      setProducts(Array.isArray(productsArray) ? productsArray : []);
-    } catch (err: any) {
-      toast.error("Failed to fetch products");
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
+  // Update price range when products load
+  useEffect(() => {
+    if (products.length > 0) {
+      const prices = products.map(p => toNumber(p.price)).filter(p => p > 0);
+      if (prices.length > 0) {
+        const max = Math.max(...prices);
+        setMaxPrice(max);
+        setFilters(prev => ({ ...prev, priceRange: [0, max] }));
+      }
     }
-  };
+  }, [products]);
+
+  const fetchProducts = async () => {
+  setIsLoading(true);
+  try {
+    const res = await apiGet("/products", {}, false);
+    console.log("API Response:", res.data);
+
+    const productsArray: Product[] = Array.isArray(res.data?.data)
+      ? res.data.data
+      : Array.isArray(res.data)
+      ? res.data
+      : [];
+
+    console.log("Products found:", productsArray.length);
+    setProducts(productsArray);
+
+  } catch (err: any) {
+    console.error("Error fetching products:", err?.response?.data ?? err);
+    toast.error("Failed to fetch products");
+    setProducts([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const fetchCategories = async () => {
     try {
@@ -1449,7 +1467,7 @@ const ManageProducts = ({ user }) => {
       status: "all",
       category: "all",
       stock: "all",
-      priceRange: [0, 10000],
+      priceRange: [0, maxPrice],
       sortBy: "name",
       sortOrder: "asc",
     });
@@ -1465,12 +1483,14 @@ const ManageProducts = ({ user }) => {
     if (filters.sortBy !== "name") count++;
     if (filters.sortOrder !== "asc") count++;
     if (filters.search) count++;
+    // Don't count price range if it's the default
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) count++;
     return count;
-  }, [filters]);
+  }, [filters, maxPrice]);
 
   // Filtered and sorted products
   const filteredProducts = useMemo(() => {
-    return products
+    const filtered = products
       .filter((product) => {
         if (!product) return false;
 
@@ -1544,6 +1564,9 @@ const ManageProducts = ({ user }) => {
 
         return filters.sortOrder === "asc" ? comparison : -comparison;
       });
+    
+    console.log(`Filtered ${products.length} products to ${filtered.length} products`);
+    return filtered;
   }, [products, debouncedSearch, filters]);
 
   // Pagination
@@ -1594,7 +1617,7 @@ const ManageProducts = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      {/* Header - Now scrolls normally with the page (sticky removed) */}
+      {/* Header */}
       <header className="bg-white border-b border-stone-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1606,7 +1629,7 @@ const ManageProducts = ({ user }) => {
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-stone-900">Products</h1>
+                <h1 className="text-2xl font-bold text-stone-900">Product Catalogs</h1>
                 <p className="text-sm text-stone-500">
                   Manage your product inventory
                 </p>
@@ -1723,7 +1746,9 @@ const ManageProducts = ({ user }) => {
             active={
               filters.status === "all" &&
               filters.stock === "all" &&
-              filters.category === "all"
+              filters.category === "all" &&
+              filters.priceRange[0] === 0 && 
+              filters.priceRange[1] === maxPrice
             }
             onClick={() => clearFilters()}
           />
@@ -1794,7 +1819,7 @@ const ManageProducts = ({ user }) => {
             }
             icon={Package}
             action={
-              filters.search
+              filters.search || activeFilterCount > 0
                 ? {
                     label: "Clear Filters",
                     onClick: clearFilters,

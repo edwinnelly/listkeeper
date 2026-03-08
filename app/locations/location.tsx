@@ -1183,7 +1183,7 @@ const ManageLocations = () => {
     setIsLoading(true);
     try {
       const res = await apiGet("/locations");
-      console.log(res)
+      
       const locArr =
         res?.data?.data?.locations ??
         res?.data?.data ??

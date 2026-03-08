@@ -1,5 +1,4 @@
 "use client";
-
 import { useRouter, useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
@@ -25,12 +24,14 @@ interface ProductFormData {
   expires_at: string;
 }
 
-// Payload interface for API requests - Only includes fields we're updating
+// Payload interface for API requests - Includes fields we're updating
 interface UpdateProductPayload {
   stock_quantity: number;
   low_stock_threshold?: number;
   manufactured_at?: string;
   expires_at?: string;
+  location_id?: number;
+  product_id?: number; // Changed from productId to product_id to match API
 }
 
 interface FormErrors {
@@ -40,22 +41,42 @@ interface FormErrors {
   expires_at?: string;
 }
 
+// Product interface for the main product data
 interface Product {
   id: number;
-  name: string;
-  sku: string;
+  owner_id: number;
+  business_key: string;
+  location_id: number;
+  product_id: number;
+  category_id: number;
+  supplier_id: number;
+  price: number;
+  cost_price: number;
+  sale_price: number | null;
   stock_quantity: number;
-  low_stock_threshold: number | null;
-  manufactured_at: string | null;
-  expires_at: string | null;
-  [key: string]: any; // For other product fields
+  low_stock_threshold: number;
+  created_at: string;
+  updated_at: string;
+  encrypted_id: string;
+  manufactured_at: string;
+  expires_at: string;
+  product: {
+    id: number;
+    name: string;
+    sku: string;
+  };
+  category: {
+    id: number;
+    name: string;
+  };
 }
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// API Response interface based on your data structure
+interface ApiResponse {
+  success: boolean;
+  id: number;
+  data: Product;
+}
 
 // ============================================================================
 // MAIN COMPONENT
@@ -83,6 +104,8 @@ const EditProductPage = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [productName, setProductName] = useState("");
   const [productSku, setProductSku] = useState("");
+  const [locationId, setLocationId] = useState<number | null>(null);
+  const [nestedProductId, setNestedProductId] = useState<number | null>(null);
 
   const router = useRouter();
 
@@ -100,7 +123,9 @@ const EditProductPage = () => {
   // LIFECYCLE METHODS
   // ==========================================================================
   useEffect(() => {
-    fetchProduct();
+    if (productId) {
+      fetchProduct();
+    }
   }, [productId]);
 
   // Track form changes
@@ -116,8 +141,8 @@ const EditProductPage = () => {
       const productData = {
         stock_quantity: product.stock_quantity?.toString() || "",
         low_stock_threshold: product.low_stock_threshold?.toString() || "",
-        manufactured_at: product.manufactured_at || "",
-        expires_at: product.expires_at || "",
+        manufactured_at: product.manufactured_at?.split('T')[0] || "", // Fixed: Handle date format
+        expires_at: product.expires_at?.split('T')[0] || "", // Fixed: Handle date format
       };
 
       const hasFormChanges =
@@ -132,22 +157,26 @@ const EditProductPage = () => {
   const fetchProduct = async () => {
     setIsLoadingProduct(true);
     try {
-      const res = await apiGet(`/products/${productId}`);
-      console.log("Product data:", res.data);
+      const res = await apiGet<ApiResponse>(
+        `/products_locaction_view/${productId}`,
+      );
+      // Access the nested data structure
+      const responseData = res.data;
 
-      const productData = res.data?.data || res.data;
+      if (responseData?.success && responseData?.data) {
+        const productData = responseData.data;
 
-      if (productData) {
         setProduct(productData);
-        setProductName(productData.name || "");
-        setProductSku(productData.sku || "");
+        setProductName(productData.product?.name || "");
+        setProductSku(productData.product?.sku || "");
+        setLocationId(productData.location_id);
+        setNestedProductId(productData.product_id); // Store product_id from the main object
 
         // Format dates for input fields (YYYY-MM-DD)
         const formatDateForInput = (dateString: string | null): string => {
           if (!dateString) return "";
-          const date = new Date(dateString);
-          if (isNaN(date.getTime())) return "";
-          return date.toISOString().split("T")[0];
+          // Handle if date comes with time component
+          return dateString.split('T')[0];
         };
 
         // Format integers without decimal places
@@ -164,11 +193,15 @@ const EditProductPage = () => {
         });
       } else {
         toast.error("Product not found");
-        router.push("/products");
+         setTimeout(() => {
+       router.back();
+     }, 1500);
       }
     } catch (err: any) {
       toast.error("Failed to load product");
-      router.push("/products");
+     setTimeout(() => {
+       router.back();
+     }, 1500);
     } finally {
       setIsLoadingProduct(false);
     }
@@ -177,10 +210,7 @@ const EditProductPage = () => {
   // ==========================================================================
   // FORM HANDLERS
   // ==========================================================================
-  const handleInputChange = (
-    field: keyof ProductFormData,
-    value: string,
-  ) => {
+  const handleInputChange = (field: keyof ProductFormData, value: string) => {
     // Special handling for integer fields to prevent decimal points
     let processedValue = value;
 
@@ -258,7 +288,7 @@ const EditProductPage = () => {
 
     // Validate required fields
     const requiredFields: Array<keyof ProductFormData> = ["stock_quantity"];
-    
+
     requiredFields.forEach((field) => {
       const error = validateField(field, form[field]);
       if (error) {
@@ -269,7 +299,10 @@ const EditProductPage = () => {
 
     // Validate optional fields if they have values
     if (form.low_stock_threshold) {
-      const error = validateField("low_stock_threshold", form.low_stock_threshold);
+      const error = validateField(
+        "low_stock_threshold",
+        form.low_stock_threshold,
+      );
       if (error) {
         newErrors.low_stock_threshold = error;
         isValid = false;
@@ -281,7 +314,7 @@ const EditProductPage = () => {
   };
 
   // ==========================================================================
-  // FORM SUBMISSION - Updated payload for specific fields
+  // FORM SUBMISSION - Updated payload with product_id
   // ==========================================================================
   const preparePayload = (): UpdateProductPayload => {
     const payload: UpdateProductPayload = {
@@ -300,6 +333,16 @@ const EditProductPage = () => {
 
     if (form.expires_at) {
       payload.expires_at = form.expires_at;
+    }
+
+    // Include location_id if available
+    if (locationId) {
+      payload.location_id = locationId;
+    }
+
+    // Include product_id if available (changed from productId to product_id)
+    if (nestedProductId) {
+      payload.product_id = nestedProductId;
     }
 
     return payload;
@@ -330,52 +373,31 @@ const EditProductPage = () => {
 
     try {
       const payload = preparePayload();
-      
-      console.log("Updating product with payload:", payload);
-
-      // Send as JSON since we're not uploading files
-      const response = await apiPut(`/products/${productId}`, payload);
-
-      console.log("API Response:", response);
-
-      if (response.data?.success || response.data?.data) {
+      // Fixed endpoint - using the correct endpoint
+      const response = await apiPut(`/product_location_update/${productId}`, payload);
+      // Fixed response checking - handle different response structures
+      if (response.data?.success || response.status === 200) {
         toast.success("Product inventory updated successfully!");
-        
         setTimeout(() => {
-          router.push("/products");
+          // router.push(`/locationproducts/${product.encrypted_id}`);
+        router.back();
         }, 1500);
       } else {
         toast.error("Failed to update product. Invalid response.");
       }
     } catch (err: any) {
       console.error("API Error:", err);
-      
+
       const status = err.response?.status;
       if (status === 422) {
         const errors = err.response?.data?.errors;
         if (errors) {
-          const formErrors: FormErrors = {};
-          Object.keys(errors).forEach((key) => {
-            const errorMessage = Array.isArray(errors[key])
-              ? errors[key][0]
-              : errors[key];
-            formErrors[key] = errorMessage;
-          });
-          setErrors(formErrors);
-
-          const firstErrorKey = Object.keys(errors)[0];
-          if (firstErrorKey && errors[firstErrorKey]) {
-            const firstError = Array.isArray(errors[firstErrorKey])
-              ? errors[firstErrorKey][0]
-              : errors[firstErrorKey];
-            toast.error(`${firstError}`);
-          }
+         
         } else {
           toast.error("Validation failed. Please check the form.");
         }
       } else if (status === 404) {
         toast.error("Product not found");
-        router.push("/products");
       } else {
         toast.error(
           err.response?.data?.message ||
@@ -388,15 +410,13 @@ const EditProductPage = () => {
   };
 
   const handleCancel = () => {
-    router.push("/products");
+     router.back();
   };
 
   // ==========================================================================
   // FORM VALIDATION
   // ==========================================================================
-  const isFormValid = 
-    form.stock_quantity !== "" && 
-    !errors.stock_quantity;
+  const isFormValid = form.stock_quantity !== "" && !errors.stock_quantity;
 
   // ==========================================================================
   // RENDER
@@ -430,12 +450,15 @@ const EditProductPage = () => {
           </button>
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Update Inventory</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Update Inventory
+              </h1>
               <p className="text-gray-600 mt-1">
                 Update product inventory for:{" "}
                 <span className="font-semibold">{productName}</span> (SKU:{" "}
                 <span className="font-semibold">{productSku}</span>)
               </p>
+              
             </div>
             <div className="flex items-center gap-3">
               {hasChanges && (
@@ -518,16 +541,11 @@ const EditProductPage = () => {
                     min="0"
                     value={form.low_stock_threshold}
                     onChange={(e) =>
-                      handleInputChange(
-                        "low_stock_threshold",
-                        e.target.value,
-                      )
+                      handleInputChange("low_stock_threshold", e.target.value)
                     }
                     onBlur={() => handleBlur("low_stock_threshold")}
                     className={
-                      errors.low_stock_threshold
-                        ? errorInputClass
-                        : inputClass
+                      errors.low_stock_threshold ? errorInputClass : inputClass
                     }
                     placeholder="5"
                     pattern="[0-9]*"

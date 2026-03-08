@@ -259,8 +259,8 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
           <NavItem href="/customers" label="Customers" icon={Users} />
         </NavSection>
 
-        <NavSection title="Products List" sectionKey="products">
-          <NavItem href="/products" label="Products List" icon={BadgePlus} />
+        <NavSection title="Products catalogs" sectionKey="products">
+          <NavItem href="/products" label="Products catalogs " icon={BadgePlus} />
           <NavItem href="/productsecat" label="Products Category" icon={BadgeCheck} />
           <NavItem href="/sales" label="Internal Stock Transfer" icon={ShoppingCart} />
           <NavItem href="/invoices" label="Manage Product Ai" icon={FileText} />
