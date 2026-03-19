@@ -206,7 +206,7 @@ const getCustomerTier = (
   const purchases = customer.total_purchases || 0;
 
   if (points >= 5000 || purchases >= 50000) {
-    return { name: "Diamond", color: "from-purple-500 to-pink-500", icon: Gem };
+    return { name: "Diamond", color: "from-gray-500 to-gray-500", icon: Gem };
   } else if (points >= 2000 || purchases >= 20000) {
     return {
       name: "Platinum",
@@ -224,7 +224,7 @@ const getCustomerTier = (
       icon: Shield,
     };
   }
-  return { name: "Regular", color: "from-blue-400 to-blue-600", icon: User };
+  return { name: "Regular", color: "from-gray-400 to-gray-600", icon: User };
 };
 
 // ==============================================
@@ -299,7 +299,7 @@ const ModernHeader: React.FC<{
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="text-sm text-blue-100"
+                className="text-sm text-gray-100"
               >
                 {subtitle}
               </motion.p>
@@ -485,7 +485,7 @@ const ModernProductCard: React.FC<{
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-lg flex items-center gap-0.5"
+            className="bg-gradient-to-r from-rose-500 to-gray-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-lg flex items-center gap-0.5"
           >
             <BadgePercent className="h-2.5 w-2.5" />
             {product.discount_percentage
@@ -905,7 +905,7 @@ const ModernCustomerCard: React.FC<{
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold">{getCustomerFullName(customer)}</h3>
-                <p className="text-xs text-blue-200">{customer.customer_code}</p>
+                <p className="text-xs text-gray-200">{customer.customer_code}</p>
               </div>
               {onClear && (
                 <button
@@ -937,13 +937,13 @@ const ModernCustomerCard: React.FC<{
 
             <div className="grid grid-cols-2 gap-2 text-xs">
               {customer.email && (
-                <div className="flex items-center gap-1 text-blue-200">
+                <div className="flex items-center gap-1 text-gray-200">
                   <Mail className="h-3 w-3" />
                   <span className="truncate">{customer.email}</span>
                 </div>
               )}
               {customer.phone && (
-                <div className="flex items-center gap-1 text-blue-200">
+                <div className="flex items-center gap-1 text-gray-200">
                   <Phone className="h-3 w-3" />
                   <span>{customer.phone}</span>
                 </div>
@@ -953,7 +953,7 @@ const ModernCustomerCard: React.FC<{
             {customer.outstanding_balance > 0 && (
               <div className="mt-3 pt-3 border-t border-white/20">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-blue-200">Outstanding Balance</span>
+                  <span className="text-gray-200">Outstanding Balance</span>
                   <span className="text-amber-300 font-semibold">
                     {formatCurrency(customer.outstanding_balance)}
                   </span>
@@ -968,9 +968,9 @@ const ModernCustomerCard: React.FC<{
             </div>
             <div className="flex-1 text-left">
               <h3 className="font-semibold">Guest Customer</h3>
-              <p className="text-xs text-blue-200">Click to select a customer</p>
+              <p className="text-xs text-gray-200">Click to select a customer</p>
             </div>
-            <UserPlus className="h-5 w-5 text-blue-200" />
+            <UserPlus className="h-5 w-5 text-gray-200" />
           </button>
         )}
       </div>
@@ -995,15 +995,15 @@ const ModernPaymentMethods: React.FC<{
       id: "card",
       name: "Card",
       icon: CreditCard,
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
+      color: "from-gray-500 to-gray-600",
+      bgColor: "bg-gray-50",
     },
     {
       id: "mobile",
       name: "Mobile Money",
       icon: Smartphone,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
+      color: "from-gray-500 to-gray-600",
+      bgColor: "bg-gray-50",
     },
     {
       id: "bank",
@@ -1058,7 +1058,7 @@ const ModernPaymentMethods: React.FC<{
                 animate={{ scale: 1 }}
                 className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center"
               >
-                <CheckCircle className="h-3 w-3 text-green-500" />
+                <CheckCircle className="h-3 w-3 text-gray-500" />
               </motion.div>
             )}
           </motion.button>
@@ -1237,7 +1237,7 @@ const ModernPaymentModal: React.FC<{
               </button>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-blue-200">Total Amount</span>
+              <span className="text-gray-200">Total Amount</span>
               <span className="text-3xl font-bold">
                 {formatCurrency(total)}
               </span>
@@ -1630,10 +1630,10 @@ const PointOfSale = ({ user }) => {
   > = {
     food: { icon: Coffee, color: "from-orange-500 to-red-500" },
     beverages: { icon: Beer, color: "from-amber-500 to-yellow-500" },
-    electronics: { icon: Laptop, color: "from-blue-500 to-indigo-500" },
-    clothing: { icon: ShoppingBag, color: "from-purple-500 to-pink-500" },
+    electronics: { icon: Laptop, color: "from-gray-500 to-indigo-500" },
+    clothing: { icon: ShoppingBag, color: "from-gray-500 to-gray-500" },
     home: { icon: Home, color: "from-emerald-500 to-teal-500" },
-    gifts: { icon: Gift, color: "from-rose-500 to-pink-500" },
+    gifts: { icon: Gift, color: "from-rose-500 to-gray-500" },
     books: { icon: BookOpen, color: "from-stone-500 to-stone-700" },
   };
 

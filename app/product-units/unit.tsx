@@ -430,13 +430,13 @@ const ManageProductUnits = () => {
     const unitSymbol = unit.symbol.toLowerCase();
     
     if (unitName.includes('kg') || unitName.includes('kilogram') || unitSymbol.includes('kg')) {
-      return <Scale className="h-5 w-5 text-blue-600" />;
+      return <Scale className="h-5 w-5 text-gray-600" />;
     } else if (unitName.includes('gram') || unitSymbol.includes('g')) {
-      return <Scale className="h-5 w-5 text-green-600" />;
+      return <Scale className="h-5 w-5 text-gray-600" />;
     } else if (unitName.includes('liter') || unitName.includes('litre') || unitSymbol.includes('l')) {
-      return <Droplets className="h-5 w-5 text-blue-600" />;
+      return <Droplets className="h-5 w-5 text-gray-600" />;
     } else if (unitName.includes('meter') || unitName.includes('metre') || unitSymbol.includes('m')) {
-      return <Ruler className="h-5 w-5 text-purple-600" />;
+      return <Ruler className="h-5 w-5 text-gray-600" />;
     } else if (unitName.includes('piece') || unitName.includes('pcs') || unitSymbol.includes('pc')) {
       return <Hash className="h-5 w-5 text-orange-600" />;
     } else if (unitName.includes('box') || unitName.includes('carton')) {
@@ -454,11 +454,11 @@ const ManageProductUnits = () => {
   const getUnitTypeBadgeColor = (unitType: string) => {
     switch (unitType) {
       case 'base':
-        return "bg-blue-50 text-blue-700 border border-blue-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       case 'derived':
-        return "bg-green-50 text-green-700 border border-green-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       case 'conversion':
-        return "bg-purple-50 text-purple-700 border border-purple-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       default:
         return "bg-gray-50 text-gray-700 border border-gray-200";
     }
@@ -485,7 +485,7 @@ const ManageProductUnits = () => {
    */
   const getStatusBadgeColor = (isActive: boolean) => {
     return isActive
-      ? "bg-green-50 text-green-700 border border-green-200"
+      ? "bg-gray-50 text-gray-700 border border-gray-200"
       : "bg-gray-50 text-gray-700 border border-gray-200";
   };
 
@@ -576,8 +576,8 @@ const ManageProductUnits = () => {
                   {units.length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Ruler className="h-6 w-6 text-blue-600" />
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                <Ruler className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -593,8 +593,8 @@ const ManageProductUnits = () => {
                   {units.filter((u) => u.unit_type === 'base').length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
-                <Package className="h-6 w-6 text-green-600" />
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                <Package className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -610,8 +610,8 @@ const ManageProductUnits = () => {
                   {units.filter((u) => u.unit_type === 'derived').length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                <Gauge className="h-6 w-6 text-purple-600" />
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                <Gauge className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -627,8 +627,8 @@ const ManageProductUnits = () => {
                   {units.filter((u) => u.is_active).length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -651,7 +651,7 @@ const ManageProductUnits = () => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search units by name, symbol, description..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
                   />
                 </div>
 
@@ -660,7 +660,7 @@ const ManageProductUnits = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:border-gray-400"
+                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -670,7 +670,7 @@ const ManageProductUnits = () => {
                   <select
                     value={unitTypeFilter}
                     onChange={(e) => setUnitTypeFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:border-gray-400"
+                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
                   >
                     <option value="all">All Types</option>
                     <option value="base">Base Units</option>
@@ -682,7 +682,7 @@ const ManageProductUnits = () => {
 
               {/* Results Summary */}
               <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200">
+                <span className="bg-gray-50 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200">
                   {`Showing ${startIndex + 1}-${endIndex} of ${totalItems} unit${
                     totalItems !== 1 ? "s" : ""
                   }`}
@@ -737,12 +737,12 @@ const ManageProductUnits = () => {
                         {/* Unit Details */}
                         <td className="px-6 py-4 min-w-[200px]">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-200/50">
+                            <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200/50">
                               {getUnitIcon(unit)}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <div className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                                <div className="font-semibold text-gray-900 truncate group-hover:text-gray-600 transition-colors">
                                   {unit.name}
                                 </div>
                                 <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
@@ -826,7 +826,7 @@ const ManageProductUnits = () => {
                         <td className="px-6 py-4 text-center relative whitespace-nowrap">
                           <button
                             onClick={() => handleViewUnit(unit)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors group/action"
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group/action"
                             title="View Details"
                           >
                             <Eye
@@ -878,7 +878,7 @@ const ManageProductUnits = () => {
                     onChange={(e) =>
                       handleItemsPerPageChange(Number(e.target.value))
                     }
-                    className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                   >
                     <option value={5}>5</option>
                     <option value={10}>10</option>
@@ -923,7 +923,7 @@ const ManageProductUnits = () => {
                           onClick={() => handlePageChange(page as number)}
                           className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                             currentPage === page
-                              ? "bg-blue-600 text-white border border-blue-600"
+                              ? "bg-gray-600 text-white border border-gray-600"
                               : "text-gray-700 hover:bg-gray-100 border border-gray-300"
                           }`}
                           aria-label={`Page ${page}`}
@@ -980,7 +980,7 @@ const ManageProductUnits = () => {
             >
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
                     {getUnitIcon(selectedUnit)}
                   </div>
                   <div>
@@ -1057,15 +1057,15 @@ const ManageProductUnits = () => {
                   {selectedUnit.unit_type !== 'base' && selectedUnit.base_unit && (
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700 mb-2">Conversion Details</h3>
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <div className="flex items-center justify-center space-x-3">
                           <div className="text-center">
-                            <p className="text-2xl font-bold text-blue-700">1</p>
+                            <p className="text-2xl font-bold text-gray-700">1</p>
                             <p className="text-sm text-gray-600">{selectedUnit.symbol}</p>
                           </div>
                           <div className="text-gray-400">=</div>
                           <div className="text-center">
-                            <p className="text-2xl font-bold text-blue-700">{selectedUnit.conversion_factor}</p>
+                            <p className="text-2xl font-bold text-gray-700">{selectedUnit.conversion_factor}</p>
                             <p className="text-sm text-gray-600">{selectedUnit.base_unit.symbol}</p>
                           </div>
                         </div>

@@ -176,7 +176,7 @@ const AddProductPage = () => {
   // STYLING CONSTANTS
   // ==========================================================================
   const inputClass =
-    "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
+    "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
   const labelClass = "block text-sm font-medium text-gray-700 mb-2";
   const errorInputClass =
     "w-full px-4 py-3 bg-white border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
@@ -724,7 +724,7 @@ const AddProductPage = () => {
             {isLoadingData ? (
               <div className="flex justify-center items-center py-16">
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+                  <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
                   <p className="text-gray-600 font-medium">
                     Loading form data...
                   </p>
@@ -913,11 +913,11 @@ const AddProductPage = () => {
                     </label>
                   </div>
                   {imagePreview && (
-                    <div className="mt-4 flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="mt-4 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <img
                         src={imagePreview}
                         alt="Product preview"
-                        className="w-16 h-16 rounded object-cover border border-blue-300"
+                        className="w-16 h-16 rounded object-cover border border-gray-300"
                       />
                       <div>
                         <span className="text-sm text-gray-700 block">
@@ -1030,7 +1030,7 @@ const AddProductPage = () => {
                   </div>
 
                   {/* Discount Section */}
-                  <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-blue-100/30 rounded-lg border border-blue-200">
+                  <div className="mt-6 p-4 bg-gradient-to-br from-gray-50 to-gray-100/30 rounded-lg border border-gray-200">
                     <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                       <Tag className="w-4 h-4" />
                       Discount Settings
@@ -1303,7 +1303,7 @@ const AddProductPage = () => {
                             />
                             <div
                               className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
-                                form.is_active ? "bg-green-500" : "bg-gray-300"
+                                form.is_active ? "bg-gray-500" : "bg-gray-300"
                               }`}
                             >
                               <div

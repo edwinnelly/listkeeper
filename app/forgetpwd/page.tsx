@@ -5,9 +5,9 @@ import Link from "next/link";
 
 const ForgotPasswordPage = () => {
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Left Side - Image */}
-      <div className="hidden md:flex items-center justify-center bg-blue-100">
+      <div className="hidden md:flex items-center justify-center bg-gray-100">
         <img
           src="/asset/login1.jpg" // replace with your image
           alt="Forgot Password Illustration"
@@ -44,13 +44,13 @@ const ForgotPasswordPage = () => {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition"
+              className="w-full bg-gray-600 text-white py-3 rounded-xl font-medium hover:bg-gray-700 transition"
             >
               Send Reset Link
             </button>
@@ -59,7 +59,7 @@ const ForgotPasswordPage = () => {
           {/* Footer */}
           <p className="text-center text-sm text-gray-600 mt-6">
             Remember your password?{" "}
-            <Link href="/auth" className="text-blue-600 hover:underline">
+            <Link href="/auth" className="text-gray-600 hover:underline">
               Back to Login
             </Link>
           </p>

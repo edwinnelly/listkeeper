@@ -154,8 +154,8 @@ const DeleteConfirmationModal = ({
             {/* Customer Info */}
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center">
-                  <User className="h-5 w-5 text-blue-600" />
+                <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg flex items-center justify-center">
+                  <User className="h-5 w-5 text-gray-600" />
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900">
@@ -508,11 +508,11 @@ const ManageCustomers = ({ user }) => {
     if (customer.gender) {
       switch (customer.gender) {
         case "male":
-          return "bg-blue-50 text-blue-700 border border-blue-200";
+          return "bg-gray-50 text-gray-700 border border-gray-200";
         case "female":
-          return "bg-pink-50 text-pink-700 border border-pink-200";
+          return "bg-gray-50 text-gray-700 border border-gray-200";
         case "other":
-          return "bg-purple-50 text-purple-700 border border-purple-200";
+          return "bg-gray-50 text-gray-700 border border-gray-200";
       }
     }
     return "bg-gray-50 text-gray-700 border border-gray-200";
@@ -521,7 +521,7 @@ const ManageCustomers = ({ user }) => {
   // Get status badge color
   const getStatusBadgeColor = (isActive: boolean) => {
     return isActive
-      ? "bg-green-50 text-green-700 border border-green-200"
+      ? "bg-gray-50 text-gray-700 border border-gray-200"
       : "bg-gray-50 text-gray-700 border border-gray-200";
   };
 
@@ -588,7 +588,7 @@ const ManageCustomers = ({ user }) => {
                   }`}
                 />
                 {isLoading && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping"></span>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-gray-500 rounded-full animate-ping"></span>
                 )}
               </button>
               <button
@@ -602,7 +602,7 @@ const ManageCustomers = ({ user }) => {
               </button>
               <Link
                 href="/addcustomers"
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30"
+                className="flex items-center gap-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 font-medium shadow-lg shadow-gray-500/25 hover:shadow-xl hover:shadow-gray-500/30"
               >
                 <Plus size={18} />
                 Add Customer
@@ -626,13 +626,13 @@ const ManageCustomers = ({ user }) => {
                   {customers.length}
                 </p>
                 <div className="mt-2 sm:mt-3 flex items-center">
-                  <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                  <span className="text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded-full">
                     +5% from last month
                   </span>
                 </div>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-4">
-                <User className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-50 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-4">
+                <User className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -657,8 +657,8 @@ const ManageCustomers = ({ user }) => {
                     : "0%"}
                 </p>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-4">
-                <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-50 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-4">
+                <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -683,13 +683,13 @@ const ManageCustomers = ({ user }) => {
                     })}
                 </p>
                 <div className="mt-2 sm:mt-3 flex items-center">
-                  <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                  <span className="text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded-full">
                     +12% from last month
                   </span>
                 </div>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-4">
-                <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-50 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-4">
+                <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -742,7 +742,7 @@ const ManageCustomers = ({ user }) => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search customers by name, email, phone, customer code..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
                   />
                 </div>
 
@@ -750,7 +750,7 @@ const ManageCustomers = ({ user }) => {
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:border-gray-400"
+                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
                   >
                     <option value="all">All Types</option>
                     <option value="individual">Individual</option>
@@ -760,7 +760,7 @@ const ManageCustomers = ({ user }) => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:border-gray-400"
+                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -775,7 +775,7 @@ const ManageCustomers = ({ user }) => {
               </div>
 
               <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200">
+                <span className="bg-gray-50 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200">
                   {isLoading
                     ? "Loading..."
                     : `Showing ${startIndex + 1}-${endIndex} of ${totalItems} customer${
@@ -790,7 +790,7 @@ const ManageCustomers = ({ user }) => {
           {isLoading && (
             <div className="flex justify-center items-center py-16">
               <div className="text-center">
-                <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+                <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
                 <p className="text-gray-600 font-medium">
                   Loading customers...
                 </p>
@@ -854,11 +854,11 @@ const ManageCustomers = ({ user }) => {
                               </td>
                               <td className="px-4 sm:px-6 py-4 min-w-[200px]">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-200/50">
-                                    <User className="h-5 w-5 text-blue-600" />
+                                  <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200/50">
+                                    <User className="h-5 w-5 text-gray-600" />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                    <div className="font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
                                       <ShortTextWithTooltip
                                         text={getFullName(customer)}
                                         max={25}
@@ -984,7 +984,7 @@ const ManageCustomers = ({ user }) => {
                                             onClick={() => setOpenRow(null)}
                                             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition first:rounded-t-xl last:rounded-b-xl disabled:opacity-50 disabled:cursor-not-allowed border-b border-gray-100"
                                           >
-                                            <Eye className="h-4 w-4 text-blue-600" />
+                                            <Eye className="h-4 w-4 text-gray-600" />
                                             View Profile
                                           </button>
                                         </Link>
@@ -998,7 +998,7 @@ const ManageCustomers = ({ user }) => {
                                           >
                                             <Edit
                                               size={16}
-                                              className="text-blue-600"
+                                              className="text-gray-600"
                                             />
                                             Edit Customer
                                           </button>
@@ -1012,7 +1012,7 @@ const ManageCustomers = ({ user }) => {
                                           >
                                             <ShoppingBag
                                               size={16}
-                                              className="text-blue-600"
+                                              className="text-gray-600"
                                             />
                                             View Orders
                                           </button>
@@ -1060,7 +1060,7 @@ const ManageCustomers = ({ user }) => {
                               {!debouncedSearch && (
                                 <Link
                                   href="/addcustomers/"
-                                  className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium mt-2"
+                                  className="flex items-center gap-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all font-medium mt-2"
                                 >
                                   <Plus size={16} />
                                   Add Customer
@@ -1086,7 +1086,7 @@ const ManageCustomers = ({ user }) => {
                         onChange={(e) =>
                           handleItemsPerPageChange(Number(e.target.value))
                         }
-                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none"
                       >
                         <option value={5}>5</option>
                         <option value={10}>10</option>
@@ -1128,7 +1128,7 @@ const ManageCustomers = ({ user }) => {
                               onClick={() => handlePageChange(page as number)}
                               className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                                 currentPage === page
-                                  ? "bg-blue-600 text-white border border-blue-600"
+                                  ? "bg-gray-600 text-white border border-gray-600"
                                   : "text-gray-700 hover:bg-gray-100 border border-gray-300"
                               }`}
                               aria-label={`Page ${page}`}

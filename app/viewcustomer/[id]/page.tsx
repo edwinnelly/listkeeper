@@ -170,7 +170,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
 
   const getStatusBadgeColor = (isActive: boolean) => {
     return isActive
-      ? "bg-green-50 text-green-700 border border-green-200"
+      ? "bg-gray-50 text-gray-700 border border-gray-200"
       : "bg-gray-50 text-gray-700 border border-gray-200";
   };
 
@@ -178,7 +178,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
     return (
       <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+          <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
           <p className="text-gray-600 font-medium">
             Loading customer profile...
           </p>
@@ -200,7 +200,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
           </p>
           <Link
             href="/customers"
-            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <ArrowLeft size={16} />
             Back to Customers
@@ -240,7 +240,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             <div className="flex items-center gap-3">
               <Link
                 href={`/editcustomers/${id}/`}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 font-medium shadow-lg shadow-gray-500/25 hover:shadow-xl hover:shadow-gray-500/30"
               >
                 <Edit size={18} />
                 Edit Profile
@@ -266,8 +266,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
               {/* Profile Photo/Icon */}
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-200/50 flex items-center justify-center">
-                    <User className="h-16 w-16 text-blue-600" />
+                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 flex items-center justify-center">
+                    <User className="h-16 w-16 text-gray-600" />
                   </div>
                 </div>
 
@@ -313,15 +313,15 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-4 w-full pt-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <DollarSign className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-gray-600 mx-auto mb-1" />
                     <p className="text-sm text-gray-600">Total Purchases</p>
                     <p className="font-bold text-gray-900 text-lg">
                       {formatCurrency(customer.total_purchases)}
                     </p>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <Award className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <Award className="h-5 w-5 text-gray-600 mx-auto mb-1" />
                     <p className="text-sm text-gray-600">Loyalty Points</p>
                     <p className="font-bold text-gray-900 text-lg">
                       {customer.loyalty_points.toLocaleString()}
@@ -337,13 +337,13 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             {/* Personal Information */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <User className="h-5 w-5 text-blue-600" />
+                <User className="h-5 w-5 text-gray-600" />
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <User className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <User className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Full Name</p>
@@ -354,8 +354,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <User className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <User className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Gender</p>
@@ -366,8 +366,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Date of Birth</p>
@@ -378,8 +378,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <Hash className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Hash className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Customer Code</p>
@@ -394,13 +394,13 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             {/* Contact Information */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Mail className="h-5 w-5 text-blue-600" />
+                <Mail className="h-5 w-5 text-gray-600" />
                 Contact Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                    <Mail className="h-5 w-5 text-green-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Mail className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Email Address</p>
@@ -411,8 +411,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                    <Phone className="h-5 w-5 text-green-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Phone Number</p>
@@ -427,13 +427,13 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             {/* Location Information */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-blue-600" />
+                <MapPin className="h-5 w-5 text-gray-600" />
                 Location Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Address</p>
@@ -444,8 +444,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <Building className="h-5 w-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Building className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">City</p>
@@ -456,8 +456,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">State</p>
@@ -468,8 +468,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <Globe className="h-5 w-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Globe className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Country</p>
@@ -480,8 +480,8 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <Hash className="h-5 w-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Hash className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Postal Code</p>
@@ -496,7 +496,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             {/* Account Information */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-blue-600" />
+                <CreditCard className="h-5 w-5 text-gray-600" />
                 Account Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -544,7 +544,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             {customer.location_name && (
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Building className="h-5 w-5 text-blue-600" />
+                  <Building className="h-5 w-5 text-gray-600" />
                   Business Location
                 </h3>
                 <div className="flex items-center gap-3">
@@ -564,7 +564,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             {/* Notes */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
+                <FileText className="h-5 w-5 text-gray-600" />
                 Notes
               </h3>
               <div className="bg-gray-50 rounded-lg p-4">

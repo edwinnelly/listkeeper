@@ -6,7 +6,7 @@ const Business = () => {
   return (
     <div>
       <Link href="/business">
-        <button className="group/btn relative overflow-hidden px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl text-sm font-medium transition-all duration-300 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer">
+        <button className="group/btn relative overflow-hidden px-3 py-1.5 bg-gradient-to-r from-gray-600 to-gray-600 hover:from-gray-700 hover:to-gray-700 text-white rounded-xl text-sm font-medium transition-all duration-300 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer">
           <span className="relative z-10">Switch Account</span>
           <ChevronRight
             size={16}

@@ -71,7 +71,7 @@ interface MetricCardProps {
   icon: React.ReactNode;
   title: string;
   data: MetricData[];
-  color: 'blue' | 'emerald' | 'violet' | 'amber';
+  color: 'gray' | 'emerald' | 'violet' | 'amber';
 }
 
 /* ---------------- Dashboard ---------------- */
@@ -92,13 +92,13 @@ const Dashboard: React.FC<DashboardProps> = ({
  
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-50/30 p-4 md:p-6">
       <main className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+              <div className="w-2 h-8 bg-gray-600 rounded-full"></div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Inventory Overview
               </h1>
@@ -113,7 +113,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <Plus size={18} className="mr-2" />
               Add Widget
             </button>
-            <button className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center shadow-sm hover:shadow-md">
+            <button className="px-4 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-medium hover:from-gray-700 hover:to-gray-800 transition-all duration-200 flex items-center shadow-sm hover:shadow-md">
               <FileText size={18} className="mr-2" />
               Generate Report
             </button>
@@ -128,7 +128,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {/* Logo and Info */}
                 <div className="flex items-start space-x-4">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-2 shadow-sm">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-50 to-indigo-50 border border-gray-100 p-2 shadow-sm">
                       {!imageError ? (
                         <img
                           src={`http://localhost:8000/storage/${logo}`}
@@ -159,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <span className="px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200">
                           Active
                         </span>
-                        <span className="px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full border border-blue-200">
+                        <span className="px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 rounded-full border border-gray-200">
                           {subscription_type}
                         </span>
                       </div>
@@ -222,7 +222,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Quick Actions */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-xl text-white shadow-sm">
+            <div className="bg-gradient-to-br from-gray-600 to-indigo-700 p-6 rounded-xl text-white shadow-sm">
               <h3 className="font-semibold mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -272,7 +272,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <MetricCard
             icon={<TrendingUp size={20} />}
             title="Sales Performance"
-            color="blue"
+            color="gray"
             data={[
               { label: "Total Revenue", value: "$45,231", change: "+12.4%" },
               { label: "Units Sold", value: "2,847", change: "+8.2%" },
@@ -309,7 +309,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
 const InfoItem = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
   <div className="flex items-center gap-3">
-    <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">{icon}</div>
+    <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">{icon}</div>
     <div>
       <p className="text-sm text-gray-500">{label}</p>
       <p className="text-sm font-medium text-gray-900">{value}</p>
@@ -339,7 +339,7 @@ const SummaryItem = ({
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon, description }) => (
   <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
     <div className="flex items-center justify-between mb-4">
-      <div className="p-2.5 rounded-xl bg-blue-50 text-gray-600 border border-blue-100">{icon}</div>
+      <div className="p-2.5 rounded-xl bg-gray-50 text-gray-600 border border-gray-100">{icon}</div>
     </div>
     <div className="mb-2">
       <h3 className="text-2xl font-bold text-gray-900 mb-1">{value}</h3>
@@ -353,7 +353,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, description }) 
 
 const MetricCard: React.FC<MetricCardProps> = ({ icon, title, data, color }) => {
   const colorClasses = {
-    blue: 'border-blue-200',
+    gray: 'border-gray-200',
     emerald: 'border-emerald-200',
     violet: 'border-violet-200',
     amber: 'border-amber-200',

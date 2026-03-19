@@ -190,7 +190,7 @@ const StatCard: React.FC<{
   title: string;
   value: string | number;
   icon: React.ElementType;
-  color: "primary" | "emerald" | "amber" | "rose" | "purple" | "blue";
+  color: "primary" | "emerald" | "amber" | "rose" | "gray" | "gray";
   trend?: {
     value: number;
     label: string;
@@ -201,8 +201,8 @@ const StatCard: React.FC<{
     emerald: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
     rose: "bg-rose-50 text-rose-700",
-    purple: "bg-purple-50 text-purple-700",
-    blue: "bg-blue-50 text-blue-700",
+    gray: "bg-gray-50 text-gray-700",
+    gray: "bg-gray-50 text-gray-700",
   };
 
   return (
@@ -1701,13 +1701,13 @@ const ManageProducts = ({ user }) => {
             title="Inventory Value"
             value={formatCurrency(statistics.totalValue)}
             icon={DollarSign}
-            color="purple"
+            color="gray"
           />
           <StatCard
             title="Profit Margin"
             value={`${statistics.profitMargin.toFixed(1)}%`}
             icon={TrendingUp}
-            color="blue"
+            color="gray"
           />
         </div>
 

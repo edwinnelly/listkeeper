@@ -304,7 +304,7 @@ export default function ProfessionalLandingPage() {
       description: "AI-powered real-time monitoring across all locations with predictive restocking alerts.",
       stats: "99.9% Accuracy",
       image: "/asset/similar-10073860.jpeg",
-      color: "from-blue-600 to-blue-800"
+      color: "from-gray-600 to-gray-800"
     },
     {
       icon: <LineChart className="w-5 h-5" />,
@@ -312,7 +312,7 @@ export default function ProfessionalLandingPage() {
       description: "Transform data into actionable insights with comprehensive dashboards and reports.",
       stats: "3.2x ROI Average",
       image: "/asset/similar-10073860.jpeg",
-      color: "from-purple-600 to-purple-800"
+      color: "from-gray-600 to-gray-800"
     },
     {
       icon: <Warehouse className="w-5 h-5" />,
@@ -468,19 +468,19 @@ export default function ProfessionalLandingPage() {
   const integrations = [
     { 
       name: "Microsoft 365", 
-      color: "from-blue-600 to-blue-800",
+      color: "from-gray-600 to-gray-800",
       icon: "M",
       category: "Productivity"
     },
     { 
       name: "Salesforce", 
-      color: "from-blue-500 to-cyan-600",
+      color: "from-gray-500 to-gray-600",
       icon: "S",
       category: "CRM"
     },
     { 
       name: "SAP", 
-      color: "from-blue-400 to-blue-600",
+      color: "from-gray-400 to-gray-600",
       icon: "S",
       category: "ERP"
     },
@@ -568,7 +568,7 @@ export default function ProfessionalLandingPage() {
         "Team collaboration"
       ],
       cta: "Most Popular",
-      color: "from-blue-600 to-blue-800"
+      color: "from-gray-600 to-gray-800"
     },
     {
       name: "Enterprise",
@@ -588,7 +588,7 @@ export default function ProfessionalLandingPage() {
         "Advanced security"
       ],
       cta: "Get Quote",
-      color: "from-purple-600 to-purple-800"
+      color: "from-gray-600 to-gray-800"
     },
     {
       name: "Custom",
@@ -669,7 +669,7 @@ export default function ProfessionalLandingPage() {
   return (
     <div className="font-sans bg-white text-gray-900 min-h-screen">
       {/* Top Announcement Bar */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-1.5 px-4 text-xs font-medium tracking-wide">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-1.5 px-4 text-xs font-medium tracking-wide">
         <div className="max-w-7xl mx-auto flex items-center justify-center space-x-4">
           <div className="flex items-center">
             <Award className="w-3 h-3 mr-2" />
@@ -731,8 +731,8 @@ export default function ProfessionalLandingPage() {
                     }}
                     className={`flex flex-col items-start px-4 py-2 text-sm transition-all duration-200 min-w-[140px] ${
                       activeMenu === item.id 
-                        ? 'text-blue-900' 
-                        : 'text-gray-700 hover:text-blue-900'
+                        ? 'text-gray-900' 
+                        : 'text-gray-700 hover:text-gray-900'
                     }`}
                   >
                     <div className="flex items-center space-x-2">
@@ -780,25 +780,25 @@ export default function ProfessionalLandingPage() {
                                         href={link.href}
                                         className={`flex items-start p-2 rounded-md transition-colors ${
                                           link.featured 
-                                            ? 'bg-blue-50 border border-blue-100' 
+                                            ? 'bg-gray-50 border border-gray-100' 
                                             : 'hover:bg-gray-50'
                                         }`}
                                       >
                                         {link.icon && (
-                                          <div className={`mt-0.5 mr-3 ${link.featured ? 'text-blue-900' : 'text-gray-500'}`}>
+                                          <div className={`mt-0.5 mr-3 ${link.featured ? 'text-gray-900' : 'text-gray-500'}`}>
                                             {link.icon}
                                           </div>
                                         )}
                                         <div className="flex-1 min-w-0">
                                           <div className="flex items-center justify-between">
-                                            <span className={`text-sm font-medium ${link.featured ? 'text-blue-900' : 'text-gray-900'}`}>
+                                            <span className={`text-sm font-medium ${link.featured ? 'text-gray-900' : 'text-gray-900'}`}>
                                               {link.label}
                                             </span>
                                             {link.badge && (
                                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                                 link.badge === 'New' 
-                                                  ? 'bg-green-100 text-green-900' 
-                                                  : 'bg-blue-100 text-blue-900'
+                                                  ? 'bg-gray-100 text-gray-900' 
+                                                  : 'bg-gray-100 text-gray-900'
                                               }`}>
                                                 {link.badge}
                                               </span>
@@ -823,12 +823,12 @@ export default function ProfessionalLandingPage() {
                                           key={featureIndex}
                                           className="flex items-center p-2 rounded-md hover:bg-gray-50 group"
                                         >
-                                          <div className="w-6 h-6 rounded bg-blue-50 flex items-center justify-center mr-2 group-hover:bg-blue-100 transition-colors">
-                                            <div className="text-blue-900">
+                                          <div className="w-6 h-6 rounded bg-gray-50 flex items-center justify-center mr-2 group-hover:bg-gray-100 transition-colors">
+                                            <div className="text-gray-900">
                                               {feature.icon}
                                             </div>
                                           </div>
-                                          <span className="text-xs font-medium text-gray-700 group-hover:text-blue-900">
+                                          <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900">
                                             {feature.label}
                                           </span>
                                         </div>
@@ -837,7 +837,7 @@ export default function ProfessionalLandingPage() {
                                     {column.cta && (
                                       <Link
                                         href={column.cta.href}
-                                        className="flex items-center justify-center text-sm font-medium text-blue-900 hover:text-blue-700 mt-3 pt-3 border-t border-gray-100"
+                                        className="flex items-center justify-center text-sm font-medium text-gray-900 hover:text-gray-700 mt-3 pt-3 border-t border-gray-100"
                                       >
                                         {column.cta.label}
                                         <ChevronRight className="w-4 h-4 ml-1" />
@@ -858,16 +858,16 @@ export default function ProfessionalLandingPage() {
                                 <Link
                                   key={supportItem.id}
                                   href={supportItem.href}
-                                  className="flex items-center text-sm font-medium text-gray-700 hover:text-blue-900 transition-colors group"
+                                  className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors group"
                                 >
                                   {supportItem.icon && (
-                                    <span className="mr-2 text-gray-500 group-hover:text-blue-900">
+                                    <span className="mr-2 text-gray-500 group-hover:text-gray-900">
                                       {supportItem.icon}
                                     </span>
                                   )}
                                   {supportItem.label}
                                   {supportItem.badge && (
-                                    <span className="ml-2 px-2 py-0.5 text-xs bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-full font-medium">
+                                    <span className="ml-2 px-2 py-0.5 text-xs bg-gradient-to-r from-gray-900 to-gray-700 text-white rounded-full font-medium">
                                       {supportItem.badge}
                                     </span>
                                   )}
@@ -890,13 +890,13 @@ export default function ProfessionalLandingPage() {
               <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-gray-700 hover:text-blue-900 transition-colors px-3 py-1.5 rounded-md hover:bg-gray-50"
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-md hover:bg-gray-50"
                 >
                   Sign In
                 </Link>
                 <button 
                   onClick={() => scrollToSection("cta")}
-                  className="group bg-gradient-to-r from-blue-900 to-blue-800 text-white px-4 py-2 rounded-md font-medium hover:shadow-lg hover:shadow-blue-900/25 transition-all duration-300 flex items-center space-x-2"
+                  className="group bg-gradient-to-r from-gray-900 to-gray-800 text-white px-4 py-2 rounded-md font-medium hover:shadow-lg hover:shadow-gray-900/25 transition-all duration-300 flex items-center space-x-2"
                 >
                   <span>Start Free Trial</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -906,7 +906,7 @@ export default function ProfessionalLandingPage() {
 
             {/* Mobile Menu Button */}
             <button
-              className="lg:hidden text-gray-700 hover:text-blue-900 transition-colors p-1"
+              className="lg:hidden text-gray-700 hover:text-gray-900 transition-colors p-1"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -928,7 +928,7 @@ export default function ProfessionalLandingPage() {
                 <input
                   type="text"
                   placeholder="Search features, docs, help..."
-                  className="w-full px-4 py-2 pl-10 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900/20"
+                  className="w-full px-4 py-2 pl-10 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900/20"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
@@ -991,8 +991,8 @@ export default function ProfessionalLandingPage() {
                                 {link.badge && (
                                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                     link.badge === 'New' 
-                                      ? 'bg-green-100 text-green-900' 
-                                      : 'bg-blue-100 text-blue-900'
+                                      ? 'bg-gray-100 text-gray-900' 
+                                      : 'bg-gray-100 text-gray-900'
                                   }`}>
                                     {link.badge}
                                   </span>
@@ -1024,7 +1024,7 @@ export default function ProfessionalLandingPage() {
                       <span className="text-sm font-medium text-gray-900">{supportItem.label}</span>
                     </div>
                     {supportItem.badge && (
-                      <span className="text-xs px-2 py-0.5 bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-full font-medium">
+                      <span className="text-xs px-2 py-0.5 bg-gradient-to-r from-gray-900 to-gray-700 text-white rounded-full font-medium">
                         {supportItem.badge}
                       </span>
                     )}
@@ -1037,7 +1037,7 @@ export default function ProfessionalLandingPage() {
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center px-4 py-3 text-sm font-medium text-blue-900 hover:bg-blue-50 rounded-lg transition-colors border border-blue-900"
+                  className="block w-full text-center px-4 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors border border-gray-900"
                 >
                   Sign In
                 </Link>
@@ -1046,7 +1046,7 @@ export default function ProfessionalLandingPage() {
                     scrollToSection("cta");
                     setMobileMenuOpen(false);
                   }}
-                  className="block w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white text-center px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all"
+                  className="block w-full bg-gradient-to-r from-gray-900 to-gray-800 text-white text-center px-4 py-3 rounded-lg font-medium hover:shadow-lg transition-all"
                 >
                   Start Free Trial
                 </button>
@@ -1068,14 +1068,14 @@ export default function ProfessionalLandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-50 text-blue-900 text-xs font-medium mb-6">
+                <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-gray-50 text-gray-900 text-xs font-medium mb-6">
                   <Sparkles className="w-3 h-3 mr-1.5" />
                   Enterprise-Grade Inventory Platform
                 </div>
 
                 <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6 leading-tight">
                   Transform Your
-                  <span className="block text-blue-900 mt-2">Supply Chain Operations</span>
+                  <span className="block text-gray-900 mt-2">Supply Chain Operations</span>
                 </h1>
 
                 <p className="text-lg text-gray-600 mb-8 max-w-2xl leading-relaxed">
@@ -1089,12 +1089,12 @@ export default function ProfessionalLandingPage() {
                   {metrics.map((metric, index) => (
                     <div key={index} className="text-left">
                       <div className="flex items-center mb-2">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3">
-                          <div className="text-blue-900">
+                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center mr-3">
+                          <div className="text-gray-900">
                             {metric.icon}
                           </div>
                         </div>
-                        <div className="text-2xl font-bold text-blue-900">{metric.value}</div>
+                        <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
                       </div>
                       <div className="text-sm font-semibold text-gray-900">{metric.label}</div>
                       <div className="text-xs text-gray-500">{metric.description}</div>
@@ -1112,21 +1112,21 @@ export default function ProfessionalLandingPage() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="Enter your work email"
-                          className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-300 bg-white focus:border-blue-900 focus:ring-2 focus:ring-blue-900/10 outline-none transition-all placeholder-gray-500 text-sm"
+                          className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-300 bg-white focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 outline-none transition-all placeholder-gray-500 text-sm"
                         />
                         <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       </div>
                     </div>
                     <button 
                       onClick={() => scrollToSection("cta")}
-                      className="group bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-xl hover:shadow-blue-900/25 transition-all duration-300 flex items-center justify-center space-x-2"
+                      className="group bg-gradient-to-r from-gray-900 to-gray-800 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-xl hover:shadow-gray-900/25 transition-all duration-300 flex items-center justify-center space-x-2"
                     >
                       <span>Start Free Trial</span>
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 flex items-center">
-                    <CheckCircle className="w-3 h-3 mr-2 text-green-500" />
+                    <CheckCircle className="w-3 h-3 mr-2 text-gray-500" />
                     No credit card required • 14-day free trial • Cancel anytime
                   </p>
                 </div>
@@ -1147,7 +1147,7 @@ export default function ProfessionalLandingPage() {
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 rounded-full bg-red-400"></div>
                           <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                          <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                          <div className="w-2 h-2 rounded-full bg-gray-400"></div>
                         </div>
                         <div className="text-white text-sm font-medium">Enterprise Dashboard</div>
                       </div>
@@ -1185,19 +1185,19 @@ export default function ProfessionalLandingPage() {
 
                     {/* Dashboard Stats */}
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center space-x-3">
-                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse"></div>
                           <span className="text-sm font-medium text-gray-900">System Status</span>
                         </div>
-                        <div className="text-sm font-semibold text-green-700">Operational</div>
+                        <div className="text-sm font-semibold text-gray-700">Operational</div>
                       </div>
-                      <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center space-x-3">
-                          <TrendingUp className="w-4 h-4 text-purple-600" />
+                          <TrendingUp className="w-4 h-4 text-gray-600" />
                           <span className="text-sm font-medium text-gray-900">AI Predictions</span>
                         </div>
-                        <div className="text-sm font-semibold text-purple-700">Active</div>
+                        <div className="text-sm font-semibold text-gray-700">Active</div>
                       </div>
                     </div>
                   </div>
@@ -1233,13 +1233,13 @@ export default function ProfessionalLandingPage() {
         <section className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 text-blue-900 text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-50 text-gray-900 text-sm font-medium mb-6">
                 <Eye className="w-4 h-4 mr-2" />
                 PLATFORM PREVIEW
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
                 See ListKeeping in Action
-                <span className="block text-blue-900">Powerful Features, Beautiful Interface</span>
+                <span className="block text-gray-900">Powerful Features, Beautiful Interface</span>
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Explore our comprehensive platform designed for modern inventory management
@@ -1267,8 +1267,8 @@ export default function ProfessionalLandingPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                      <div className="text-blue-900">
+                    <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                      <div className="text-gray-900">
                         {screenshot.icon}
                       </div>
                     </div>
@@ -1308,8 +1308,8 @@ export default function ProfessionalLandingPage() {
                     <div className="space-y-3">
                       {capability.items.map((item, itemIndex) => (
                         <div key={itemIndex} className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                            <div className="text-blue-900">
+                          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
+                            <div className="text-gray-900">
                               {item.icon}
                             </div>
                           </div>
@@ -1328,13 +1328,13 @@ export default function ProfessionalLandingPage() {
         <section id="features" className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 text-blue-900 text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-50 text-gray-900 text-sm font-medium mb-6">
                 <Target className="w-4 h-4 mr-2" />
                 ENTERPRISE FEATURES
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
                 Comprehensive Solutions for
-                <span className="block text-blue-900">Modern Enterprises</span>
+                <span className="block text-gray-900">Modern Enterprises</span>
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Everything you need to optimize inventory management and supply chain operations
@@ -1349,7 +1349,7 @@ export default function ProfessionalLandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
-                  className="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-900/20 transition-all duration-300"
+                  className="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-gray-900/20 transition-all duration-300"
                 >
                   <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-lg flex items-center justify-center mb-4`}>
                     <div className="text-white">
@@ -1360,7 +1360,7 @@ export default function ProfessionalLandingPage() {
                   <p className="text-gray-600 text-sm mb-4 leading-relaxed">
                     {feature.description}
                   </p>
-                  <div className="text-sm font-semibold text-blue-900">
+                  <div className="text-sm font-semibold text-gray-900">
                     {feature.stats}
                   </div>
                 </motion.div>
@@ -1373,13 +1373,13 @@ export default function ProfessionalLandingPage() {
         <section id="integrations" className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 text-blue-900 text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-50 text-gray-900 text-sm font-medium mb-6">
                 <Globe className="w-4 h-4 mr-2" />
                 SEAMLESS INTEGRATION
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
                 Connect With Your
-                <span className="block text-blue-900">Technology Stack</span>
+                <span className="block text-gray-900">Technology Stack</span>
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Works effortlessly with the enterprise systems you already use
@@ -1415,13 +1415,13 @@ export default function ProfessionalLandingPage() {
         <section id="testimonials" className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 text-blue-900 text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-50 text-gray-900 text-sm font-medium mb-6">
                 <Star className="w-4 h-4 mr-2" />
                 CUSTOMER SUCCESS
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
                 Trusted by Industry
-                <span className="block text-blue-900">Leaders Worldwide</span>
+                <span className="block text-gray-900">Leaders Worldwide</span>
               </h2>
             </div>
 
@@ -1436,13 +1436,13 @@ export default function ProfessionalLandingPage() {
                   className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300"
                 >
                   <div className="flex items-center mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-900 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-12 h-12 bg-gradient-to-br from-gray-900 to-gray-700 rounded-full flex items-center justify-center text-white font-bold text-lg">
                       {testimonial.avatar}
                     </div>
                     <div className="ml-4">
                       <div className="font-bold text-gray-900">{testimonial.name}</div>
                       <div className="text-sm text-gray-600">{testimonial.role}</div>
-                      <div className="text-sm text-blue-900 font-semibold">{testimonial.company}</div>
+                      <div className="text-sm text-gray-900 font-semibold">{testimonial.company}</div>
                     </div>
                   </div>
                   <p className="text-gray-700 mb-6 text-sm italic">&ldquo;{testimonial.content}&rdquo;</p>
@@ -1464,13 +1464,13 @@ export default function ProfessionalLandingPage() {
         <section id="pricing" className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 text-blue-900 text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-50 text-gray-900 text-sm font-medium mb-6">
                 <CreditCard className="w-4 h-4 mr-2" />
                 TRANSPARENT PRICING
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
                 Choose the Perfect Plan
-                <span className="block text-blue-900">For Your Business</span>
+                <span className="block text-gray-900">For Your Business</span>
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Scalable solutions for businesses of all sizes. Start free, upgrade as you grow.
@@ -1489,13 +1489,13 @@ export default function ProfessionalLandingPage() {
                 >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                      <div className="bg-gradient-to-r from-gray-600 to-gray-800 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg">
                         MOST POPULAR
                       </div>
                     </div>
                   )}
                   
-                  <div className={`relative h-full rounded-xl border-2 ${plan.popular ? 'border-blue-600 shadow-xl' : 'border-gray-200 shadow-lg hover:shadow-xl'} bg-white overflow-hidden transition-all duration-300`}>
+                  <div className={`relative h-full rounded-xl border-2 ${plan.popular ? 'border-gray-600 shadow-xl' : 'border-gray-200 shadow-lg hover:shadow-xl'} bg-white overflow-hidden transition-all duration-300`}>
                     {/* Plan Header */}
                     <div className={`bg-gradient-to-r ${plan.color} p-6 text-white`}>
                       <h3 className="text-xl font-bold">{plan.name}</h3>
@@ -1504,7 +1504,7 @@ export default function ProfessionalLandingPage() {
                           {plan.price}
                           {plan.price !== "Custom" && <span className="text-lg font-normal">/mo</span>}
                         </div>
-                        <div className="text-blue-100 text-sm mt-1">{plan.period}</div>
+                        <div className="text-gray-100 text-sm mt-1">{plan.period}</div>
                       </div>
                     </div>
 
@@ -1515,7 +1515,7 @@ export default function ProfessionalLandingPage() {
                       <div className="space-y-3 mb-8">
                         {plan.features.map((feature, featureIndex) => (
                           <div key={featureIndex} className="flex items-start">
-                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-gray-500 mt-0.5 mr-3 flex-shrink-0" />
                             <span className="text-sm text-gray-700">{feature}</span>
                           </div>
                         ))}
@@ -1525,7 +1525,7 @@ export default function ProfessionalLandingPage() {
                         onClick={() => plan.price === "Custom" ? alert("Contacting sales...") : scrollToSection("cta")}
                         className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 ${
                           plan.popular 
-                            ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:from-blue-700 hover:to-blue-900' 
+                            ? 'bg-gradient-to-r from-gray-600 to-gray-800 text-white hover:from-gray-700 hover:to-gray-900' 
                             : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                         }`}
                       >
@@ -1600,7 +1600,7 @@ export default function ProfessionalLandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section id="cta" className="py-20 bg-gradient-to-br from-blue-900 to-blue-800">
+        <section id="cta" className="py-20 bg-gradient-to-br from-gray-900 to-gray-800">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.div
               initial={{ opacity: 0, y: 40 }}
@@ -1611,7 +1611,7 @@ export default function ProfessionalLandingPage() {
                 Ready to Transform Your
                 <span className="block">Inventory Management?</span>
               </h2>
-              <p className="text-lg text-blue-100 mb-12 max-w-2xl mx-auto">
+              <p className="text-lg text-gray-100 mb-12 max-w-2xl mx-auto">
                 Join thousands of enterprises optimizing their supply chain with ListKeeping
               </p>
               
@@ -1621,7 +1621,7 @@ export default function ProfessionalLandingPage() {
                     setEmail("");
                     alert("Starting your free trial...");
                   }}
-                  className="bg-white text-blue-900 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center space-x-2"
+                  className="bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center space-x-2"
                 >
                   <span>Start Free Trial</span>
                   <ArrowRight className="w-5 h-5" />
@@ -1634,15 +1634,15 @@ export default function ProfessionalLandingPage() {
               </div>
               
               <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="flex items-center justify-center text-blue-200">
+                <div className="flex items-center justify-center text-gray-200">
                   <CheckCircle className="w-5 h-5 mr-2" />
                   <span>No credit card required</span>
                 </div>
-                <div className="flex items-center justify-center text-blue-200">
+                <div className="flex items-center justify-center text-gray-200">
                   <Clock className="w-5 h-5 mr-2" />
                   <span>14-day free trial</span>
                 </div>
-                <div className="flex items-center justify-center text-blue-200">
+                <div className="flex items-center justify-center text-gray-200">
                   <Shield className="w-5 h-5 mr-2" />
                   <span>Enterprise support included</span>
                 </div>
@@ -1668,7 +1668,7 @@ export default function ProfessionalLandingPage() {
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-white">ListKeeping</div>
-                    <div className="text-sm text-blue-400">Enterprise Platform</div>
+                    <div className="text-sm text-gray-400">Enterprise Platform</div>
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed">

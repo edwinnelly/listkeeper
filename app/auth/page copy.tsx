@@ -2,7 +2,6 @@
 import React, { useState, FormEvent, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image"; // Added for image optimization
 import { useRouter } from "next/navigation";
 import { 
   MailRegular,
@@ -17,21 +16,10 @@ import {
 } from "@fluentui/react-icons";
 import { api, withCsrf } from "@/lib/axios";
 
-// Define proper types
 interface User {
   id: number;
   name: string;
   email: string;
-}
-
-// Define error response type
-interface ErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
 }
 
 const LoginPage: React.FC = () => {
@@ -70,8 +58,7 @@ const LoginPage: React.FC = () => {
         const element = document.getElementById(window.location.hash.substring(1));
         if (element && containerRef.current) {
           const container = containerRef.current;
-          // elementRect is no longer unused - we use it directly
-          element.getBoundingClientRect(); // Use it if needed, or remove this line
+          const elementRect = element.getBoundingClientRect();
           const containerRect = container.getBoundingClientRect();
           
           container.scrollTo({
@@ -114,21 +101,13 @@ const LoginPage: React.FC = () => {
         api.post("/login", { email, password }, { withCredentials: true })
       );
 
-      // We're fetching the user but not using it - either use it or remove it
       const { data: user } = await withCsrf(() =>
         api.get<User>("/user", { withCredentials: true })
       );
 
-      // Option 1: Use the user data (uncomment if needed)
-      // console.log('Logged in user:', user);
-      
-      // Option 2: Store user in context/state if needed
-      // For now, just redirect
       router.push("/dashboard");
-    } catch (err: unknown) { // Fixed: removed 'any' type
-      // Properly type the error
-      const error = err as ErrorResponse;
-      setError(error.response?.data?.message || "Login failed. Please try again.");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -190,14 +169,10 @@ const LoginPage: React.FC = () => {
             <div className="container mx-auto px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  {/* Fixed: Replaced img with Next.js Image */}
-                  <Image 
+                  <img 
                     src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
                     alt="ListKeeping Logo" 
-                    width={32}
-                    height={32}
                     className="h-8 w-8"
-                    priority
                   />
                   <span className="text-white font-bold text-lg">ListKeeping</span>
                 </div>
@@ -226,14 +201,10 @@ const LoginPage: React.FC = () => {
                 >
                   <div className="space-y-6 md:space-y-8 p-4 md:p-6 lg:p-8">
                     <div className="flex items-center space-x-3">
-                      {/* Fixed: Replaced img with Next.js Image */}
-                      <Image 
+                      <img 
                         src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
                         alt="ListKeeping Logo" 
-                        width={isTablet ? 40 : 56}
-                        height={isTablet ? 40 : 56}
-                        className={`${isTablet ? 'h-10' : 'h-12 lg:h-14'} w-auto`}
-                        priority
+                        className={`${isTablet ? 'h-10' : 'h-12 lg:h-14'}`}
                       />
                       <span className={`${isTablet ? 'text-2xl' : 'text-3xl lg:text-4xl'} font-bold`}>ListKeeping</span>
                     </div>

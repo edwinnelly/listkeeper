@@ -170,7 +170,7 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
               href={value}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-gray-900 hover:text-blue-600 transition-colors font-medium"
+              className="inline-flex items-center gap-2 text-sm text-gray-900 hover:text-gray-600 transition-colors font-medium"
             >
               Visit site
               <ExternalLink className="h-4 w-4" />
@@ -189,7 +189,7 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-16 h-16 border-4 border-gray-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-gray-600 font-medium">Loading business profile...</p>
         </div>
       </div>
@@ -234,7 +234,7 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
 
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-500/10"></div>
           <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-center gap-6">
               {business.logo ? (
@@ -271,7 +271,7 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
             label="Total Locations"
             value={business.stats.totalLocations}
             trend={12}
-            gradient="bg-gradient-to-br from-blue-500 to-blue-600"
+            gradient="bg-gradient-to-br from-gray-500 to-gray-600"
           />
           <StatCard
             icon={Activity}
@@ -336,7 +336,7 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
                 <button
                   onClick={handleSwitchAccount}
                   disabled={switchingAccount}
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 text-white text-base font-semibold rounded-xl shadow-md hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gray-600 text-white text-base font-semibold rounded-xl shadow-md hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg"
                 >
                   {switchingAccount ? (
                     <>
@@ -352,7 +352,7 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
                 </button>
               ) : (
                 <Link href={`/business_subscription/${id}`}> 
-                <button className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 text-white text-base font-semibold rounded-xl shadow-md cursor-pointer">
+                <button className="inline-flex items-center gap-3 px-8 py-4 bg-gray-600 text-white text-base font-semibold rounded-xl shadow-md cursor-pointer">
                   Activate Account
                 </button></Link>
                 

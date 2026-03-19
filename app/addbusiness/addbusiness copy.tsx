@@ -1,43 +1,12 @@
 'use client';
 
-import { useRouter } from "next/navigation"; // Removed unused useParams
-import React, { useState } from "react";
-import Image from "next/image"; // Add this for Next.js Image component
-import { Building2, Plus, ArrowLeft } from "lucide-react"; // Removed unused Image, Upload, Hexagon
+import { useParams, useRouter } from "next/navigation";
+import React, { useState, } from "react";
+import { Building2, Image, Upload, Plus, Hexagon, ArrowLeft } from "lucide-react";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { toast } from 'react-hot-toast';
-
-// Define proper types
-interface FormState {
-  business_name: string;
-  slug: string;
-  industry_type: string;
-  logo: string;
-  email: string;
-  phone: string;
-  website: string;
-  address: string;
-  country: string;
-  state: string;
-  city: string;
-  subscription_type: string;
-  subscription_plan: string;
-  currency: string;
-  language: string;
-  about_business: string;
-}
-
-// Define error response type
-interface ErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
-}
 
 const industryTypes = [
   "Technology", "Finance", "Retail", "Healthcare", "Education", "Manufacturing",
@@ -64,13 +33,33 @@ const subscriptionTypes = [
   "Premium",
   "Enterprise",
   "Custom"
+
 ];
 
 const subscriptionPlans = ["monthly", "yearly"];
+const currencies = ["NGN", "USD", "EUR"];
 const languages = ["en", "fr", "es"];
 
+interface FormState {
+  business_name: string;
+  slug: string;
+  industry_type: string;
+  logo: string;
+  email: string;
+  phone: string;
+  website: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  subscription_type: string;
+  subscription_plan: string;
+  currency: string;
+  language: string;
+  about_business: string;
+}
+
 export default function AddBusinessPage() {
-  const router = useRouter();
   const [form, setForm] = useState<FormState>({
     business_name: "",
     slug: "",
@@ -83,7 +72,7 @@ export default function AddBusinessPage() {
     country: "",
     state: "",
     city: "",
-    subscription_type: "Free", // Changed from "free" to match subscriptionTypes
+    subscription_type: "free",
     subscription_plan: "monthly",
     currency: "NGN",
     language: "en",
@@ -92,7 +81,6 @@ export default function AddBusinessPage() {
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null); // Add for preview
 
   const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
   const labelClass = "block text-sm font-medium text-gray-700 mb-2";
@@ -102,7 +90,7 @@ export default function AddBusinessPage() {
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    const maxSize = 2 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       toast.error('Please upload a JPEG, PNG, or WEBP image.');
@@ -115,14 +103,8 @@ export default function AddBusinessPage() {
     }
 
     setLogoFile(file);
-    
-    // Create preview URL
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setLogoPreview(result);
-      setForm(prev => ({ ...prev, logo: result }));
-    };
+    reader.onload = () => setForm(prev => ({ ...prev, logo: reader.result as string }));
     reader.readAsDataURL(file);
   };
 
@@ -130,14 +112,15 @@ export default function AddBusinessPage() {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
+  const router = useRouter();
+
   const showSuccessAlert = () => {
     toast.success('Your business has been created successfully.');
     router.push('/business');
   };
 
-  // Fixed: Added proper typing and used the message parameter
   const showErrorAlert = (message: string) => {
-    toast.error(message || 'Failed to create business. Please try again.');
+    toast.error('Creation Failed');
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -149,53 +132,43 @@ export default function AddBusinessPage() {
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
-        // Handle null/undefined values
-        if (value !== null && value !== undefined) {
-          formData.append(key, value);
-        }
+        formData.append(key, value);
       });
 
-      if (logoFile) {
-        formData.append("logo", logoFile);
-      }
+      if (logoFile) formData.append("logo", logoFile);
 
       await api.get("/sanctum/csrf-cookie");
-      const response = await api.post("/newbusinesses", formData, {
+      await api.post("/newbusinesses", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || ""
         },
       });
 
-      if (response.data) {
-        showSuccessAlert();
+      showSuccessAlert();
 
-        // Reset form
-        setForm({
-          business_name: "",
-          slug: "",
-          industry_type: "",
-          logo: "",
-          email: "",
-          phone: "",
-          website: "",
-          address: "",
-          country: "",
-          state: "",
-          city: "",
-          subscription_type: "Free",
-          subscription_plan: "monthly",
-          currency: "NGN",
-          language: "en",
-          about_business: ""
-        });
-        setLogoFile(null);
-        setLogoPreview(null);
-      }
-    } catch (err: unknown) { // Fixed: removed 'any' type
-      // Properly type the error
-      const error = err as ErrorResponse;
-      const errorMessage = error.response?.data?.message || "Failed to create business.";
+      // Reset form
+      setForm({
+        business_name: "",
+        slug: "",
+        industry_type: "",
+        logo: "",
+        email: "",
+        phone: "",
+        website: "",
+        address: "",
+        country: "",
+        state: "",
+        city: "",
+        subscription_type: "free",
+        subscription_plan: "monthly",
+        currency: "NGN",
+        language: "en",
+        about_business: ""
+      });
+      setLogoFile(null);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to create business.";
       showErrorAlert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -229,7 +202,7 @@ export default function AddBusinessPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl">
+        <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl border border-gray-200">
           {/* Card Header */}
           <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
             <div className="flex items-center space-x-3">
@@ -301,21 +274,17 @@ export default function AddBusinessPage() {
                     />
                     <label htmlFor="logo-upload" className="cursor-pointer">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        {/* Fixed: Using lucide-react Image icon, not next/image */}
-                        <Building2 className="h-8 w-8 text-gray-400" />
+                        <Image className="h-8 w-8 text-gray-400" />
                         <p className="text-sm font-medium text-gray-600">Click to upload logo</p>
                         <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 2MB</p>
                       </div>
                     </label>
                   </div>
-                  {logoPreview && (
+                  {form.logo && (
                     <div className="mt-3 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      {/* Fixed: Using Next.js Image component for preview */}
-                      <Image
-                        src={logoPreview}
+                      <img
+                        src={form.logo}
                         alt="Logo preview"
-                        width={48}
-                        height={48}
                         className="w-12 h-12 rounded object-cover border border-gray-300"
                       />
                       <span className="text-sm text-gray-700">Logo ready</span>
@@ -399,7 +368,7 @@ export default function AddBusinessPage() {
                   >
                     {subscriptionTypes.map((type) => (
                       <option key={type} value={type}>
-                        {type}
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
                       </option>
                     ))}
                   </select>
@@ -427,22 +396,51 @@ export default function AddBusinessPage() {
                     onChange={(e) => handleInputChange('currency', e.target.value)}
                     className={inputClass}
                   >
-                    <option value="USD">$ - US Dollar (USD)</option>
-                    <option value="EUR">€ - Euro (EUR)</option>
-                    <option value="GBP">£ - British Pound (GBP)</option>
-                    <option value="JPY">¥ - Japanese Yen (JPY)</option>
-                    <option value="CNY">¥ - Chinese Yuan (CNY)</option>
-                    <option value="INR">₹ - Indian Rupee (INR)</option>
-                    <option value="AUD">$ - Australian Dollar (AUD)</option>
-                    <option value="CAD">$ - Canadian Dollar (CAD)</option>
+                    <option value="$">$ - US Dollar (USD)</option>
+                    <option value="€">€ - Euro (EUR)</option>
+                    <option value="£">£ - British Pound (GBP)</option>
+                    <option value="¥">¥ - Japanese Yen (JPY)</option>
+                    <option value="¥">¥ - Chinese Yuan (CNY)</option>
+                    <option value="₹">₹ - Indian Rupee (INR)</option>
+                    <option value="$">$ - Australian Dollar (AUD)</option>
+                    <option value="$">$ - Canadian Dollar (CAD)</option>
                     <option value="CHF">CHF - Swiss Franc (CHF)</option>
-                    <option value="NZD">$ - New Zealand Dollar (NZD)</option>
-                    <option value="ZAR">R - South African Rand (ZAR)</option>
-                    <option value="NGN">₦ - Nigerian Naira (NGN)</option>
-                    <option value="KES">KSh - Kenyan Shilling (KES)</option>
-                    <option value="GHS">₵ - Ghanaian Cedi (GHS)</option>
-                    <option value="XAF">FCFA - Central African CFA Franc (XAF)</option>
-                    <option value="XOF">CFA - West African CFA Franc (XOF)</option>
+                    <option value="$">$ - New Zealand Dollar (NZD)</option>
+                    <option value="R">R - South African Rand (ZAR)</option>
+                    <option value="₦">₦ - Nigerian Naira (NGN)</option>
+                    <option value="KSh">KSh - Kenyan Shilling (KES)</option>
+                    <option value="₵">₵ - Ghanaian Cedi (GHS)</option>
+                    <option value="FCFA">FCFA - Central African CFA Franc (XAF)</option>
+                    <option value="CFA">CFA - West African CFA Franc (XOF)</option>
+                    <option value="﷼">﷼ - Saudi Riyal (SAR)</option>
+                    <option value="د.إ">د.إ - UAE Dirham (AED)</option>
+                    <option value="﷼">﷼ - Qatari Riyal (QAR)</option>
+                    <option value="£">£ - Egyptian Pound (EGP)</option>
+                    <option value="R$">R$ - Brazilian Real (BRL)</option>
+                    <option value="$">$ - Mexican Peso (MXN)</option>
+                    <option value="$">$ - Singapore Dollar (SGD)</option>
+                    <option value="$">$ - Hong Kong Dollar (HKD)</option>
+                    <option value="RM">RM - Malaysian Ringgit (MYR)</option>
+                    <option value="฿">฿ - Thai Baht (THB)</option>
+                    <option value="₩">₩ - South Korean Won (KRW)</option>
+                    <option value="kr">kr - Swedish Krona (SEK)</option>
+                    <option value="kr">kr - Norwegian Krone (NOK)</option>
+                    <option value="kr">kr - Danish Krone (DKK)</option>
+                    <option value="₽">₽ - Russian Ruble (RUB)</option>
+                    <option value="₺">₺ - Turkish Lira (TRY)</option>
+                    <option value="₨">₨ - Pakistani Rupee (PKR)</option>
+                    <option value="৳">৳ - Bangladeshi Taka (BDT)</option>
+                    <option value="Rs">Rs - Sri Lankan Rupee (LKR)</option>
+                    <option value="NT$">NT$ - New Taiwan Dollar (TWD)</option>
+                    <option value="₫">₫ - Vietnamese Dong (VND)</option>
+                    <option value="Rp">Rp - Indonesian Rupiah (IDR)</option>
+                    <option value="zł">zł - Polish Zloty (PLN)</option>
+                    <option value="Kč">Kč - Czech Koruna (CZK)</option>
+                    <option value="Ft">Ft - Hungarian Forint (HUF)</option>
+                    <option value="₪">₪ - Israeli Shekel (ILS)</option>
+                    <option value="$">$ - Argentine Peso (ARS)</option>
+                    <option value="$">$ - Chilean Peso (CLP)</option>
+                    <option value="$">$ - Colombian Peso (COP)</option>
                   </select>
                 </div>
 
@@ -453,9 +451,9 @@ export default function AddBusinessPage() {
                     onChange={(e) => handleInputChange('language', e.target.value)}
                     className={inputClass}
                   >
-                    <option value="en">English (EN)</option>
-                    <option value="fr">French (FR)</option>
-                    <option value="es">Spanish (ES)</option>
+                    {languages.map((lang) => (
+                      <option key={lang} value={lang}>{lang.toUpperCase()}</option>
+                    ))}
                   </select>
                 </div>
               </div>

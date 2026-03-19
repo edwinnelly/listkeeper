@@ -62,7 +62,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon, trend =
       </div>
       {change && (
         <div className="mt-3 text-sm flex items-center gap-2">
-          <span className={`text-${trend === 'up' ? 'green' : 'red'}-600 font-medium`}>{change}</span>
+          <span className={`text-${trend === 'up' ? 'gray' : 'red'}-600 font-medium`}>{change}</span>
           <span className="text-slate-400">vs last month</span>
         </div>
       )}
@@ -126,7 +126,7 @@ export default function InventoryDashboard() {
           <aside className="col-span-12 lg:col-span-3 xl:col-span-2">
             <div className="sticky top-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-600 to-cyan-400 flex items-center justify-center text-white font-bold">Y</div>
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-600 to-gray-400 flex items-center justify-center text-white font-bold">Y</div>
                 <div>
                   <p className="font-semibold">Yelocode Inventory</p>
                   <p className="text-xs text-slate-400">Inventory Manager</p>
@@ -163,7 +163,7 @@ export default function InventoryDashboard() {
                 <p className="text-sm font-medium">Sync status</p>
                 <p className="text-xs text-slate-500 mt-2">Last sync: 20 minutes ago</p>
                 <div className="mt-3 flex gap-2 items-center">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <div className="h-2 w-2 rounded-full bg-gray-500" />
                   <p className="text-xs">All systems nominal</p>
                 </div>
               </div>
@@ -289,7 +289,7 @@ export default function InventoryDashboard() {
                           <td className="py-3 text-sm">{p.reorderLevel}</td>
                           <td className="py-3 text-sm">{p.warehouse}</td>
                           <td className="py-3 text-sm">
-                            <button className="text-sm text-blue-600 underline">Create PO</button>
+                            <button className="text-sm text-gray-600 underline">Create PO</button>
                           </td>
                         </tr>
                       ))}
@@ -340,7 +340,7 @@ export default function InventoryDashboard() {
                   </li>
                   <li>
                     <div className="flex items-start gap-3">
-                      <div className="h-2 w-2 rounded-full bg-green-500 mt-2" />
+                      <div className="h-2 w-2 rounded-full bg-gray-500 mt-2" />
                       <div>
                         <p className="font-medium">New stock received</p>
                         <p className="text-xs text-slate-400">150 units of USB-C Charger added to Main Warehouse</p>

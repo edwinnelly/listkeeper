@@ -132,11 +132,11 @@ const RegisterPage = () => {
 
   if (loading && success) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 z-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-gray-50 z-50">
         <div className="flex flex-col items-center">
           <div className="relative">
             <div className="h-14 w-14 rounded-full border-2 border-slate-200"></div>
-            <div className="absolute top-0 left-0 h-14 w-14 rounded-full border-2 border-blue-600 border-t-transparent animate-spin"></div>
+            <div className="absolute top-0 left-0 h-14 w-14 rounded-full border-2 border-gray-600 border-t-transparent animate-spin"></div>
           </div>
           <p className="mt-4 text-slate-600 text-sm font-medium text-center">Setting up your inventory account...</p>
         </div>
@@ -152,7 +152,7 @@ const RegisterPage = () => {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: 'url("/asset/similar-10073860.jpeg")' }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-blue-800/80 to-blue-700/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-gray-800/80 to-gray-700/70" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
       </div>
@@ -209,7 +209,7 @@ const RegisterPage = () => {
                   </a>
                   <Link
                     href="/auth"
-                    className="text-white hover:text-blue-200 text-sm transition-colors"
+                    className="text-white hover:text-gray-200 text-sm transition-colors"
                   >
                     Sign In
                   </Link>
@@ -328,10 +328,10 @@ const RegisterPage = () => {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="flex items-start p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg"
+                          className="flex items-start p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg"
                         >
-                          <CheckmarkCircleRegular className="text-green-600 w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-green-600">{success}</span>
+                          <CheckmarkCircleRegular className="text-gray-600 w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-600">{success}</span>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -350,7 +350,7 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="Warehouse Manager"
                             required
-                            className="w-full px-4 py-3 pl-11 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all bg-white text-sm sm:text-base"
+                            className="w-full px-4 py-3 pl-11 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <PersonRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -370,7 +370,7 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="inventory@company.com"
                             required
-                            className="w-full px-4 py-3 pl-11 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all bg-white text-sm sm:text-base"
+                            className="w-full px-4 py-3 pl-11 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <MailRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -392,7 +392,7 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="Create secure password"
                             required
-                            className="w-full px-4 py-3 pl-11 pr-10 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all bg-white text-sm sm:text-base"
+                            className="w-full px-4 py-3 pl-11 pr-10 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <LockClosedRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -428,7 +428,7 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="Re-enter password"
                             required
-                            className="w-full px-4 py-3 pl-11 pr-10 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all bg-white text-sm sm:text-base"
+                            className="w-full px-4 py-3 pl-11 pr-10 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <LockClosedRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -454,16 +454,16 @@ const RegisterPage = () => {
                         type="checkbox"
                         id="terms"
                         required
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-600 mt-1 flex-shrink-0"
+                        className="rounded border-slate-300 text-gray-600 focus:ring-gray-600 mt-1 flex-shrink-0"
                         disabled={loading || !!success}
                       />
                       <label htmlFor="terms" className="text-sm text-slate-600 leading-tight">
                         I agree to the{" "}
-                        <Link href="/terms" className="text-blue-600 hover:underline inline">
+                        <Link href="/terms" className="text-gray-600 hover:underline inline">
                           Inventory Management Policy
                         </Link>{" "}
                         and{" "}
-                        <Link href="/privacy" className="text-blue-600 hover:underline inline">
+                        <Link href="/privacy" className="text-gray-600 hover:underline inline">
                           Data Security Agreement
                         </Link>
                       </label>
@@ -472,7 +472,7 @@ const RegisterPage = () => {
                     <button
                       type="submit"
                       disabled={loading || !!success}
-                      className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3 sm:py-4 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-900 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 sm:space-x-3 shadow-lg text-sm sm:text-base"
+                      className="w-full bg-gradient-to-r from-gray-600 to-gray-800 text-white py-3 sm:py-4 rounded-lg font-semibold hover:from-gray-700 hover:to-gray-900 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 sm:space-x-3 shadow-lg text-sm sm:text-base"
                     >
                       {loading ? (
                         <>
@@ -506,7 +506,7 @@ const RegisterPage = () => {
                       className="w-full py-2 sm:py-3 rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center space-x-2 sm:space-x-3 shadow-sm text-sm sm:text-base"
                       disabled={loading || !!success}
                     >
-                      <WindowRegular className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                      <WindowRegular className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                       <span className="text-slate-700 font-medium">Warehouse Terminal Registration</span>
                     </button>
                   </form>
@@ -527,7 +527,7 @@ const RegisterPage = () => {
                       Already have inventory access?{" "}
                       <Link
                         href="/auth"
-                        className="text-blue-600 hover:text-blue-800 font-semibold transition-colors inline"
+                        className="text-gray-600 hover:text-gray-800 font-semibold transition-colors inline"
                       >
                         Sign in to system
                       </Link>

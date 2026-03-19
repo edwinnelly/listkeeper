@@ -198,19 +198,19 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-purple-50 text-purple-700 border border-purple-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       case "manager":
-        return "bg-blue-50 text-blue-700 border border-blue-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       case "staff":
         return "bg-emerald-50 text-emerald-700 border border-emerald-200";
       case "Inventory Clerk":
         return "bg-orange-50 text-orange-700 border border-orange-200";
       case "Salesperson":
-        return "bg-cyan-50 text-cyan-700 border border-cyan-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       case "Purchasing Officer":
         return "bg-indigo-50 text-indigo-700 border border-indigo-200";
       case "Accountant":
-        return "bg-pink-50 text-pink-700 border border-pink-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       case "Viewer / Auditor":
         return "bg-teal-50 text-teal-700 border border-teal-200";
       default:
@@ -222,7 +222,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-50 text-green-700 border border-green-200";
+        return "bg-gray-50 text-gray-700 border border-gray-200";
       case "inactive":
         return "bg-gray-50 text-gray-700 border border-gray-200";
       case "suspended":
@@ -291,7 +291,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
               <span className="text-gray-400">/</span>
               <Link
                 href="/users"
-                className="flex items-center gap-1 text-blue-600 font-medium"
+                className="flex items-center gap-1 text-gray-600 font-medium"
               >
                 <Users className="h-4 w-4" />
                 Users
@@ -327,7 +327,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search users by name, email, phone..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
                   />
                 </div>
 
@@ -335,7 +335,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:border-gray-400"
+                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
                   >
                     <option value="all">All Roles</option>
                     {roles.map((role) => (
@@ -348,7 +348,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:border-gray-400"
+                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -363,7 +363,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
               </div>
 
               <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200">
+                <span className="bg-gray-50 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200">
                   {isLoading
                     ? "Loading..."
                     : `${filteredUsers.length} user${
@@ -378,7 +378,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
           {isLoading && (
             <div className="flex justify-center items-center py-16">
               <div className="text-center">
-                <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+                <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
                 <p className="text-gray-600 font-medium">Loading users...</p>
                 <p className="text-gray-400 text-sm mt-1">
                   Please wait a moment
@@ -431,7 +431,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
                           </td>
                           <td className="px-6 py-4 min-w-[250px]">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-200/50">
+                              <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200/50">
                                 {user.profile_pic ? (
                                   <img
                                     src={`http://localhost:8000/storage/${user.profile_pic}`}
@@ -439,7 +439,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
                                     className="w-full h-full object-cover rounded-xl"
                                   />
                                 ) : (
-                                  <User className="h-5 w-5 text-blue-600" />
+                                  <User className="h-5 w-5 text-gray-600" />
                                 )}
                               </div>
                               <div className="min-w-0 flex-1">
@@ -492,7 +492,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
 
                           <td className="px-6 py-4 text-center whitespace-nowrap">
                             <Link href={`/usersprofile/${user.user_id}`}>
-                              <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                              <button className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                                 View Profile
                               </button>
                             </Link>

@@ -57,7 +57,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon, trend =
       </div>
       {change && (
         <div className="mt-3 text-sm flex items-center gap-2">
-          <span className={`text-${trend === 'up' ? 'green' : 'red'}-600 font-medium`}>{change}</span>
+          <span className={`text-${trend === 'up' ? 'gray' : 'red'}-600 font-medium`}>{change}</span>
           <span className="text-slate-400">vs last week</span>
         </div>
       )}
@@ -101,7 +101,7 @@ export default function GoogleAdminDashboard() {
           <aside className="col-span-12 lg:col-span-3 xl:col-span-2">
             <div className="sticky top-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center text-white font-bold">G</div>
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-400 flex items-center justify-center text-white font-bold">G</div>
                 <div>
                   <p className="font-semibold">Google Admin</p>
                   <p className="text-xs text-slate-400">Super Admin</p>
@@ -132,7 +132,7 @@ export default function GoogleAdminDashboard() {
                 <p className="text-sm font-medium">Security</p>
                 <p className="text-xs text-slate-500 mt-2">2FA enforced for 87% of accounts</p>
                 <div className="mt-3 flex gap-2 items-center">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <div className="h-2 w-2 rounded-full bg-gray-500" />
                   <p className="text-xs">All systems nominal</p>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function GoogleAdminDashboard() {
                             <span
                               className={`inline-block px-2 py-1 rounded-full text-xs ${
                                 u.status === 'Active'
-                                  ? 'bg-green-100 text-green-700'
+                                  ? 'bg-gray-100 text-gray-700'
                                   : u.status === 'Suspended'
                                   ? 'bg-red-100 text-red-700'
                                   : 'bg-yellow-100 text-yellow-700'
@@ -256,7 +256,7 @@ export default function GoogleAdminDashboard() {
                             </span>
                           </td>
                           <td className="py-3 text-sm">
-                            <button className="text-sm text-blue-600 underline">Manage</button>
+                            <button className="text-sm text-gray-600 underline">Manage</button>
                           </td>
                         </tr>
                       ))}
@@ -288,7 +288,7 @@ export default function GoogleAdminDashboard() {
                   </li>
                   <li>
                     <div className="flex items-start gap-3">
-                      <div className="h-2 w-2 rounded-full bg-green-500 mt-2" />
+                      <div className="h-2 w-2 rounded-full bg-gray-500 mt-2" />
                       <div>
                         <p className="font-medium">2FA enabled</p>
                         <p className="text-xs text-slate-400">87% adoption</p>

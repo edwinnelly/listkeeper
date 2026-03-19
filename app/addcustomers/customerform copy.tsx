@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect, useCallback } from "react"; // Added useCallback
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { apiGet, apiPost } from "@/lib/axios";
@@ -252,18 +252,6 @@ export const getActiveBusinessCountry = (user: UserType): string => {
   return user?.businesses_one?.[0]?.country ?? "USA";
 };
 
-// Define error response type
-interface ErrorResponse {
-  response?: {
-    status?: number;
-    data?: {
-      message?: string;
-      errors?: Record<string, string[] | string>;
-    };
-  };
-  message?: string;
-}
-
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -315,33 +303,11 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
   // ==========================================================================
 
   /**
-   * Fetches available business locations from API
-   */
-  const fetchBusinessLocations = useCallback(async () => {
-    setIsLoadingLocations(true);
-    try {
-      const res = await apiGet("/locations");
-      const locationsArray = res.data?.data ?? res.data?.locations ?? [];
-      setLocations(Array.isArray(locationsArray) ? locationsArray : []);
-    } catch (err: unknown) { // Fixed: removed 'any' type
-      console.error("Failed to load business locations:", err);
-      
-      // Properly type the error
-      const error = err as ErrorResponse;
-      const errorMessage = error.response?.data?.message || "Failed to load business locations";
-      toast.error(errorMessage);
-      setLocations([]);
-    } finally {
-      setIsLoadingLocations(false);
-    }
-  }, []); // Empty dependency array since it doesn't depend on any props/state
-
-  /**
    * Fetch business locations on component mount
    */
   useEffect(() => {
     fetchBusinessLocations();
-  }, [fetchBusinessLocations]); // Added fetchBusinessLocations to dependencies
+  }, []);
 
   // Update form country when userCountry changes
   useEffect(() => {
@@ -350,6 +316,28 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
       country: userCountry,
     }));
   }, [userCountry]);
+
+  // ==========================================================================
+  // DATA FETCHING FUNCTIONS
+  // ==========================================================================
+
+  /**
+   * Fetches available business locations from API
+   */
+  const fetchBusinessLocations = async () => {
+    setIsLoadingLocations(true);
+    try {
+      const res = await apiGet("/locations");
+      const locationsArray = res.data?.data ?? res.data?.locations ?? [];
+      setLocations(Array.isArray(locationsArray) ? locationsArray : []);
+    } catch (err: any) {
+      console.error("Failed to load business locations:", err);
+      toast.error("Failed to load business locations");
+      setLocations([]);
+    } finally {
+      setIsLoadingLocations(false);
+    }
+  };
 
   // ==========================================================================
   // FORM HANDLERS
@@ -635,24 +623,22 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
           router.push("/customers");
         }, 1500);
       }
-    } catch (err: unknown) { // Fixed: removed 'any' type
-      const error = err as ErrorResponse;
-      const status = error.response?.status;
+    } catch (err: any) {
+      const status = err.response?.status;
 
       // Handle specific error cases
       if (status === 403) {
         toast.error("You do not have permission to create customers");
       } else if (status === 422) {
-        const apiErrors = error.response?.data?.errors;
+        const apiErrors = err.response?.data?.errors;
         if (apiErrors) {
           // Map backend errors to form errors
           const formErrors: FormErrors = {};
           Object.keys(apiErrors).forEach((key) => {
             const field = key as keyof FormErrors;
-            const errorValue = apiErrors[key];
-            formErrors[field] = Array.isArray(errorValue) 
-              ? errorValue[0] 
-              : errorValue;
+            formErrors[field] = Array.isArray(apiErrors[key]) 
+              ? apiErrors[key][0] 
+              : apiErrors[key];
           });
           setErrors(formErrors);
 
@@ -667,7 +653,7 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
       } else if (status === 409) {
         toast.error("A customer with this email already exists");
       } else {
-        toast.error(error.response?.data?.message || "Failed to create customer. Please try again.");
+        toast.error("Failed to create customer. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -795,8 +781,8 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
                   {locations.length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
-                <Building className="h-6 w-6 text-gray-600" />
+              <div className="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center">
+                <Building className="h-6 w-6 text-yellow-600" />
               </div>
             </div>
           </div>

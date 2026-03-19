@@ -144,11 +144,11 @@ const LocationCard: React.FC<{
 
   const getGradient = () => {
     if (location.type?.toLowerCase().includes("warehouse")) {
-      return "from-blue-500 to-blue-600";
+      return "from-gray-500 to-gray-600";
     } else if (location.type?.toLowerCase().includes("store")) {
       return "from-emerald-500 to-emerald-600";
     } else if (location.type?.toLowerCase().includes("office")) {
-      return "from-purple-500 to-purple-600";
+      return "from-gray-500 to-gray-600";
     } else {
       return "from-stone-500 to-stone-600";
     }
@@ -537,7 +537,7 @@ const StatCard: React.FC<{
   title: string;
   value: string | number | React.ReactNode;
   icon: React.ElementType;
-  color: "primary" | "emerald" | "amber" | "rose" | "purple" | "blue";
+  color: "primary" | "emerald" | "amber" | "rose" | "gray" | "gray";
   subtitle?: string;
 }> = ({ title, value, icon: Icon, color, subtitle }) => {
   const colorClasses = {
@@ -545,8 +545,8 @@ const StatCard: React.FC<{
     emerald: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
     rose: "bg-rose-50 text-rose-700",
-    purple: "bg-purple-50 text-purple-700",
-    blue: "bg-blue-50 text-blue-700",
+    gray: "bg-gray-50 text-gray-700",
+    gray: "bg-gray-50 text-gray-700",
   };
 
   return (
@@ -1145,7 +1145,7 @@ const AddToLocations = ({ user }) => {
             title="Total Units"
             value={formatNumber(totalUnits)}
             icon={Layers}
-            color="purple"
+            color="gray"
           />
         </div>
 

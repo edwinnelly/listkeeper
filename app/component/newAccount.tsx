@@ -20,13 +20,13 @@ const NewAccount = () => {
           {/* List */}
           <ul className="space-y-4">
             <li className="flex items-start gap-3">
-              <Building2 className="text-blue-600 w-6 h-6 flex-shrink-0" />
+              <Building2 className="text-gray-600 w-6 h-6 flex-shrink-0" />
               <span className="text-gray-700">
                 Fill in the business name, address, and logo.
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <GitBranch className="text-green-600 w-6 h-6 flex-shrink-0" />
+              <GitBranch className="text-gray-600 w-6 h-6 flex-shrink-0" />
               <span className="text-gray-700">
                 You can add multiple branches later.
               </span>
@@ -46,8 +46,8 @@ const NewAccount = () => {
 
 <Link
   href="/business"
-  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 
-             hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold rounded-full 
+  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-gray-600 to-indigo-600 
+             hover:from-gray-700 hover:to-indigo-700 text-white text-sm font-bold rounded-full 
              px-7 py-4 shadow-md hover:shadow-lg transition-all duration-300"
 >
   <PlusCircle size={18} className="text-white" />

@@ -60,7 +60,7 @@ interface Business {
 // =============================================================================
 
 /** CSS classes for consistent styling */
-const INPUT_CLASS = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
+const INPUT_CLASS = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
 const LABEL_CLASS = "block text-sm font-medium text-gray-700 mb-2";
 
 /** Industry types for dropdown */
@@ -369,11 +369,11 @@ const EditBusinessPage = () => {
                     
                     {/* Logo Preview */}
                     {form.logo && (
-                      <div className="mt-3 flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="mt-3 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <img 
                           src={form.logo.startsWith('data:') ? form.logo : `http://localhost:8001/storage/${form.logo}`}
                           alt="Logo preview" 
-                          className="w-12 h-12 rounded object-cover border border-blue-300" 
+                          className="w-12 h-12 rounded object-cover border border-gray-300" 
                         />
                         <span className="text-sm text-gray-700">
                           {form.logo.startsWith('data:') ? 'New logo uploaded' : 'Current logo'}

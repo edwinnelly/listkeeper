@@ -176,7 +176,7 @@ const EditProductPage = () => {
   // STYLING CONSTANTS
   // ==========================================================================
   const inputClass =
-    "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
+    "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
   const labelClass = "block text-sm font-medium text-gray-700 mb-2";
   const errorInputClass =
     "w-full px-4 py-3 bg-white border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
@@ -812,7 +812,7 @@ const EditProductPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center py-16">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+              <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
               <p className="text-gray-600 font-medium">Loading product...</p>
             </div>
           </div>
@@ -861,7 +861,7 @@ const EditProductPage = () => {
         {/* Form Card */}
         <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl">
           {/* Card Header */}
-          <div className="bg-gradient-to-r from-gray-900 to-blue-800 px-6 py-5">
+          <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/10 rounded-lg">
                 <Edit className="h-5 w-5 text-white" />
@@ -870,7 +870,7 @@ const EditProductPage = () => {
                 <h2 className="text-lg font-semibold text-white">
                   Edit Product: {form.name || "Product"}
                 </h2>
-                <p className="text-blue-200 text-sm">
+                <p className="text-gray-200 text-sm">
                   Modify the product details below
                 </p>
               </div>
@@ -882,7 +882,7 @@ const EditProductPage = () => {
             {isLoadingData ? (
               <div className="flex justify-center items-center py-16">
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+                  <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
                   <p className="text-gray-600 font-medium">
                     Loading form data...
                   </p>
@@ -1038,8 +1038,8 @@ const EditProductPage = () => {
 
                   {/* Image Preview */}
                   {imagePreview && (
-                    <div className="mt-4 flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="w-16 h-16 rounded overflow-hidden border border-blue-300 bg-white">
+                    <div className="mt-4 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="w-16 h-16 rounded overflow-hidden border border-gray-300 bg-white">
                         <img
                           src={imagePreview}
                           alt="Product preview"
@@ -1166,7 +1166,7 @@ const EditProductPage = () => {
                   </div>
 
                   {/* Discount Section */}
-                  <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-blue-100/30 rounded-lg border border-blue-200">
+                  <div className="mt-6 p-4 bg-gradient-to-br from-gray-50 to-gray-100/30 rounded-lg border border-gray-200">
                     <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                       <Tag className="w-4 h-4" />
                       Discount Settings
@@ -1443,7 +1443,7 @@ const EditProductPage = () => {
                             />
                             <div
                               className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
-                                form.is_active ? "bg-green-500" : "bg-gray-300"
+                                form.is_active ? "bg-gray-500" : "bg-gray-300"
                               }`}
                             >
                               <div
@@ -1554,7 +1554,7 @@ const EditProductPage = () => {
                   <button
                     type="submit"
                     disabled={!isFormValid || isSubmitting || !hasChanges}
-                    className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                   >
                     {isSubmitting ? (
                       <>

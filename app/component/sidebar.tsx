@@ -153,7 +153,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
         href={href}
         className={`group relative flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-bold transition-all duration-200 ease-out ${
           isActive
-            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border-r-2 border-blue-500"
+            ? "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300 border-r-2 border-gray-500"
             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60 border-r-2 border-transparent"
         } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
         onClick={closeSidebar}
@@ -165,7 +165,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
           <div
             className={`transition-all duration-200 flex-shrink-0 ${
               isActive
-                ? "text-blue-600 dark:text-blue-400"
+                ? "text-gray-600 dark:text-gray-400"
                 : "text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300"
             }`}
           >
@@ -174,12 +174,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
           <span className="truncate">{label}</span>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-          {isNew && <span className="px-1.5 py-0.5 text-xs bg-green-500 text-white rounded font-medium">New</span>}
-          {badge && <span className="px-1.5 py-0.5 text-xs bg-purple-500 text-white rounded font-medium">{badge}</span>}
+          {isNew && <span className="px-1.5 py-0.5 text-xs bg-gray-500 text-white rounded font-medium">New</span>}
+          {badge && <span className="px-1.5 py-0.5 text-xs bg-gray-500 text-white rounded font-medium">{badge}</span>}
           {count !== undefined && (
             <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
               isActive
-                ? "bg-blue-200 text-blue-700 dark:bg-blue-800 dark:text-blue-200"
+                ? "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                 : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
             }`}>{count}</span>
           )}
@@ -371,7 +371,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
             onClick={() => setActiveView("app")} 
             className={`flex-1 py-3 text-sm font-medium ${
               activeView === "app" 
-                ? "text-blue-600 border-b-2 border-blue-500 bg-white dark:bg-gray-900" 
+                ? "text-gray-600 border-b-2 border-gray-500 bg-white dark:bg-gray-900" 
                 : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
@@ -381,7 +381,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
             onClick={() => setActiveView("mail")} 
             className={`flex-1 py-3 text-sm font-medium ${
               activeView === "mail" 
-                ? "text-blue-600 border-b-2 border-blue-500 bg-white dark:bg-gray-900" 
+                ? "text-gray-600 border-b-2 border-gray-500 bg-white dark:bg-gray-900" 
                 : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
@@ -405,7 +405,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
         {/* Footer */}
         <div className="border-t border-gray-200 dark:border-gray-800 p-3 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 border rounded-lg">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-semibold text-sm">
               {user.name?.charAt(0).toUpperCase() || "U"}
             </div>
             <div className="min-w-0 flex-1">

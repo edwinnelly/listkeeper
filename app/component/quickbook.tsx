@@ -38,7 +38,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
                   <Building className="text-white" size={20} />
                 </div>
                 <span className="text-xl font-bold text-gray-900">QuickBiz</span>
@@ -46,7 +46,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
               <nav className="flex items-center space-x-6">
                 {['Dashboard', 'Transactions', 'Invoices', 'Reports', 'Taxes', 'Accounting'].map((item) => (
                   <a key={item} href="#" className={`text-sm font-medium ${
-                    item === 'Dashboard' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                    item === 'Dashboard' ? 'text-gray-600' : 'text-gray-600 hover:text-gray-900'
                   }`}>
                     {item}
                   </a>
@@ -63,7 +63,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
               <button className="p-2 text-gray-600 hover:text-gray-900">
                 <Settings size={20} />
               </button>
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-bold">JD</span>
               </div>
             </div>
@@ -76,8 +76,8 @@ const Dashboard: React.FC = ({logo,business_name}) => {
         <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-8">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Building className="text-blue-600" size={20} />
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Building className="text-gray-600" size={20} />
               </div>
               <div>
                 <h2 className="font-semibold text-gray-900">{business_name}</h2>
@@ -101,7 +101,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                   href="#"
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium ${
                     item.active 
-                      ? 'bg-blue-50 text-blue-600 border border-blue-100' 
+                      ? 'bg-gray-50 text-gray-600 border border-gray-100' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
@@ -140,7 +140,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                 <Calendar size={18} />
                 <span>This Month</span>
               </button>
-              <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
                 <Plus size={18} />
                 <span>New Transaction</span>
               </button>
@@ -166,10 +166,10 @@ const Dashboard: React.FC = ({logo,business_name}) => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-gray-600">Income</span>
-                  <ArrowUpRight className="text-green-600" size={16} />
+                  <ArrowUpRight className="text-gray-600" size={16} />
                 </div>
                 <p className="text-2xl font-bold text-gray-900">$45,231</p>
-                <p className="text-sm text-green-600">+12.4% from last month</p>
+                <p className="text-sm text-gray-600">+12.4% from last month</p>
               </div>
               
               <div className="bg-gray-50 rounded-lg p-4">
@@ -184,24 +184,24 @@ const Dashboard: React.FC = ({logo,business_name}) => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-gray-600">Net Income</span>
-                  <TrendingUp className="text-green-600" size={16} />
+                  <TrendingUp className="text-gray-600" size={16} />
                 </div>
                 <p className="text-2xl font-bold text-gray-900">$13,047</p>
-                <p className="text-sm text-green-600">+24.1% from last month</p>
+                <p className="text-sm text-gray-600">+24.1% from last month</p>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-gray-600">Profit Margin</span>
-                  <Target className="text-blue-600" size={16} />
+                  <Target className="text-gray-600" size={16} />
                 </div>
                 <p className="text-2xl font-bold text-gray-900">28.8%</p>
-                <p className="text-sm text-green-600">+2.4% from last month</p>
+                <p className="text-sm text-gray-600">+2.4% from last month</p>
               </div>
             </div>
 
             {/* Chart Placeholder */}
-            <div className="h-48 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-gray-200 flex items-center justify-center">
+            <div className="h-48 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg border border-gray-200 flex items-center justify-center">
               <div className="text-center">
                 <BarChart3 className="text-gray-400 mx-auto mb-2" size={32} />
                 <p className="text-gray-500">Profit and Loss Trend Chart</p>
@@ -217,7 +217,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold text-gray-900">Money In</h3>
-                    <span className="text-sm text-green-600 font-semibold">$12,450</span>
+                    <span className="text-sm text-gray-600 font-semibold">$12,450</span>
                   </div>
                   <div className="space-y-4">
                     {[
@@ -228,7 +228,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                       <div key={item.label} className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className={`w-2 h-2 rounded-full ${
-                            item.status === 'success' ? 'bg-green-500' :
+                            item.status === 'success' ? 'bg-gray-500' :
                             item.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
                           }`}></div>
                           <span className="text-sm text-gray-600">{item.label}</span>
@@ -259,7 +259,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                       <div key={item.label} className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className={`w-2 h-2 rounded-full ${
-                            item.status === 'success' ? 'bg-green-500' :
+                            item.status === 'success' ? 'bg-gray-500' :
                             item.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
                           }`}></div>
                           <span className="text-sm text-gray-600">{item.label}</span>
@@ -281,7 +281,7 @@ const Dashboard: React.FC = ({logo,business_name}) => {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-semibold text-gray-900">Recent Transactions</h3>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <button className="text-gray-600 hover:text-gray-700 text-sm font-medium">
                     View All
                   </button>
                 </div>
@@ -295,10 +295,10 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                     <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
                       <div className="flex items-center space-x-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          transaction.type === 'Income' ? 'bg-green-100' : 'bg-red-100'
+                          transaction.type === 'Income' ? 'bg-gray-100' : 'bg-red-100'
                         }`}>
                           {transaction.type === 'Income' ? 
-                            <TrendingUp className="text-green-600" size={16} /> :
+                            <TrendingUp className="text-gray-600" size={16} /> :
                             <TrendingDown className="text-red-600" size={16} />
                           }
                         </div>
@@ -309,12 +309,12 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                       </div>
                       <div className="text-right">
                         <p className={`font-semibold ${
-                          transaction.type === 'Income' ? 'text-green-600' : 'text-red-600'
+                          transaction.type === 'Income' ? 'text-gray-600' : 'text-red-600'
                         }`}>
                           {transaction.type === 'Income' ? '+' : '-'}{transaction.amount}
                         </p>
                         <div className="flex items-center space-x-1 text-sm text-gray-500">
-                          <CheckCircle2 size={14} className="text-green-500" />
+                          <CheckCircle2 size={14} className="text-gray-500" />
                           <span>Completed</span>
                         </div>
                       </div>
@@ -357,10 +357,10 @@ const Dashboard: React.FC = ({logo,business_name}) => {
                 <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: Plus, label: 'Create Invoice', color: 'blue' },
-                    { icon: Users, label: 'Add Customer', color: 'green' },
+                    { icon: Plus, label: 'Create Invoice', color: 'gray' },
+                    { icon: Users, label: 'Add Customer', color: 'gray' },
                     { icon: CreditCard, label: 'Record Expense', color: 'red' },
-                    { icon: Download, label: 'Export Report', color: 'purple' },
+                    { icon: Download, label: 'Export Report', color: 'gray' },
                   ].map((action, index) => (
                     <button
                       key={action.label}

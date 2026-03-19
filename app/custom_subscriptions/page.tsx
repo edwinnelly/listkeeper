@@ -102,7 +102,7 @@ const PricingPlansPage = () => {
       users: "6-10 users",
       cta: "Get Started",
       icon: Zap,
-      color: "from-blue-500 to-purple-600"
+      color: "from-gray-500 to-gray-600"
     },
     {
       id: "growth",
@@ -126,7 +126,7 @@ const PricingPlansPage = () => {
       users: "11-25 users",
       cta: "Go Growth",
       icon: TrendingUp,
-      color: "from-purple-500 to-pink-600"
+      color: "from-gray-500 to-gray-600"
     },
     {
       id: "enterprise",
@@ -188,7 +188,7 @@ const PricingPlansPage = () => {
   // ===========================================================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/20 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-50/30 to-indigo-50/20 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Section */}
@@ -213,8 +213,8 @@ const PricingPlansPage = () => {
             <button className="px-6 py-3 rounded-xl font-semibold text-gray-700 transition-all duration-300">
               Monthly
             </button>
-            <button className="px-6 py-3 rounded-xl font-semibold text-blue-600 bg-white shadow-sm transition-all duration-300">
-              Yearly <span className="text-sm text-green-600 ml-1">(Save 20%)</span>
+            <button className="px-6 py-3 rounded-xl font-semibold text-gray-600 bg-white shadow-sm transition-all duration-300">
+              Yearly <span className="text-sm text-gray-600 ml-1">(Save 20%)</span>
             </button>
           </div>
         </div>
@@ -230,14 +230,14 @@ const PricingPlansPage = () => {
                 key={plan.id}
                 className={`relative bg-white/80 backdrop-blur-xl rounded-3xl border-2 transition-all duration-500 hover:scale-105 hover:shadow-2xl ${
                   isPopular 
-                    ? 'border-purple-500 shadow-2xl shadow-purple-200/50' 
-                    : 'border-white/50 shadow-xl shadow-blue-100/30'
+                    ? 'border-gray-500 shadow-2xl shadow-gray-200/50' 
+                    : 'border-white/50 shadow-xl shadow-gray-100/30'
                 }`}
               >
                 {/* Popular Badge */}
                 {isPopular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-2 rounded-full font-semibold text-sm flex items-center gap-2 shadow-lg">
+                    <div className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-2 rounded-full font-semibold text-sm flex items-center gap-2 shadow-lg">
                       <Star className="h-4 w-4" />
                       MOST POPULAR
                     </div>
@@ -291,7 +291,7 @@ const PricingPlansPage = () => {
                       >
                         {feature.included ? (
                           <Check className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-                            feature.highlight ? 'text-amber-600' : 'text-green-500'
+                            feature.highlight ? 'text-amber-600' : 'text-gray-500'
                           }`} />
                         ) : (
                           <div className="h-5 w-5 mt-0.5 flex-shrink-0 rounded-full border-2 border-gray-300" />
@@ -313,7 +313,7 @@ const PricingPlansPage = () => {
                     disabled={isProcessing}
                     className={`w-full py-4 px-6 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 ${
                       isPopular
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl'
+                        ? 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-lg hover:shadow-xl'
                         : 'bg-gray-900 hover:bg-gray-800 text-white shadow-lg hover:shadow-xl'
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -343,7 +343,7 @@ const PricingPlansPage = () => {
         </div>
 
         {/* Features Comparison */}
-        <div className="mt-20 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 p-8 shadow-xl shadow-blue-100/20">
+        <div className="mt-20 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 p-8 shadow-xl shadow-gray-100/20">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
             Compare Plan Features
           </h2>
@@ -372,7 +372,7 @@ const PricingPlansPage = () => {
                     {plans.map((plan) => (
                       <td key={plan.id} className="py-4 px-4 text-center">
                         {plan.features[featureIndex].included ? (
-                          <Check className="h-6 w-6 text-green-500 mx-auto" />
+                          <Check className="h-6 w-6 text-gray-500 mx-auto" />
                         ) : (
                           <div className="h-6 w-6 rounded-full border-2 border-gray-300 mx-auto" />
                         )}

@@ -90,13 +90,13 @@ const genderOptions: GenderOption[] = [
 
 const CSS_CLASSES = {
   INPUT:
-    "w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 placeholder-gray-500 text-sm hover:border-gray-400",
+    "w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-all duration-200 placeholder-gray-500 text-sm hover:border-gray-400",
   INPUT_ERROR:
     "w-full px-4 py-3 bg-white border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all duration-200 placeholder-gray-500 text-sm hover:border-red-400",
   LABEL: "block text-sm font-semibold text-gray-700 mb-2",
   LABEL_ERROR: "block text-sm font-semibold text-red-700 mb-2",
   SELECT:
-    "w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 text-sm hover:border-gray-400 appearance-none cursor-pointer",
+    "w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-all duration-200 text-sm hover:border-gray-400 appearance-none cursor-pointer",
   SELECT_ERROR:
     "w-full px-4 py-3 bg-white border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all duration-200 text-sm hover:border-red-400 appearance-none cursor-pointer",
   ERROR_TEXT: "text-red-600 text-xs mt-1.5 flex items-center gap-1",
@@ -543,7 +543,7 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
     return (
       <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
+          <Loader2 className="h-12 w-12 animate-spin text-gray-600 mx-auto" />
           <p className="mt-4 text-gray-600">Loading customer data...</p>
         </div>
       </div>
@@ -579,7 +579,7 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
             <div className="flex items-center gap-3">
               <Link
                 href="/customers"
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30"
+                className="flex items-center gap-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 font-medium shadow-lg shadow-gray-500/25 hover:shadow-xl hover:shadow-gray-500/30"
               >
                 <Users size={18} />
                 View All Customers
@@ -601,8 +601,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
                   {form.first_name} {form.last_name}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                <User className="h-6 w-6 text-blue-600" />
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                <User className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -617,8 +617,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
                   {userCountry}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
-                <Globe className="h-6 w-6 text-green-600" />
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                <Globe className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -631,11 +631,11 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
                   {form.is_active ? "Active" : "Inactive"}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
                 {form.is_active ? (
-                  <CheckCircle className="h-6 w-6 text-purple-600" />
+                  <CheckCircle className="h-6 w-6 text-gray-600" />
                 ) : (
-                  <XCircle className="h-6 w-6 text-purple-600" />
+                  <XCircle className="h-6 w-6 text-gray-600" />
                 )}
               </div>
             </div>
@@ -662,8 +662,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
           <div className="px-6 py-5 border-b border-gray-200 bg-gray-50/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center">
-                  <Edit className="h-5 w-5 text-blue-600" />
+                <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center">
+                  <Edit className="h-5 w-5 text-gray-600" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
@@ -688,8 +688,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
           <form onSubmit={handleSubmit} className="p-6 space-y-8">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <User className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
+                  <User className="w-4 h-4 text-gray-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">
                   Personal Information
@@ -799,8 +799,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
 
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Phone className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
+                  <Phone className="w-4 h-4 text-gray-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">
                   Contact Information
@@ -978,8 +978,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
 
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Building className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
+                  <Building className="w-4 h-4 text-gray-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">
                   Business & Account Information
@@ -1073,7 +1073,7 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
                         />
                         <div
                           className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
-                            form.is_active ? "bg-green-500" : "bg-gray-300"
+                            form.is_active ? "bg-gray-500" : "bg-gray-300"
                           }`}
                         >
                           <div
@@ -1097,7 +1097,7 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
                   </div>
                 </div>
 
-                <div className="p-6 bg-gradient-to-br from-blue-50/50 to-blue-100/30 rounded-xl border border-blue-200">
+                <div className="p-6 bg-gradient-to-br from-gray-50/50 to-gray-100/30 rounded-xl border border-gray-200">
                   <h4 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     Account Details
@@ -1167,8 +1167,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
 
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-gray-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">
                   Additional Information
@@ -1217,7 +1217,7 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
                   isLoadingLocations ||
                   !hasChanges
                 }
-                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gray-500/25"
               >
                 {isSubmitting ? (
                   <>
@@ -1235,8 +1235,8 @@ const EditCustomerPage = ({ user }: { user: UserType }) => {
           </form>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">
+        <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="text-sm text-gray-700">
             <span className="font-medium">Note:</span> Required fields are
             marked with a red asterisk (*). The customer will be automatically
             associated with your current active business.

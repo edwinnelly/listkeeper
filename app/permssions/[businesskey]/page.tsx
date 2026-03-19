@@ -142,7 +142,7 @@ const ToggleRow = ({
         type="button"
         onClick={onToggle}
         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 flex-shrink-0 ${
-          value ? "bg-blue-600" : "bg-gray-300"
+          value ? "bg-gray-600" : "bg-gray-300"
         }`}
       >
         <span
@@ -180,7 +180,7 @@ const PermissionSection = ({
         <button
           type="button"
           onClick={() => handleCategoryToggle(list.map((item) => item.key))}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+          className="text-sm text-gray-600 hover:text-gray-700 font-medium transition-colors duration-200"
         >
           {allEnabled ? "Disable All" : "Enable All"}
         </button>
@@ -279,9 +279,9 @@ const PermissionsForm = () => {
   const getRoleBadgeColor = (role: string) => {
     switch (role?.toLowerCase()) {
       case "admin":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-gray-100 text-gray-800 border-gray-200";
       case "manager":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-gray-100 text-gray-800 border-gray-200";
       case "staff":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       default:
@@ -291,7 +291,7 @@ const PermissionsForm = () => {
 
   const getStatusBadgeColor = (isActive: boolean) => {
     return isActive
-      ? "bg-green-100 text-green-800 border-green-200"
+      ? "bg-gray-100 text-gray-800 border-gray-200"
       : "bg-gray-100 text-gray-800 border-gray-200";
   };
 
@@ -784,7 +784,7 @@ const PermissionsForm = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+          <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
           <p className="text-gray-600 font-medium">Loading user profile...</p>
         </div>
       </div>
@@ -806,7 +806,7 @@ const PermissionsForm = () => {
           </p>
           <Link
             href="/users"
-            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
           >
             <ArrowLeft size={16} />
             Back to Users List
@@ -842,8 +842,8 @@ const PermissionsForm = () => {
               {/* Title Section */}
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Shield className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Shield className="h-6 w-6 text-gray-600" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -869,7 +869,7 @@ const PermissionsForm = () => {
           {/* Secondary Navigation */}
           <div className="border-t border-gray-100 mt-2 pt-4">
             <div className="flex space-x-6">
-              <button className="px-3 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+              <button className="px-3 py-2 text-sm font-medium text-gray-600 border-b-2 border-gray-600">
                 Permissions
               </button>
               <button className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200">
@@ -894,7 +894,7 @@ const PermissionsForm = () => {
               {/* Profile Photo */}
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-200/50 overflow-hidden">
+                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 overflow-hidden">
                     {user.profile_pic ? (
                       <img
                         src={`http://localhost:8000/storage/${user.profile_pic}`}
@@ -903,7 +903,7 @@ const PermissionsForm = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <User className="h-10 w-10 text-blue-600" />
+                        <User className="h-10 w-10 text-gray-600" />
                       </div>
                     )}
                   </div>
@@ -949,8 +949,8 @@ const PermissionsForm = () => {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Mail className="h-4 w-4 text-blue-600" />
+                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
+                      <Mail className="h-4 w-4 text-gray-600" />
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-600">Email</p>
@@ -961,8 +961,8 @@ const PermissionsForm = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <Building className="h-4 w-4 text-blue-600" />
+                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
+                      <Building className="h-4 w-4 text-gray-600" />
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-600">Role</p>
@@ -979,7 +979,7 @@ const PermissionsForm = () => {
           {/* Right Column - Permissions Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-4">
+              <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-4">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-white/10 rounded-lg">
                     <Shield className="h-5 w-5 text-white" />
@@ -988,7 +988,7 @@ const PermissionsForm = () => {
                     <h2 className="text-lg font-semibold text-white">
                       Access Control
                     </h2>
-                    <p className="text-blue-200 text-sm">
+                    <p className="text-gray-200 text-sm">
                       Toggle permissions on/off for {user.name}
                     </p>
                   </div>
@@ -1111,7 +1111,7 @@ const PermissionsForm = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                    className="flex items-center gap-2 bg-gray-600 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                   >
                     {isSubmitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

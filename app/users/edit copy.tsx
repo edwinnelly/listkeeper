@@ -131,7 +131,7 @@ const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 const DEBOUNCE_DELAY = 300;
 
 const INPUT_CLASS =
-  "w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 placeholder-gray-500 text-sm hover:border-gray-400";
+  "w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-all duration-200 placeholder-gray-500 text-sm hover:border-gray-400";
 const LABEL_CLASS = "block text-sm font-semibold text-gray-700 mb-2";
 
 // ============================================================================
@@ -154,14 +154,14 @@ const validateImageFile = (file: File): string | null => {
 
 const getRoleBadgeColor = (role: string): string => {
   const colorMap: Record<string, string> = {
-    admin: "bg-purple-50 text-purple-700 border border-purple-200",
-    manager: "bg-blue-50 text-blue-700 border border-blue-200",
+    admin: "bg-gray-50 text-gray-700 border border-gray-200",
+    manager: "bg-gray-50 text-gray-700 border border-gray-200",
     staff: "bg-emerald-50 text-emerald-700 border border-emerald-200",
     "Inventory Clerk": "bg-orange-50 text-orange-700 border border-orange-200",
-    Salesperson: "bg-cyan-50 text-cyan-700 border border-cyan-200",
+    Salesperson: "bg-gray-50 text-gray-700 border border-gray-200",
     "Purchasing Officer":
       "bg-indigo-50 text-indigo-700 border border-indigo-200",
-    Accountant: "bg-pink-50 text-pink-700 border border-pink-200",
+    Accountant: "bg-gray-50 text-gray-700 border border-gray-200",
     "Viewer / Auditor": "bg-teal-50 text-teal-700 border border-teal-200",
   };
   return colorMap[role] || "bg-gray-50 text-gray-700 border border-gray-200";
@@ -169,7 +169,7 @@ const getRoleBadgeColor = (role: string): string => {
 
 const getStatusBadgeColor = (status: string): string => {
   const colorMap: Record<string, string> = {
-    active: "bg-green-50 text-green-700 border border-green-200",
+    active: "bg-gray-50 text-gray-700 border border-gray-200",
     inactive: "bg-gray-50 text-gray-700 border border-gray-200",
     suspended: "bg-red-50 text-red-700 border border-red-200",
     pending: "bg-amber-50 text-amber-700 border border-amber-200",
@@ -269,11 +269,11 @@ export const useLocations = () => {
 // COMPONENTS
 // ============================================================================
 
-const StatsCard = ({ title, value, icon: Icon, color = "blue" }: any) => {
+const StatsCard = ({ title, value, icon: Icon, color = "gray" }: any) => {
   const colorClasses = {
-    blue: "bg-blue-50 text-blue-600",
-    green: "bg-green-50 text-green-600",
-    purple: "bg-purple-50 text-purple-600",
+    gray: "bg-gray-50 text-gray-600",
+    gray: "bg-gray-50 text-gray-600",
+    gray: "bg-gray-50 text-gray-600",
     gray: "bg-gray-50 text-gray-600",
   };
 
@@ -305,7 +305,7 @@ const SearchBar = ({ search, onSearchChange }: any) => (
       value={search}
       onChange={(e) => onSearchChange(e.target.value)}
       placeholder="Search users by name, email, phone..."
-      className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
+      className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition placeholder-gray-500 text-sm hover:border-gray-400"
     />
   </div>
 );
@@ -314,7 +314,7 @@ const FilterSelect = ({ value, onChange, options, placeholder }: any) => (
   <select
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:border-gray-400"
+    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
   >
     <option value="all">{placeholder}</option>
     {options.map((option: any) => (
@@ -334,13 +334,13 @@ const ActionMenu = ({ user, onEdit, onDelete, onClose, isOpen }: any) => {
       <div className="absolute right-6 z-40 w-56 bg-white border border-gray-200 rounded-xl shadow-lg shadow-gray-200/50 animate-fadeIn backdrop-blur-sm">
         <Link href={`/permssions/${user.user_id}`}>
           <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition first:rounded-t-xl border-b border-gray-100">
-            <ShieldBan size={16} className="text-blue-600" />
+            <ShieldBan size={16} className="text-gray-600" />
             Change Roles
           </button>
         </Link>
         <Link href={`/usersprofile/${user.user_id}`}>
           <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition border-b border-gray-100">
-            <UserCheck size={16} className="text-blue-600" />
+            <UserCheck size={16} className="text-gray-600" />
             View Profile
           </button>
         </Link>
@@ -348,7 +348,7 @@ const ActionMenu = ({ user, onEdit, onDelete, onClose, isOpen }: any) => {
           onClick={() => onEdit(user)}
           className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition border-b border-gray-100"
         >
-          <Edit size={16} className="text-blue-600" />
+          <Edit size={16} className="text-gray-600" />
           Edit User
         </button>
         <button
@@ -371,7 +371,7 @@ const UserTableRow = React.memo(
       </td>
       <td className="px-6 py-4 min-w-[250px]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-200/50">
+          <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200/50">
             {user.profile_pic ? (
               <img
                 src={`http://localhost:8000/storage/${user.profile_pic}`}
@@ -380,11 +380,11 @@ const UserTableRow = React.memo(
                 loading="lazy"
               />
             ) : (
-              <User className="h-5 w-5 text-blue-600" />
+              <User className="h-5 w-5 text-gray-600" />
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+            <div className="font-semibold text-gray-900 truncate group-hover:text-gray-600 transition-colors">
               {user.name}
             </div>
             <div className="text-xs text-gray-500 truncate mt-0.5">
@@ -467,7 +467,7 @@ const EmptyState = ({ hasSearch, onAddClick }: any) => (
         {!hasSearch && (
           <button
             onClick={onAddClick}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium mt-2"
+            className="flex items-center gap-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all font-medium mt-2"
           >
             <Plus size={16} />
             Add User
@@ -940,7 +940,7 @@ const ManageUsers = () => {
               </button>
               <button
                 onClick={handleAddClick}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 font-medium shadow-lg shadow-gray-500/25 hover:shadow-xl hover:shadow-gray-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
                 <Plus size={18} />
@@ -959,19 +959,19 @@ const ManageUsers = () => {
             title="Total Users"
             value={stats.total}
             icon={User}
-            color="blue"
+            color="gray"
           />
           <StatsCard
             title="Active Users"
             value={stats.active}
             icon={UserCheck}
-            color="green"
+            color="gray"
           />
           <StatsCard
             title="Admins"
             value={stats.admins}
             icon={Shield}
-            color="purple"
+            color="gray"
           />
           <StatsCard
             title="Inactive"
@@ -1015,7 +1015,7 @@ const ManageUsers = () => {
               </div>
 
               <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200">
+                <span className="bg-gray-50 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200">
                   {isLoading
                     ? "Loading..."
                     : `${filteredUsers.length} user${filteredUsers.length !== 1 ? "s" : ""}`}
@@ -1028,7 +1028,7 @@ const ManageUsers = () => {
           {isLoading && (
             <div className="flex justify-center items-center py-16">
               <div className="text-center">
-                <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+                <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
                 <p className="text-gray-600 font-medium">Loading users...</p>
                 <p className="text-gray-400 text-sm mt-1">
                   Please wait a moment
@@ -1099,11 +1099,11 @@ const ManageUsers = () => {
           onClose={handleModalClose}
           title={
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
                 {modalState.type === "add" ? (
-                  <Plus className="h-5 w-5 text-blue-600" />
+                  <Plus className="h-5 w-5 text-gray-600" />
                 ) : (
-                  <Edit className="h-5 w-5 text-blue-600" />
+                  <Edit className="h-5 w-5 text-gray-600" />
                 )}
               </div>
               <div>
@@ -1148,7 +1148,7 @@ const ManageUsers = () => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gray-500/25"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -1316,7 +1316,7 @@ const UserForm = React.memo(
         </div>
 
         {isUploading && (
-          <div className="flex items-center gap-2 text-sm text-blue-600">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
             <Loader2 className="h-4 w-4 animate-spin" />
             Uploading photo...
           </div>

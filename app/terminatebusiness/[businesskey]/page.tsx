@@ -21,7 +21,7 @@ const DeleteBusinessPage = () => {
   const [confirmText, setConfirmText] = useState("");
 
   // Input classes from your concept
-  const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
+  const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
   const labelClass = "block text-sm font-medium text-gray-700 mb-2";
 
   // ===========================================================================
