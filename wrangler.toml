@@ -1,0 +1,16 @@
+name = "listkeeper"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+
+# For OpenNext/Next.js apps, you typically need to specify the main entry point
+main = ".open-next/worker.js"
+
+# If you're serving static assets
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# Environment variables (optional)
+[vars]
+NODE_VERSION = "18"
