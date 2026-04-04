@@ -171,7 +171,7 @@ const RegisterPage = () => {
       <div className="fixed inset-0 -z-10">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url("/asset/similar-10073860.jpeg")' }}
+          style={{ backgroundImage: 'url("/asset/similar-10073860.webp")' }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-gray-800/80 to-gray-700/70" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
