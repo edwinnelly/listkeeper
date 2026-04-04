@@ -14,9 +14,6 @@ import {
   ArrowLeft,
   Loader2,
   Filter,
-  Download,
-  ChevronDown,
-  Settings,
   RefreshCw,
   User,
   Building,
@@ -24,7 +21,6 @@ import {
   Phone,
   MapPin,
   Globe,
-  Banknote,
   FileText,
   CheckCircle,
   XCircle,
@@ -35,7 +31,6 @@ import {
   Building2,
   Briefcase,
   CreditCard,
-  Earth,
   Calendar,
   Users,
   Eye, // Added the missing Eye icon
@@ -43,11 +38,17 @@ import {
 import Link from "next/link"; // Next.js component for client-side navigation
 import { useRouter } from "next/navigation"; // Next.js hook for programmatic navigation
 import api from "@/lib/axios"; // API client instance
-import Cookies from "js-cookie"; // Library for client-side cookie management
 import { toast } from "react-hot-toast"; // Toast notification library
 import ShortTextWithTooltip from "../component/shorten_len"; // make sure the path is correct
 
 // TypeScript interfaces for type safety
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role?: string;
+}
+
 interface Vendor {
   id: number;
   created_at: string;
@@ -122,12 +123,50 @@ interface BusinessLocation {
   business_key: string;
 }
 
-const ManageVendors = ({ user }) => {
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      errors?: Record<string, string[]>;
+    };
+  };
+  userMessage?: string;
+}
+
+interface VendorApiResponse {
+  data?: {
+    data?: {
+      vendors?: Vendor[];
+    };
+    vendors?: Vendor[];
+  };
+  vendors?: Vendor[];
+}
+
+interface BusinessApiResponse {
+  data?: {
+    data?: Business[];
+    businesses?: Business[];
+  };
+  businesses?: Business[];
+}
+
+interface LocationApiResponse {
+  data?: {
+    data?: BusinessLocation[];
+    locations?: BusinessLocation[];
+  };
+  locations?: BusinessLocation[];
+}
+
+const ManageVendors = ({ user }: { user: User }) => {
   // Search and Filter States
   const [search, setSearch] = useState(""); // Real-time search input value
   const [debouncedSearch, setDebouncedSearch] = useState(""); // Debounced search value (300ms delay)
   const [statusFilter, setStatusFilter] = useState<string>("all"); // Filter by active/inactive status
-  const [businessFilter, setBusinessFilter] = useState<string>("all"); // Filter by business
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [businessFilter, setBusinessFilter] = useState<string>("all"); // Filter by business (kept for potential future use)
   const [industryFilter, setIndustryFilter] = useState<string>("all"); // Filter by industry
 
   // UI Interaction States
@@ -180,7 +219,8 @@ const ManageVendors = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1); // Current page number (1-indexed)
   const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items to display per page
 
-  const router = useRouter(); // Next.js router instance for navigation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const router = useRouter(); // Next.js router instance for navigation (kept for potential future use)
 
   // Effect for debouncing search input
   useEffect(() => {
@@ -203,7 +243,7 @@ const ManageVendors = ({ user }) => {
     fetchVendors();
     fetchBusinesses();
     fetchLocations();
-  }, []);
+  }, [user]); // Added user as dependency
 
   /**
    * Fetches all vendors from the API
@@ -211,10 +251,10 @@ const ManageVendors = ({ user }) => {
   const fetchVendors = async () => {
     setIsLoading(true);
     try {
-      const res = await apiGet("/vendors");
+      const res = await apiGet("/vendors") as { data: VendorApiResponse };
 
       // Normalize API response to ensure it's always an array
-      const vendorsArray =
+      const vendorsArray: Vendor[] =
         res.data?.data?.vendors ?? res.data?.data ?? res.data?.vendors ?? [];
 
       setVendors(Array.isArray(vendorsArray) ? vendorsArray : []);
@@ -228,9 +268,10 @@ const ManageVendors = ({ user }) => {
         ),
       ) as string[];
       setIndustries(uniqueIndustries);
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as ApiError;
       toast.error(
-        err.response?.status === 403
+        error.response?.status === 403
           ? "You don't have permission to access vendors"
           : "Failed to fetch vendors",
       );
@@ -246,11 +287,11 @@ const ManageVendors = ({ user }) => {
    */
   const fetchBusinesses = async () => {
     try {
-      const res = await apiGet("/businesses");
+      const res = await apiGet("/businesses") as { data: BusinessApiResponse };
 
-      const businessesArray = res.data?.data ?? res.data?.businesses ?? [];
+      const businessesArray: Business[] = res.data?.data ?? res.data?.businesses ?? [];
       setBusinesses(Array.isArray(businessesArray) ? businessesArray : []);
-    } catch (err: any) {
+    } catch{
       toast.error("Failed to fetch businesses");
       setBusinesses([]);
     }
@@ -261,10 +302,10 @@ const ManageVendors = ({ user }) => {
    */
   const fetchLocations = async () => {
     try {
-      const res = await apiGet("/locations");
-      const locationsArray = res.data?.data ?? res.data?.locations ?? [];
+      const res = await apiGet("/locations") as { data: LocationApiResponse };
+      const locationsArray: BusinessLocation[] = res.data?.data ?? res.data?.locations ?? [];
       setLocations(Array.isArray(locationsArray) ? locationsArray : []);
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to fetch locations");
       setLocations([]);
     }
@@ -364,7 +405,7 @@ const ManageVendors = ({ user }) => {
    * Generates an array of page numbers for pagination
    */
   const getPageNumbers = () => {
-    const pageNumbers = [];
+    const pageNumbers: (number | string)[] = [];
     const maxVisiblePages = 5;
 
     if (totalPages <= maxVisiblePages) {
@@ -474,6 +515,7 @@ const ManageVendors = ({ user }) => {
     }
 
     setIsSubmitting(true);
+    let tempId: number | null = null;
 
     try {
       const payload = {
@@ -483,10 +525,10 @@ const ManageVendors = ({ user }) => {
       };
 
       // OPTIMISTIC UPDATE: Create temporary ID
-      const tempId = -Math.abs(Date.now());
+      tempId = -Math.abs(Date.now());
 
       // Create temporary vendor object
-      const optimisticVendor = {
+      const optimisticVendor: Vendor = {
         id: tempId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -518,6 +560,7 @@ const ManageVendors = ({ user }) => {
         location: locations.find((l) => l.id === form.location_id) || {
           id: form.location_id,
           location_name: "Unknown",
+          business_key: form.business_key,
         },
       };
 
@@ -525,7 +568,7 @@ const ManageVendors = ({ user }) => {
 
       const response = await apiPost("/add_vendors", payload, {}, [
         "/add_vendors",
-      ]);
+      ]) as { data?: { data?: Vendor } };
 
       if (response.data?.data) {
         const actualVendor = response.data.data;
@@ -539,30 +582,19 @@ const ManageVendors = ({ user }) => {
       toast.success("Vendor created successfully");
       setModalOpen(false);
       resetForm();
-    } catch (err: any) {
-      const status = err.response?.status;
-
-      setVendors((prev) => prev.filter((v) => v.id !== tempId));
+    } catch (err) {
+      const error = err as ApiError;
+      
+      if (tempId) {
+        setVendors((prev) => prev.filter((v) => v.id !== tempId));
+      }
+      
       const errorMessage =
-        err.userMessage ||
-        err.response?.data?.message ||
-        "Failed to delete customer";
+        error.userMessage ||
+        error.response?.data?.message ||
+        "Failed to create vendor";
 
       toast.error(errorMessage);
-      // if (status === 403) {
-      //   toast.error("You do not have permission to perform this action.");
-      // } else if (status === 422) {
-      //   const errors = err.response?.data?.errors;
-      //   if (errors) {
-      //     Object.values(errors).forEach((errorArray: any) => {
-      //       errorArray.forEach((error: string) => toast.error(error));
-      //     });
-      //   } else {
-      //     toast.error("Failed to create vendor. Please check your input.");
-      //   }
-      // } else if (status === 409) {
-      //   toast.error("A vendor with this email already exists.");
-      // }
     } finally {
       setIsSubmitting(false);
     }
@@ -620,11 +652,12 @@ const ManageVendors = ({ user }) => {
       toast.success("Vendor updated successfully");
       setEditModalOpen(false);
       resetForm();
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as ApiError;
       const errorMessage =
-        err.userMessage ||
-        err.response?.data?.message ||
-        "Failed to delete customer";
+        error.userMessage ||
+        error.response?.data?.message ||
+        "Failed to update vendor";
 
       toast.error(errorMessage);
       fetchVendors(); // Revert optimistic update
@@ -643,11 +676,11 @@ const ManageVendors = ({ user }) => {
       setVendors((prevVendors) =>
         prevVendors.filter((vendor) => vendor.id !== selectedVendor.id),
       );
-      let res = await api.delete(`/vendors-dels/${selectedVendor.id}`);
+      await api.delete(`/vendors-dels/${selectedVendor.id}`);
       toast.success("Vendor deleted successfully!");
       setDeleteModalOpen(false);
       setSelectedVendor(null);
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to delete vendor");
       fetchVendors(); // Revert optimistic update
     } finally {
@@ -658,7 +691,7 @@ const ManageVendors = ({ user }) => {
   /**
    * Handles form input changes
    */
-  const handleInputChange = (field: keyof VendorFormData, value: any) => {
+  const handleInputChange = (field: keyof VendorFormData, value: string | number | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -856,8 +889,8 @@ const ManageVendors = ({ user }) => {
                   {vendors.filter((v) => v.country === "Nigeria").length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center">
-                <Globe className="h-6 w-6 text-yellow-600" />
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                <Globe className="h-6 w-6 text-gray-600" />
               </div>
             </div>
           </div>
@@ -896,6 +929,7 @@ const ManageVendors = ({ user }) => {
                     <option value="inactive">Inactive</option>
                   </select>
 
+                  {/* Business filter commented out for future use */}
                   {/* <select
                     value={businessFilter}
                     onChange={(e) => setBusinessFilter(e.target.value)}
@@ -1065,7 +1099,7 @@ const ManageVendors = ({ user }) => {
                                   "No location"
                                 )}
                               </div>
-                            </td>
+                             </td>
 
                             {/* Status Badge */}
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -1086,12 +1120,12 @@ const ManageVendors = ({ user }) => {
                                   </>
                                 )}
                               </span>
-                            </td>
+                             </td>
 
                             {/* Created Date */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(vendor.created_at).toLocaleDateString()}
-                            </td>
+                             </td>
 
                             {/* Action Menu */}
                             <td className="px-6 py-4 text-center relative whitespace-nowrap">
@@ -1163,7 +1197,7 @@ const ManageVendors = ({ user }) => {
                                   </div>
                                 </>
                               )}
-                            </td>
+                             </td>
                           </tr>
                         ))
                       ) : (
@@ -1991,6 +2025,7 @@ const ManageVendors = ({ user }) => {
                   </div>
 
                   <div className="space-y-5">
+                    {/* Business select commented out for future use */}
                     {/* <div>
                       <label className={labelClass}>
                         Business <span className="text-red-500">*</span>
@@ -2412,7 +2447,7 @@ const ManageVendors = ({ user }) => {
                 <div className="text-sm text-gray-500">
                   Vendor ID:{" "}
                   <span className="font-mono font-medium text-gray-700">
-                    #Private
+                    #{selectedVendor.id}
                   </span>
                 </div>
               </div>

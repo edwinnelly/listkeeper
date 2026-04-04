@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect, useCallback } from "react"; // Added useCallback
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { apiGet, apiPost } from "@/lib/axios";
@@ -49,7 +49,7 @@ interface CustomerFormData {
   dob: string;
   gender: string;
   notes: string;
-  location_id: string; // Keep as string for form state
+  location_id: string;
 }
 
 /**
@@ -97,6 +97,7 @@ interface UserType {
  */
 interface AddCustomerPageProps {
   user: UserType;
+  loading?: boolean;
 }
 
 /**
@@ -105,6 +106,20 @@ interface AddCustomerPageProps {
 interface GenderOption {
   value: string;
   label: string;
+}
+
+/**
+ * Error response interface
+ */
+interface ErrorResponse {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      errors?: Record<string, string[] | string>;
+    };
+  };
+  message?: string;
 }
 
 // ============================================================================
@@ -146,7 +161,7 @@ const CSS_CLASSES = {
  * Validates email format
  */
 const validateEmail = (email: string): boolean => {
-  if (!email) return true; // Empty is allowed
+  if (!email) return true;
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 };
@@ -155,23 +170,20 @@ const validateEmail = (email: string): boolean => {
  * Validates phone number format
  */
 const validatePhone = (phone: string): boolean => {
-  if (!phone) return true; // Empty is allowed
-  // Enhanced phone validation - allows international formats
+  if (!phone) return true;
   const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,5}[-\s\.]?[0-9]{1,5}$/;
   const cleaned = phone.replace(/\s/g, '');
   if (!phoneRegex.test(cleaned)) return false;
   
-  // Check digit count (minimum 10, maximum 15)
   const digitCount = cleaned.replace(/[^0-9]/g, '').length;
   return digitCount >= 10 && digitCount <= 15;
 };
 
 /**
- * Validates postal code format (basic validation)
+ * Validates postal code format
  */
 const validatePostalCode = (postalCode: string): boolean => {
-  if (!postalCode) return true; // Empty is allowed
-  // Allow alphanumeric postal codes with spaces and hyphens
+  if (!postalCode) return true;
   const postalCodeRegex = /^[A-Za-z0-9\s\-]{3,10}$/;
   return postalCodeRegex.test(postalCode);
 };
@@ -200,7 +212,7 @@ const validateName = (name: string, fieldName: string): string | undefined => {
  * Validates date of birth
  */
 const validateDateOfBirth = (dob: string): string | undefined => {
-  if (!dob) return undefined; // Optional
+  if (!dob) return undefined;
   
   const date = new Date(dob);
   const today = new Date();
@@ -230,7 +242,7 @@ const validateNumericField = (
   min: number = 0,
   max: number = 999999999.99
 ): string | undefined => {
-  if (!value) return undefined; // Optional
+  if (!value) return undefined;
   
   const num = parseFloat(value);
   if (isNaN(num)) {
@@ -252,18 +264,6 @@ export const getActiveBusinessCountry = (user: UserType): string => {
   return user?.businesses_one?.[0]?.country ?? "USA";
 };
 
-// Define error response type
-interface ErrorResponse {
-  response?: {
-    status?: number;
-    data?: {
-      message?: string;
-      errors?: Record<string, string[] | string>;
-    };
-  };
-  message?: string;
-}
-
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -274,7 +274,7 @@ interface ErrorResponse {
  * Handles creation of new customer records with comprehensive form validation
  * and integration with business location data.
  */
-const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
+const AddCustomerPage = ({ user, loading }: AddCustomerPageProps) => {
   // ==========================================================================
   // STATE MANAGEMENT
   // ==========================================================================
@@ -311,7 +311,7 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
   const router = useRouter();
 
   // ==========================================================================
-  // LIFECYCLE METHODS
+  // LIFECYCLE METHODS - ALL HOOKS MUST BE CALLED BEFORE CONDITIONAL RETURNS
   // ==========================================================================
 
   /**
@@ -323,10 +323,9 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
       const res = await apiGet("/locations");
       const locationsArray = res.data?.data ?? res.data?.locations ?? [];
       setLocations(Array.isArray(locationsArray) ? locationsArray : []);
-    } catch (err: unknown) { // Fixed: removed 'any' type
+    } catch (err: unknown) {
       console.error("Failed to load business locations:", err);
       
-      // Properly type the error
       const error = err as ErrorResponse;
       const errorMessage = error.response?.data?.message || "Failed to load business locations";
       toast.error(errorMessage);
@@ -334,14 +333,14 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
     } finally {
       setIsLoadingLocations(false);
     }
-  }, []); // Empty dependency array since it doesn't depend on any props/state
+  }, []);
 
   /**
    * Fetch business locations on component mount
    */
   useEffect(() => {
     fetchBusinessLocations();
-  }, [fetchBusinessLocations]); // Added fetchBusinessLocations to dependencies
+  }, [fetchBusinessLocations]);
 
   // Update form country when userCountry changes
   useEffect(() => {
@@ -350,6 +349,22 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
       country: userCountry,
     }));
   }, [userCountry]);
+
+  // ==========================================================================
+  // CONDITIONAL RETURN - AFTER ALL HOOKS
+  // ==========================================================================
+  
+  // Show loading state if the HOC is still loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-gray-600 mx-auto" />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // ==========================================================================
   // FORM HANDLERS
@@ -397,13 +412,13 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
   /**
    * Validates a single form field
    */
-  const validateField = (field: string, value: any): string | undefined => {
+  const validateField = (field: string, value: string | boolean | number): string | undefined => {
     switch (field) {
       case "first_name":
-        return validateName(value, "First name");
+        return validateName(value as string, "First name");
 
       case "last_name":
-        return validateName(value, "Last name");
+        return validateName(value as string, "Last name");
 
       case "email":
         if (value && !validateEmail(value.toString())) {
@@ -463,16 +478,16 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
         return undefined;
 
       case "dob":
-        return validateDateOfBirth(value);
+        return validateDateOfBirth(value as string);
 
       case "total_purchases":
-        return validateNumericField(value, "Total purchases");
+        return validateNumericField(value as string, "Total purchases");
 
       case "outstanding_balance":
-        return validateNumericField(value, "Outstanding balance");
+        return validateNumericField(value as string, "Outstanding balance");
 
       case "loyalty_points":
-        return validateNumericField(value, "Loyalty points", 0, 9999999);
+        return validateNumericField(value as string, "Loyalty points", 0, 9999999);
 
       case "address":
         if (value && typeof value === "string" && value.trim().length > 200) {
@@ -492,7 +507,6 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
     const newErrors: FormErrors = {};
     let isValid = true;
 
-    // Validate each field
     (Object.keys(form) as Array<keyof CustomerFormData>).forEach((field) => {
       const error = validateField(field, form[field]);
       if (error) {
@@ -530,7 +544,6 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
    * Validates form data before submission
    */
   const validateForm = (): boolean => {
-    // Mark all fields as touched
     const allTouched: Record<string, boolean> = {};
     (Object.keys(form) as Array<keyof CustomerFormData>).forEach((field) => {
       allTouched[field] = true;
@@ -540,7 +553,6 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
     const isValid = validateAllFields();
 
     if (!isValid) {
-      // Show first error in toast
       const firstError = Object.values(errors).find((error) => error);
       if (firstError) {
         toast.error(firstError);
@@ -603,7 +615,6 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
           id: "create-customer",
         });
 
-        // Reset form to initial state
         setForm({
           first_name: "",
           last_name: "",
@@ -626,26 +637,22 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
           location_id: "",
         });
 
-        // Clear errors and touched states
         setErrors({});
         setTouched({});
 
-        // Redirect to customers list after successful creation
         setTimeout(() => {
           router.push("/customers");
         }, 1500);
       }
-    } catch (err: unknown) { // Fixed: removed 'any' type
+    } catch (err: unknown) {
       const error = err as ErrorResponse;
       const status = error.response?.status;
 
-      // Handle specific error cases
       if (status === 403) {
         toast.error("You do not have permission to create customers");
       } else if (status === 422) {
         const apiErrors = error.response?.data?.errors;
         if (apiErrors) {
-          // Map backend errors to form errors
           const formErrors: FormErrors = {};
           Object.keys(apiErrors).forEach((key) => {
             const field = key as keyof FormErrors;
@@ -656,7 +663,6 @@ const AddCustomerPage = ({ user }: AddCustomerPageProps) => {
           });
           setErrors(formErrors);
 
-          // Show first error in toast
           const firstError = Object.values(apiErrors)[0];
           if (firstError && Array.isArray(firstError)) {
             toast.error(firstError[0]);

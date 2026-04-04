@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { 
   Check, 
@@ -6,12 +7,6 @@ import {
   Zap,
   Star,
   CreditCard,
-  Users,
-  BarChart,
-  Shield,
-  FileText,
-  DownloadCloud,
-  Eye,
   TrendingUp,
   Building2
 } from "lucide-react";
@@ -38,7 +33,7 @@ interface Plan {
   features: PlanFeature[];
   users: string;
   cta: string;
-  icon: any;
+  icon: React.ElementType; // Changed from 'any' to React.ElementType
   color: string;
 }
 
@@ -47,7 +42,6 @@ interface Plan {
 // =============================================================================
 
 const PricingPlansPage = () => {
-  const [selectedPlan, setSelectedPlan] = useState<string>("essentials");
   const [isProcessing, setIsProcessing] = useState(false);
 
   // ===========================================================================
@@ -165,10 +159,6 @@ const PricingPlansPage = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(price);
-  };
-
-  const handlePlanSelect = (planId: string) => {
-    setSelectedPlan(planId);
   };
 
   const handlePayment = async (plan: Plan) => {

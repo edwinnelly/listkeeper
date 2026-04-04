@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image"; // Add this import for Next.js Image component
 import { 
   MailRegular,
   LockClosedRegular,
@@ -18,6 +19,15 @@ import {
 } from "@fluentui/react-icons";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
+
+// Define error response type
+interface ErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
 
 const RegisterPage = () => {
   const router = useRouter();
@@ -60,11 +70,10 @@ const RegisterPage = () => {
         const element = document.getElementById(window.location.hash.substring(1));
         if (element && containerRef.current) {
           const container = containerRef.current;
-          const elementRect = element.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
+          // Removed unused elementRect variable
           
           container.scrollTo({
-            top: element.offsetTop - containerRect.top + container.scrollTop,
+            top: element.offsetTop - container.getBoundingClientRect().top + container.scrollTop,
             behavior: 'smooth'
           });
         }
@@ -116,8 +125,9 @@ const RegisterPage = () => {
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+    } catch (err) {
+      const error = err as ErrorResponse;
+      setError(error.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -127,6 +137,17 @@ const RegisterPage = () => {
     if (e.key === "Enter" && !loading) {
       const formElement = e.currentTarget.closest("form");
       formElement?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+    }
+  };
+
+  const scrollToElement = (elementId: string, offset: number = 0) => {
+    const element = document.getElementById(elementId);
+    if (element && containerRef.current) {
+      const container = containerRef.current;
+      container.scrollTo({
+        top: element.offsetTop - container.getBoundingClientRect().top + container.scrollTop - offset,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -179,11 +200,16 @@ const RegisterPage = () => {
             <div className="container mx-auto px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <img 
-                    src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
-                    alt="ListKeeping Logo" 
-                    className="h-8 w-8"
-                  />
+                  {/* Replace img with Next.js Image */}
+                  <div className="relative h-8 w-8">
+                    <Image 
+                      src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
+                      alt="ListKeeping Logo" 
+                      fill
+                      className="object-contain"
+                      sizes="32px"
+                    />
+                  </div>
                   <span className="text-white font-bold text-lg">ListKeeping</span>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -192,17 +218,7 @@ const RegisterPage = () => {
                     className="text-white/80 hover:text-white text-sm transition-colors"
                     onClick={(e) => {
                       e.preventDefault();
-                      const element = document.getElementById('terms-section');
-                      if (element && containerRef.current) {
-                        const container = containerRef.current;
-                        const elementRect = element.getBoundingClientRect();
-                        const containerRect = container.getBoundingClientRect();
-                        
-                        container.scrollTo({
-                          top: element.offsetTop - containerRect.top + container.scrollTop - 80,
-                          behavior: 'smooth'
-                        });
-                      }
+                      scrollToElement('terms-section', 80);
                     }}
                   >
                     Terms
@@ -231,11 +247,16 @@ const RegisterPage = () => {
                 >
                   <div className="space-y-6 md:space-y-8 p-4 md:p-6 lg:p-8">
                     <div className="flex items-center space-x-3">
-                      <img 
-                        src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
-                        alt="ListKeeping Logo" 
-                        className={`${isTablet ? 'h-10' : 'h-12 lg:h-14'}`}
-                      />
+                      {/* Replace img with Next.js Image */}
+                      <div className={`relative ${isTablet ? 'h-10 w-10' : 'h-12 w-12 lg:h-14 lg:w-14'}`}>
+                        <Image 
+                          src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
+                          alt="ListKeeping Logo" 
+                          fill
+                          className="object-contain"
+                          sizes={isTablet ? "40px" : "56px"}
+                        />
+                      </div>
                       <span className={`${isTablet ? 'text-2xl' : 'text-3xl lg:text-4xl'} font-bold`}>ListKeeping</span>
                     </div>
                     

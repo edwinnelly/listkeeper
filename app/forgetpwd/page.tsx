@@ -2,16 +2,19 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 
 const ForgotPasswordPage = () => {
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Left Side - Image */}
-      <div className="hidden md:flex items-center justify-center bg-gray-100">
-        <img
+      <div className="hidden md:flex items-center justify-center bg-gray-100 relative">
+        <Image
           src="/asset/login1.jpg" // replace with your image
           alt="Forgot Password Illustration"
-          className="object-cover w-full h-full"
+          fill
+          className="object-cover"
+          priority
         />
       </div>
 
@@ -25,11 +28,14 @@ const ForgotPasswordPage = () => {
         >
           {/* Logo */}
           <div className="flex flex-col items-center">
-            <img
-              src="http://localhost:8000/assets/img/mylogo.svg" // replace with your logo path
-              alt="Logo"
-              className="w-40 h-16 mb-3"
-            />
+            <div className="relative w-40 h-16 mb-3">
+              <Image
+                src="http://localhost:8000/assets/img/mylogo.svg" // replace with your logo path
+                alt="Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
             <p className="text-gray-500 text-sm text-center">
               Enter your email to reset your password
             </p>

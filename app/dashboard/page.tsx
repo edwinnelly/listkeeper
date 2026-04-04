@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { withAuth } from '@/hoc/withAuth';
 import Dashboard from '../component/dashboard';
 import NewAccount from '../component/newAccount';
@@ -29,9 +28,7 @@ interface User {
 }
 
 function DashboardPage({ user, loading }: { user: User | null; loading: boolean }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  //HARD GUARD — prevent crash if user is null
+  // HARD GUARD — prevent crash if user is null
   if (loading || !user) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -58,7 +55,7 @@ function DashboardPage({ user, loading }: { user: User | null; loading: boolean 
   const firstBusiness = user.businesses_one?.[0];
   const createdAt = firstBusiness?.created_at
     ? dayjs(firstBusiness.created_at).format('MMMM D, YYYY')
-    : undefined;
+    : '';
 
   if (user.creator === 'Host' && user.active_business_key === '0') {
     return <NewAccount />;
@@ -68,12 +65,12 @@ function DashboardPage({ user, loading }: { user: User | null; loading: boolean 
     <div className="flex flex-col flex-1">
       <Dashboard
         user={user}
-        logo={firstBusiness?.logo}
-        business_name={firstBusiness?.business_name}
-        about_business={firstBusiness?.about_business}
-        address={firstBusiness?.address}
-        phone={firstBusiness?.phone}
-        subscription_type={firstBusiness?.subscription_type}
+        logo={firstBusiness?.logo || ''}
+        business_name={firstBusiness?.business_name || ''}
+        about_business={firstBusiness?.about_business || ''}
+        address={firstBusiness?.address || ''}
+        phone={firstBusiness?.phone || ''}
+        subscription_type={firstBusiness?.subscription_type || ''}
         created_at={createdAt}
       />
     </div>

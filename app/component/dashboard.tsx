@@ -1,24 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import {
   FileText,
   Users,
-  CreditCard,
-  Globe,
   ChevronRight,
   Plus,
-  BarChart3,
   Building2,
   MapPin,
   Phone,
-  Calendar,
-  Image as ImageIcon,
-  BookmarkCheck,
   DollarSign,
-  Receipt,
-  UserCheck,
-  PieChart,
   TrendingUp,
   Package,
   ShoppingCart,
@@ -45,9 +37,7 @@ interface DashboardProps {
   created_at?: string;
   subscriptionStatus?: "active" | "inactive" | "trial" | "expired";
   user?: User;
-  
 }
-
 
 interface StatCardProps {
   title: string;
@@ -79,17 +69,15 @@ interface MetricCardProps {
 const Dashboard: React.FC<DashboardProps> = ({
   logo,
   business_name,
-  about_business,
+  // about_business: _about_business, // Prefix with underscore to indicate intentional non-use
   created_at,
   subscription_type,
   address = "123 Business Ave, City, State",
   phone = "+1 (555) 123-4567",
-  // established_date = "Est. 2020",
-  subscriptionStatus = "active",
-  user,
+  // subscriptionStatus: _subscriptionStatus = "active", // Prefix with underscore
+  // user: _user, // Prefix with underscore
 }) => {
   const [imageError, setImageError] = useState(false);
- 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-50/30 p-4 md:p-6">
@@ -129,13 +117,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="flex items-start space-x-4">
                   <div className="relative">
                     <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-50 to-indigo-50 border border-gray-100 p-2 shadow-sm">
-                      {!imageError ? (
-                        <img
-                          src={`http://localhost:8000/storage/${logo}`}
-                          alt={`${business_name} Logo`}
-                          className="w-full h-full rounded-xl object-cover"
-                          onError={() => setImageError(true)}
-                        />
+                      {!imageError && logo ? (
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={`http://localhost:8000/storage/${logo}`}
+                            alt={`${business_name} Logo`}
+                            fill
+                            className="rounded-xl object-cover"
+                            onError={() => setImageError(true)}
+                            sizes="80px"
+                          />
+                        </div>
                       ) : (
                         <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center">
                           <Building2 size={24} className="text-gray-400" />

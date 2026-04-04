@@ -5,7 +5,22 @@ import { ChevronDown, Menu, Search, Bell, User, Settings, LogOut } from "lucide-
 import { withAuth } from "@/hoc/withAuth";
 import { api, withCsrf } from "@/lib/axios";
 
-const Header = ({ setSidebarOpen, user }: { setSidebarOpen: (open: boolean) => void; user: any }) => {
+// Define User interface
+interface User {
+  id?: number;
+  name?: string;
+  email?: string;
+  role?: string;
+  [key: string]: string | number | undefined;
+}
+
+// Define Header props interface
+interface HeaderProps {
+  setSidebarOpen: (open: boolean) => void;
+  user: User;
+}
+
+const Header = ({ setSidebarOpen, user }: HeaderProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

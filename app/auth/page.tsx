@@ -70,8 +70,8 @@ const LoginPage: React.FC = () => {
         const element = document.getElementById(window.location.hash.substring(1));
         if (element && containerRef.current) {
           const container = containerRef.current;
-          // elementRect is no longer unused - we use it directly
-          element.getBoundingClientRect(); // Use it if needed, or remove this line
+          // Get element position
+          element.getBoundingClientRect();
           const containerRect = container.getBoundingClientRect();
           
           container.scrollTo({
@@ -114,18 +114,20 @@ const LoginPage: React.FC = () => {
         api.post("/login", { email, password }, { withCredentials: true })
       );
 
-      // We're fetching the user but not using it - either use it or remove it
-      const { data: user } = await withCsrf(() =>
+      // Option 1: Remove the unused variable (recommended)
+      // Just verify the session is established without storing the user
+      await withCsrf(() =>
         api.get<User>("/user", { withCredentials: true })
       );
 
-      // Option 1: Use the user data (uncomment if needed)
-      // console.log('Logged in user:', user);
+      // Option 2: If you need the user data later, uncomment this:
+      // const { data: user } = await withCsrf(() =>
+      //   api.get<User>("/user", { withCredentials: true })
+      // );
+      // You can store user in context or state here
       
-      // Option 2: Store user in context/state if needed
-      // For now, just redirect
       router.push("/dashboard");
-    } catch (err: unknown) { // Fixed: removed 'any' type
+    } catch (err: unknown) {
       // Properly type the error
       const error = err as ErrorResponse;
       setError(error.response?.data?.message || "Login failed. Please try again.");

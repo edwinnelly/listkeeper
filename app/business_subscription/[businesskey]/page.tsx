@@ -15,35 +15,21 @@ import {
   Users,
   Calendar,
   FileText,
-  Shield,
   Sparkles,
   TrendingUp,
   Activity,
-  Check,
-  Star,
   CreditCard,
   Crown,
   Zap,
   Settings,
   DownloadCloud,
-  UserPlus,
-  BarChart,
-  Eye,
   History,
-  FileSpreadsheet,
   AlertCircle,
   CheckCircle,
   XCircle,
   Clock,
-  DollarSign,
-  Briefcase,
-  Target,
-  Award,
-  Layers,
   ExternalLink,
-  ChevronRight,
   Download,
-  RefreshCw,
 } from "lucide-react";
 import Cookies from "js-cookie";
 
@@ -94,6 +80,8 @@ interface Subscription {
   features: string[];
   renewalDate: string;
 }
+
+type TabType = "overview" | "payment-history" | "settings";
 
 // =============================================================================
 // MOCK DATA
@@ -149,10 +137,7 @@ const BusinessProfilePage = () => {
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "payment-history" | "settings"
-  >("overview");
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("overview");
 
   // ===========================================================================
   // FETCH BUSINESS DATA
@@ -192,7 +177,7 @@ const BusinessProfilePage = () => {
     router.push("/custom_subscriptions");
   }, [router]);
 
-  const handleTabChange = useCallback((tab: "overview" | "payment-history" | "settings") => {
+  const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
   }, []);
 
@@ -319,7 +304,7 @@ const BusinessProfilePage = () => {
               Business Not Found
             </h2>
             <p className="text-gray-600 mb-8 text-lg">
-              The business you're looking for doesn't exist or has been moved.
+              The business you&apos;re looking for doesn&apos;t exist or has been moved.
             </p>
             <Link
               href="/business"
@@ -420,16 +405,16 @@ const BusinessProfilePage = () => {
           <div className="border-b border-gray-200/50 px-8">
             <nav className="flex space-x-8 -mb-px" aria-label="Business profile tabs" role="tablist">
               {[
-                { id: "overview", label: "Overview", icon: Building2 },
-                { id: "payment-history", label: "Payment History", icon: History },
-                { id: "settings", label: "Settings", icon: Settings },
+                { id: "overview" as TabType, label: "Overview", icon: Building2 },
+                { id: "payment-history" as TabType, label: "Payment History", icon: History },
+                { id: "settings" as TabType, label: "Settings", icon: Settings },
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => handleTabChange(tab.id as any)}
-                    onKeyDown={(e) => handleKeyDown(e, () => handleTabChange(tab.id as any))}
+                    onClick={() => handleTabChange(tab.id)}
+                    onKeyDown={(e) => handleKeyDown(e, () => handleTabChange(tab.id))}
                     className={`py-6 px-1 border-b-2 font-medium text-sm flex items-center gap-3 transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${
                       activeTab === tab.id
                         ? "border-blue-600 text-blue-700"

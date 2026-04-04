@@ -11,7 +11,8 @@ export default function TestCsrf() {
 
       // Read the cookie
       const csrfToken = Cookies.get("XSRF-TOKEN");
-      //  console.log("CSRF Token:", csrfToken);
+      // Uncomment the line below to use the csrfToken or remove the variable
+      console.log("CSRF Token:", csrfToken);
     };
 
     fetchCsrf();

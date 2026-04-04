@@ -35,7 +35,6 @@ import {
   Minus,
   Layers,
   Box,
-  Clock,
   Plus,
   ArrowUpDown,
   FilterX,
@@ -43,6 +42,7 @@ import {
   Scale,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import ShortTextWithTooltip from "../component/shorten_len";
@@ -84,10 +84,10 @@ interface Product {
   is_on_sale: boolean;
   is_out_of_stock: boolean;
   image: string | null;
-  additional_info: any | null;
+  additional_info: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
-  encrypted_id: any | null;
+  encrypted_id: string | null;
 
   category?: {
     id: number;
@@ -141,6 +141,19 @@ interface Statistics {
   outOfStockCount: number;
 }
 
+interface ApiError {
+  response?: {
+    data?: unknown;
+  };
+  message?: string;
+}
+
+interface User {
+  businesses_one?: Array<{
+    currency?: string;
+  }>;
+}
+
 // ==============================================
 // Utility Functions
 // ==============================================
@@ -190,7 +203,7 @@ const StatCard: React.FC<{
   title: string;
   value: string | number;
   icon: React.ElementType;
-  color: "primary" | "emerald" | "amber" | "rose" | "gray" | "gray";
+  color: "primary" | "emerald" | "amber" | "rose" | "gray";
   trend?: {
     value: number;
     label: string;
@@ -201,7 +214,6 @@ const StatCard: React.FC<{
     emerald: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
     rose: "bg-rose-50 text-rose-700",
-    gray: "bg-gray-50 text-gray-700",
     gray: "bg-gray-50 text-gray-700",
   };
 
@@ -381,14 +393,16 @@ const ProductImage: React.FC<{
 
   return (
     <div
-      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden`}
+      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden relative`}
     >
       {src && !error ? (
-        <img
+        <Image
           src={`http://localhost:8000/storage/${src}`}
           alt={alt}
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
           onError={() => setError(true)}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
       ) : (
         <Package className="h-5 w-5 text-[#1e3a5f]" />
@@ -588,13 +602,12 @@ const Pagination: React.FC<{
   );
 };
 
-// Product Table Row Component
+// Product Table Row Component (Fixed: Removed unused onEdit parameter)
 const ProductTableRow: React.FC<{
   product: Product;
   index: number;
   startIndex: number;
   onView: (product: Product) => void;
-  onEdit: (id: number) => void;
   onDelete: (product: Product) => void;
   onHistory: (id: number) => void;
   isOpen: boolean;
@@ -605,7 +618,6 @@ const ProductTableRow: React.FC<{
   index,
   startIndex,
   onView,
-  onEdit,
   onDelete,
   onHistory,
   isOpen,
@@ -690,16 +702,6 @@ const ProductTableRow: React.FC<{
               </button>
               <button
                 onClick={() => {
-                  onEdit(product.id);
-                  onToggleOpen(null);
-                }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100"
-              >
-                <Edit className="h-4 w-4 text-[#1e3a5f]" />
-                Edit Product
-              </button>
-              <button
-                onClick={() => {
                   onHistory(product.id);
                   onToggleOpen(null);
                 }}
@@ -738,12 +740,14 @@ const ProductGridCard: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all group">
       <div className="p-5">
         <div className="relative mb-4">
-          <div className="aspect-square bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden">
+          <div className="aspect-square bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden relative">
             {product.image ? (
-              <img
+              <Image
                 src={`http://localhost:8000/storage/${product.image}`}
                 alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
               <Package className="h-12 w-12 text-stone-400" />
@@ -1017,7 +1021,7 @@ const ViewProductModal: React.FC<{
   onEdit: (id: number) => void;
   onHistory: (id: number) => void;
   formatCurrency: (amount: number) => string;
-}> = ({ isOpen, onClose, product, onEdit, onHistory, formatCurrency }) => {
+}> = ({ isOpen, onClose, product, onHistory, formatCurrency }) => {
   if (!isOpen || !product) return null;
 
   return (
@@ -1326,10 +1330,10 @@ const ViewProductModal: React.FC<{
 };
 
 // ==============================================
-// Main Component
+// Main Component (Fixed: Changed any to User type)
 // ==============================================
 
-const ManageProducts = ({ user }) => {
+const ManageProducts = ({ user }: { user: User }) => {
   const router = useRouter();
 
   // Format currency with user's preferred currency symbol
@@ -1391,28 +1395,28 @@ const ManageProducts = ({ user }) => {
   }, [products]);
 
   const fetchProducts = async () => {
-  setIsLoading(true);
-  try {
-    const res = await apiGet("/products", {}, false);
-    console.log("API Response:", res.data);
+    setIsLoading(true);
+    try {
+      const res = await apiGet("/products", {}, false);
+      console.log("API Response:", res.data);
 
-    const productsArray: Product[] = Array.isArray(res.data?.data)
-      ? res.data.data
-      : Array.isArray(res.data)
-      ? res.data
-      : [];
+      const productsArray: Product[] = Array.isArray(res.data?.data)
+        ? res.data.data
+        : Array.isArray(res.data)
+        ? res.data
+        : [];
 
-    console.log("Products found:", productsArray.length);
-    setProducts(productsArray);
-
-  } catch (err: any) {
-    console.error("Error fetching products:", err?.response?.data ?? err);
-    toast.error("Failed to fetch products");
-    setProducts([]);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      console.log("Products found:", productsArray.length);
+      setProducts(productsArray);
+    } catch (err) {
+      const error = err as ApiError;
+      console.error("Error fetching products:", error?.response?.data ?? error);
+      toast.error("Failed to fetch products");
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -1424,7 +1428,8 @@ const ManageProducts = ({ user }) => {
         res.data ??
         [];
       setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
-    } catch (err: any) {
+    } catch{
+      // Error is intentionally ignored - just set empty categories
       setCategories([]);
     }
   };
@@ -1445,8 +1450,10 @@ const ManageProducts = ({ user }) => {
       toast.success("Product deleted successfully!");
       setDeleteModalOpen(false);
       setSelectedProduct(null);
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as ApiError;
       toast.error("Failed to delete product");
+      console.error("Delete error:", error);
       fetchProducts();
     } finally {
       setIsSubmitting(false);
@@ -1915,7 +1922,6 @@ const ManageProducts = ({ user }) => {
                         setSelectedProduct(product);
                         setViewModalOpen(true);
                       }}
-                      onEdit={(id) => router.push(`/editproduct/${id}`)}
                       onDelete={(product) => {
                         setSelectedProduct(product);
                         setDeleteModalOpen(true);

@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { apiGet } from "@/lib/axios";
@@ -25,7 +25,6 @@ import {
   Users,
   Loader2,
   Edit,
-  Eye,
 } from "lucide-react";
 import { withAuth } from "@/hoc/withAuth";
 
@@ -68,21 +67,16 @@ interface UserType {
 // MAIN COMPONENT
 // ============================================================================
 
-const CustomerProfilePage = ({ user }: { user: UserType }) => {
+const CustomerProfilePage = ({ }: { user: UserType }) => {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
 
   const [customer, setCustomer] = useState<CustomerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      fetchCustomerProfile();
-    }
-  }, [id]);
+  const fetchCustomerProfile = useCallback(async () => {
+    if (!id) return;
 
-  const fetchCustomerProfile = async () => {
     try {
       setLoading(true);
       const response = await apiGet(`/customers/${id}`);
@@ -126,12 +120,16 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
       };
 
       setCustomer(formattedData);
-    } catch (error: any) {
+    } catch {
       toast.error("Failed to load customer profile");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchCustomerProfile();
+  }, [fetchCustomerProfile]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -149,7 +147,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
         month: "long",
         day: "numeric",
       });
-    } catch (error) {
+    } catch {
       return "Invalid date";
     }
   };
@@ -196,7 +194,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             Customer not found
           </p>
           <p className="text-gray-500 text-sm mt-1">
-            The customer profile you're looking for doesn't exist.
+            The customer profile you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link
             href="/customers"
@@ -263,7 +261,6 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sticky top-8">
-              {/* Profile Photo/Icon */}
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
                   <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 flex items-center justify-center">
@@ -519,7 +516,11 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
                   <div className="flex-1">
                     <p className="text-sm text-gray-600">Outstanding Balance</p>
                     <p
-                      className={`font-medium ${customer.outstanding_balance > 0 ? "text-red-600" : "text-gray-900"}`}
+                      className={`font-medium ${
+                        customer.outstanding_balance > 0
+                          ? "text-red-600"
+                          : "text-gray-900"
+                      }`}
                     >
                       {formatCurrency(customer.outstanding_balance)}
                     </p>

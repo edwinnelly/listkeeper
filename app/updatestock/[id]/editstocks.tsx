@@ -1,6 +1,6 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { apiGet, apiPut } from "@/lib/axios";
 import {
@@ -78,6 +78,17 @@ interface ApiResponse {
   data: Product;
 }
 
+// API Error interface
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      errors?: Record<string, string[]>;
+      message?: string;
+    };
+  };
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -97,7 +108,7 @@ const EditProductPage = () => {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [, setTouched] = useState<Record<string, boolean>>({}); // Fixed: Added underscore prefix for unused variable
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
@@ -120,41 +131,9 @@ const EditProductPage = () => {
   const errorTextClass = "text-red-600 text-xs mt-1.5 flex items-center gap-1";
 
   // ==========================================================================
-  // LIFECYCLE METHODS
-  // ==========================================================================
-  useEffect(() => {
-    if (productId) {
-      fetchProduct();
-    }
-  }, [productId]);
-
-  // Track form changes
-  useEffect(() => {
-    if (product) {
-      const formData = {
-        stock_quantity: form.stock_quantity,
-        low_stock_threshold: form.low_stock_threshold,
-        manufactured_at: form.manufactured_at,
-        expires_at: form.expires_at,
-      };
-
-      const productData = {
-        stock_quantity: product.stock_quantity?.toString() || "",
-        low_stock_threshold: product.low_stock_threshold?.toString() || "",
-        manufactured_at: product.manufactured_at?.split('T')[0] || "", // Fixed: Handle date format
-        expires_at: product.expires_at?.split('T')[0] || "", // Fixed: Handle date format
-      };
-
-      const hasFormChanges =
-        JSON.stringify(formData) !== JSON.stringify(productData);
-      setHasChanges(hasFormChanges);
-    }
-  }, [form, product]);
-
-  // ==========================================================================
   // DATA FETCHING
   // ==========================================================================
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     setIsLoadingProduct(true);
     try {
       const res = await apiGet<ApiResponse>(
@@ -197,7 +176,7 @@ const EditProductPage = () => {
        router.back();
      }, 1500);
       }
-    } catch (err: any) {
+    } catch{ // Fixed: Changed 'err: any' to 'error' with proper typing
       toast.error("Failed to load product");
      setTimeout(() => {
        router.back();
@@ -205,7 +184,39 @@ const EditProductPage = () => {
     } finally {
       setIsLoadingProduct(false);
     }
-  };
+  }, [productId, router]);
+
+  // ==========================================================================
+  // LIFECYCLE METHODS
+  // ==========================================================================
+  useEffect(() => {
+    if (productId) {
+      fetchProduct();
+    }
+  }, [productId, fetchProduct]); // Fixed: Added fetchProduct to dependencies
+
+  // Track form changes
+  useEffect(() => {
+    if (product) {
+      const formData = {
+        stock_quantity: form.stock_quantity,
+        low_stock_threshold: form.low_stock_threshold,
+        manufactured_at: form.manufactured_at,
+        expires_at: form.expires_at,
+      };
+
+      const productData = {
+        stock_quantity: product.stock_quantity?.toString() || "",
+        low_stock_threshold: product.low_stock_threshold?.toString() || "",
+        manufactured_at: product.manufactured_at?.split('T')[0] || "", // Fixed: Handle date format
+        expires_at: product.expires_at?.split('T')[0] || "", // Fixed: Handle date format
+      };
+
+      const hasFormChanges =
+        JSON.stringify(formData) !== JSON.stringify(productData);
+      setHasChanges(hasFormChanges);
+    }
+  }, [form, product]);
 
   // ==========================================================================
   // FORM HANDLERS
@@ -244,7 +255,7 @@ const EditProductPage = () => {
   // ==========================================================================
   // VALIDATION
   // ==========================================================================
-  const validateField = (field: string, value: any): string | undefined => {
+  const validateField = (field: string, value: string | number | undefined): string | undefined => { // Fixed: Changed 'any' to proper type
     switch (field) {
       case "stock_quantity":
         if (!value || value.toString().trim().length === 0) {
@@ -385,14 +396,15 @@ const EditProductPage = () => {
       } else {
         toast.error("Failed to update product. Invalid response.");
       }
-    } catch (err: any) {
+    } catch (error) { // Fixed: Changed 'err: any' to 'error' with proper typing
+      const err = error as ApiError;
       console.error("API Error:", err);
 
       const status = err.response?.status;
       if (status === 422) {
-        const errors = err.response?.data?.errors;
-        if (errors) {
-         
+        const errorResponse = err.response?.data?.errors;
+        if (errorResponse) {
+          // Handle validation errors here if needed
         } else {
           toast.error("Validation failed. Please check the form.");
         }

@@ -3,10 +3,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
-import Swal from "sweetalert2";
-import { ArrowLeft, Plus, Building2, Image } from "lucide-react";
+import { ArrowLeft, Plus, Building2, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 // =============================================================================
@@ -54,6 +54,8 @@ interface Business {
   details: BusinessDetails;
   stats: BusinessStats;
 }
+
+/** Error response interface */
 
 // =============================================================================
 // CONSTANTS
@@ -144,7 +146,7 @@ const EditBusinessPage = () => {
 
         setBusiness(businessData);
         setForm(businessData);
-      } catch (err: any) {
+      } catch {
         toast.error('Unable to fetch business data.');
       } finally {
         setFetching(false);
@@ -167,13 +169,13 @@ const EditBusinessPage = () => {
 
     // Validate file type
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-       toast.error('Invalid file type, Please upload a JPEG, PNG, or WEBP image.');
+      toast.error('Invalid file type, Please upload a JPEG, PNG, or WEBP image.');
       return;
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-       toast.error('File too large, Image must be smaller than 2MB.');
+      toast.error('File too large, Image must be smaller than 2MB.');
       return;
     }
 
@@ -188,59 +190,58 @@ const EditBusinessPage = () => {
   /**
    * Handles form input changes
    */
-  const handleInputChange = (key: keyof Business, value: any) => {
+  const handleInputChange = (key: keyof Business, value: string | number) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const onSubmit = async (e: FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!isFormValid) {
-     toast.error('Business name is required.');
-    return;
-  }
+    if (!isFormValid) {
+      toast.error('Business name is required.');
+      return;
+    }
 
-  try {
-    setIsSubmitting(true);
-    await api.get("/sanctum/csrf-cookie");
+    try {
+      setIsSubmitting(true);
+      await api.get("/sanctum/csrf-cookie");
 
-    const formData = new FormData();
+      const formData = new FormData();
 
-    // Exclude "logo" from auto append
-    Object.entries(form).forEach(([key, value]) => {
-      if (key !== "logo" && value !== undefined && value !== null) {
-        formData.append(key, value as any);
+      // Exclude "logo" from auto append
+      Object.entries(form).forEach(([key, value]) => {
+        if (key !== "logo" && value !== undefined && value !== null && value !== "") {
+          formData.append(key, String(value));
+        }
+      });
+
+      // Only append real file if user uploaded one
+      if (logoFile instanceof File) {
+        formData.append("logo", logoFile);
       }
-    });
 
-    // Only append real file if user uploaded one
-    if (logoFile instanceof File) {
-      formData.append("logo", logoFile);
+      // Tell Laravel it's a PUT update
+      formData.append("_method", "PUT");
+
+      const res = await api.post(`/updatebusiness/${id}`, formData, {
+        headers: {
+          "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (res.status === 200) {
+        toast.success('Business updated successfully!');
+        router.push("/business");
+      } else {
+        throw new Error("Update failed");
+      }
+    } catch {
+      toast.error('Failed to update business. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Tell Laravel it's a PUT update
-    formData.append("_method", "PUT");
-
-    const res = await api.post(`/updatebusiness/${id}`, formData, {
-      headers: {
-        "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    if (res.status === 200) {
-      toast.success('Business updated successfully!');
-      router.push("/business");
-    } else {
-      throw new Error("Update failed");
-    }
-  } catch (err: any) {
-  
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  };
 
   // ===========================================================================
   // COMPUTED VALUES
@@ -282,7 +283,7 @@ const EditBusinessPage = () => {
         ) : business ? (
           
           /* Main Form Card */
-          <div className="bg-white  shadow-sm border border-gray-200 overflow-hidden rounded-xl border">
+          <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl border">
             
             {/* Card Header */}
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
@@ -360,7 +361,7 @@ const EditBusinessPage = () => {
                       />
                       <label htmlFor="logo-upload" className="cursor-pointer">
                         <div className="flex flex-col items-center justify-center space-y-2">
-                          <Image className="h-8 w-8 text-gray-400" />
+                          <ImageIcon className="h-8 w-8 text-gray-400" />
                           <p className="text-sm font-medium text-gray-600">Click to upload logo</p>
                           <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 2MB</p>
                         </div>
@@ -370,11 +371,16 @@ const EditBusinessPage = () => {
                     {/* Logo Preview */}
                     {form.logo && (
                       <div className="mt-3 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <img 
-                          src={form.logo.startsWith('data:') ? form.logo : `http://localhost:8001/storage/${form.logo}`}
-                          alt="Logo preview" 
-                          className="w-12 h-12 rounded object-cover border border-gray-300" 
-                        />
+                        <div className="relative w-12 h-12 rounded overflow-hidden border border-gray-300">
+                          <Image 
+                            src={form.logo.startsWith('data:') ? form.logo : `http://localhost:8001/storage/${form.logo}`}
+                            alt="Business logo preview"
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                            unoptimized={process.env.NODE_ENV === 'development'}
+                          />
+                        </div>
                         <span className="text-sm text-gray-700">
                           {form.logo.startsWith('data:') ? 'New logo uploaded' : 'Current logo'}
                         </span>

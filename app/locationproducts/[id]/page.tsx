@@ -1,7 +1,8 @@
 "use client";
 import { withAuth } from "@/hoc/withAuth";
-import { apiGet, apiDelete } from "@/lib/axios";
-import React, { useState, useEffect, useMemo } from "react";
+import { apiGet } from "@/lib/axios";
+// import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Edit,
   Trash2,
@@ -35,7 +36,6 @@ import {
   Minus,
   Layers,
   Box,
-  Clock,
   Plus,
   ArrowUpDown,
   FilterX,
@@ -43,6 +43,7 @@ import {
   Scale,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import ShortTextWithTooltip from "../../component/shorten_len";
@@ -55,7 +56,7 @@ interface Product {
   id: number;
   owner_id: number;
   business_key: string;
-  encrypted_pid: any | null;
+  encrypted_pid: string | null;
   name: string;
   location_name: string;
   sku: string;
@@ -86,10 +87,10 @@ interface Product {
   is_on_sale: boolean;
   is_out_of_stock: boolean;
   image: string | null;
-  additional_info: any | null;
+  additional_info: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
-  encrypted_id: any | null;
+  encrypted_id: string | null;
   product?: {
     name: string;
     image: string;
@@ -156,6 +157,128 @@ interface Statistics {
   outOfStockCount: number;
 }
 
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: "primary" | "emerald" | "amber" | "rose" | "gray";
+  trend?: {
+    value: number;
+    label: string;
+  };
+}
+
+interface FilterChipProps {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}
+
+interface EmptyStateProps {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  action?: {
+    label: string;
+    onClick?: () => void;
+    href?: string;
+  };
+}
+
+interface DeleteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  productName: string;
+  isSubmitting: boolean;
+}
+
+interface ProductImageProps {
+  src?: string | null;
+  alt: string;
+  className?: string;
+}
+
+interface StockBadgeProps {
+  product: Product;
+}
+
+interface ProfitTrendProps {
+  product: Product;
+}
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  startIndex: number;
+  endIndex: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange: (items: number) => void;
+}
+
+interface ProductTableRowProps {
+  product: Product;
+  index: number;
+  startIndex: number;
+  onView: (product: Product) => void;
+  onEdit: (id: string | null) => void;
+  onDelete: (product: Product) => void;
+  onHistory: (id: string | null) => void;
+  isOpen: boolean;
+  onToggleOpen: (id: number | null) => void;
+  formatCurrency: (amount: number) => string;
+}
+
+interface ProductGridCardProps {
+  product: Product;
+  onView: (product: Product) => void;
+  onEdit: (id: number) => void;
+  onDelete: (product: Product) => void;
+  formatCurrency: (amount: number) => string;
+}
+
+interface FilterDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  filters: FilterState;
+  categories: Category[];
+  totalItems: number;
+  onFilterChange: <K extends keyof FilterState>(
+    key: K,
+    value: FilterState[K],
+  ) => void;
+  onClearFilters: () => void;
+  activeFilterCount: number;
+}
+
+interface ViewProductModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  product: Product | null;
+  onEdit: (id: string | null) => void;
+  onHistory: (id: string | null) => void;
+  formatCurrency: (amount: number) => string;
+}
+
+interface ApiError {
+  userMessage?: string;
+  response?: {
+    data?: {
+      message?: string;
+      errors?: Record<string, string[]>;
+    };
+    status?: number;
+  };
+}
+
+interface User {
+  businesses_one?: Array<{
+    currency?: string;
+  }>;
+}
+
 // ==============================================
 // Utility Functions
 // ==============================================
@@ -181,6 +304,11 @@ const formatNumber = (value: string | number | null | undefined): string => {
   return new Intl.NumberFormat("en-US").format(num);
 };
 
+const getImageUrl = (src: string | null): string => {
+  if (!src) return "";
+  return `http://localhost:8000/storage/${src}`;
+};
+
 // ==============================================
 // Custom Hooks
 // ==============================================
@@ -201,22 +329,12 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 // ==============================================
 
 // Stat Card Component
-const StatCard: React.FC<{
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  color: "primary" | "emerald" | "amber" | "rose" | "gray" | "gray";
-  trend?: {
-    value: number;
-    label: string;
-  };
-}> = ({ title, value, icon: Icon, color, trend }) => {
-  const colorClasses = {
+const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => {
+  const colorClasses: Record<string, string> = {
     primary: "bg-[#1e3a5f]/10 text-[#1e3a5f]",
     emerald: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
     rose: "bg-rose-50 text-rose-700",
-    gray: "bg-gray-50 text-gray-700",
     gray: "bg-gray-50 text-gray-700",
   };
 
@@ -250,11 +368,7 @@ const StatCard: React.FC<{
 };
 
 // Filter Chip Component
-const FilterChip: React.FC<{
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-}> = ({ label, active, onClick }) => (
+const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
     className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
@@ -268,16 +382,7 @@ const FilterChip: React.FC<{
 );
 
 // Empty State Component
-const EmptyState: React.FC<{
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  action?: {
-    label: string;
-    onClick?: () => void;
-    href?: string;
-  };
-}> = ({ title, description, icon: Icon, action }) => (
+const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon: Icon, action }) => (
   <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
     <div className="flex flex-col items-center text-center max-w-md mx-auto">
       <div className="w-20 h-20 bg-stone-100 rounded-2xl flex items-center justify-center mb-4">
@@ -322,13 +427,13 @@ const LoadingState: React.FC = () => (
 );
 
 // Delete Modal Component
-const DeleteModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  productName: string;
-  isSubmitting: boolean;
-}> = ({ isOpen, onClose, onConfirm, productName, isSubmitting }) => {
+const DeleteModal: React.FC<DeleteModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  productName,
+  isSubmitting,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -387,22 +492,21 @@ const DeleteModal: React.FC<{
 };
 
 // Product Image Component
-const ProductImage: React.FC<{
-  src?: string | null;
-  alt: string;
-  className?: string;
-}> = ({ src, alt, className = "w-10 h-10" }) => {
+const ProductImage: React.FC<ProductImageProps> = ({ src, alt, className = "w-10 h-10" }) => {
   const [error, setError] = useState(false);
+  const imageUrl = getImageUrl(src);
 
   return (
     <div
-      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden`}
+      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden relative`}
     >
-      {src && !error ? (
-        <img
-          src={`http://localhost:8000/storage/${src}`}
+      {src && !error && imageUrl ? (
+        <Image
+          src={imageUrl}
           alt={alt}
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
+          sizes="40px"
           onError={() => setError(true)}
         />
       ) : (
@@ -413,7 +517,7 @@ const ProductImage: React.FC<{
 };
 
 // Stock Badge Component
-const StockBadge: React.FC<{ product: Product }> = ({ product }) => {
+const StockBadge: React.FC<StockBadgeProps> = ({ product }) => {
   const stockQuantity = toNumber(product.stock_quantity);
   const lowStockThreshold = toNumber(product.low_stock_threshold) || 5;
 
@@ -447,7 +551,7 @@ const StockBadge: React.FC<{ product: Product }> = ({ product }) => {
 };
 
 // Profit Trend Component
-const ProfitTrend: React.FC<{ product: Product }> = ({ product }) => {
+const ProfitTrend: React.FC<ProfitTrendProps> = ({ product }) => {
   const price = toNumber(product.price);
   const costPrice = toNumber(product.cost_price);
 
@@ -475,16 +579,7 @@ const ProfitTrend: React.FC<{ product: Product }> = ({ product }) => {
 };
 
 // Pagination Component
-const Pagination: React.FC<{
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  startIndex: number;
-  endIndex: number;
-  itemsPerPage: number;
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (items: number) => void;
-}> = ({
+const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   totalItems,
@@ -604,18 +699,7 @@ const Pagination: React.FC<{
 };
 
 // Product Table Row Component
-const ProductTableRow: React.FC<{
-  product: Product;
-  index: number;
-  startIndex: number;
-  onView: (product: Product) => void;
-  onEdit: (id: number) => void;
-  onDelete: (product: Product) => void;
-  onHistory: (id: number) => void;
-  isOpen: boolean;
-  onToggleOpen: (id: number | null) => void;
-  formatCurrency: (amount: number) => string;
-}> = ({
+const ProductTableRow: React.FC<ProductTableRowProps> = ({
   product,
   index,
   startIndex,
@@ -636,7 +720,7 @@ const ProductTableRow: React.FC<{
     <tr className="hover:bg-stone-50/50 transition-colors group">
       <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
         {startIndex + index + 1}
-      </td>
+       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <ProductImage src={productImage} alt={productName} />
@@ -650,17 +734,17 @@ const ProductTableRow: React.FC<{
             </div>
           </div>
         </div>
-      </td>
+       </td>
       <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
         <code className="text-xs bg-stone-100 px-2 py-1 rounded font-mono">
           {productSku}
         </code>
-      </td>
+       </td>
       <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
         <span className="text-stone-600">
           {product.category?.name || "Uncategorized"}
         </span>
-      </td>
+       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex flex-col">
           <span className="font-semibold text-stone-900">
@@ -668,10 +752,10 @@ const ProductTableRow: React.FC<{
           </span>
           <ProfitTrend product={product} />
         </div>
-      </td>
+       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <StockBadge product={product} />
-      </td>
+       </td>
       <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
         <span
           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -682,7 +766,7 @@ const ProductTableRow: React.FC<{
         >
           {product.is_active ? "Active" : "Inactive"}
         </span>
-      </td>
+       </td>
       <td className="px-6 py-4 text-center relative">
         <button
           onClick={() => onToggleOpen(isOpen ? null : product.id)}
@@ -741,19 +825,19 @@ const ProductTableRow: React.FC<{
             </div>
           </>
         )}
-      </td>
+       </td>
     </tr>
   );
 };
 
 // Product Grid Card Component
-const ProductGridCard: React.FC<{
-  product: Product;
-  onView: (product: Product) => void;
-  onEdit: (id: number) => void;
-  onDelete: (product: Product) => void;
-  formatCurrency: (amount: number) => string;
-}> = ({ product, onView, onEdit, onDelete, formatCurrency }) => {
+const ProductGridCard: React.FC<ProductGridCardProps> = ({
+  product,
+  onView,
+  onEdit,
+  onDelete,
+  formatCurrency,
+}) => {
   // Get product name from either product.name or product.product?.name
   const productName = product.product?.name || product.name || "";
   const productSku = product.product?.sku || product.sku || "";
@@ -764,12 +848,14 @@ const ProductGridCard: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all group">
       <div className="p-5">
         <div className="relative mb-4">
-          <div className="aspect-square bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden">
+          <div className="aspect-square bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden relative">
             {productImage ? (
-              <img
-                src={`http://localhost:8000/storage/${productImage}`}
+              <Image
+                src={getImageUrl(productImage)}
                 alt={productName}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
               <Package className="h-12 w-12 text-stone-400" />
@@ -844,19 +930,7 @@ const ProductGridCard: React.FC<{
 };
 
 // Filter Drawer Component
-const FilterDrawer: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  filters: FilterState;
-  categories: Category[];
-  totalItems: number;
-  onFilterChange: <K extends keyof FilterState>(
-    key: K,
-    value: FilterState[K],
-  ) => void;
-  onClearFilters: () => void;
-  activeFilterCount: number;
-}> = ({
+const FilterDrawer: React.FC<FilterDrawerProps> = ({
   isOpen,
   onClose,
   filters,
@@ -1033,14 +1107,14 @@ const FilterDrawer: React.FC<{
 };
 
 // View Product Modal Component
-const ViewProductModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  product: Product | null;
-  onEdit: (id: number) => void;
-  onHistory: (id: number) => void;
-  formatCurrency: (amount: number) => string;
-}> = ({ isOpen, onClose, product, onEdit, onHistory, formatCurrency }) => {
+const ViewProductModal: React.FC<ViewProductModalProps> = ({
+  isOpen,
+  onClose,
+  product,
+  // onEdit,
+  // onHistory,
+  formatCurrency,
+}) => {
   if (!isOpen || !product) return null;
 
   // Get product details safely
@@ -1327,34 +1401,6 @@ const ViewProductModal: React.FC<{
               </div>
             </div>
           )}
-
-          {/* Actions */}
-          {/* <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-stone-200">
-            <button
-              onClick={onClose}
-              className="px-6 py-3 text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
-            >
-              Close
-            </button>
-            <button
-              onClick={() => {
-                onHistory(product.id);
-                onClose();
-              }}
-              className="px-6 py-3 text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors inline-flex items-center justify-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              View History
-            </button>
-            <Link
-              href={`/editproduct/${product.id}`}
-              onClick={onClose}
-              className="px-6 py-3 text-sm font-medium text-white bg-[#1e3a5f] rounded-lg hover:bg-[#2c4c6e] transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-[#1e3a5f]/20"
-            >
-              <Edit className="h-4 w-4" />
-              Edit Product
-            </Link>
-          </div> */}
         </div>
       </div>
     </div>
@@ -1365,7 +1411,7 @@ const ViewProductModal: React.FC<{
 // Main Component
 // ==============================================
 
-const ManageProducts = ({ user }: { user?: any }) => {
+const ManageProducts = ({ user }: { user?: User }) => {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -1426,7 +1472,7 @@ const ManageProducts = ({ user }: { user?: any }) => {
   }, [products]);
 
   // Helper function used for both initial load and refresh
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
 
@@ -1451,22 +1497,23 @@ const ManageProducts = ({ user }: { user?: any }) => {
       setLocationName(newLocationName);
       setProducts(Array.isArray(newProducts) ? newProducts : []);
       setCategories(Array.isArray(newCategories) ? newCategories : []);
-    } catch (error) {
-      // console.error("Error loading data:", error);
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      console.error("Error loading data:", error);
       toast.error("Failed to load data");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   // Initial load
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   // Refresh handler
   const handleRefresh = async () => {
-    await loadData(); // reuses the same helper
+    await loadData();
     toast.success("Data refreshed");
   };
 
@@ -1475,10 +1522,11 @@ const ManageProducts = ({ user }: { user?: any }) => {
     setIsSubmitting(true);
 
     try {
-       toast.error("Product can not be deleted from this account level");
-    } catch (err: any) {
-      toast.error("Failed to delete product");
-      await loadData(); // reuses the same helper
+      toast.error("Product can not be deleted from this account level");
+      // The actual delete API call is disabled as per the original code
+    } catch (err: unknown) {
+      // Error handling is disabled as per original code
+      console.error("Delete failed:", err);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Plus,
   Edit,
@@ -30,11 +30,11 @@ import {
   Hash,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { apiGet, apiDelete } from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import { withAuth } from "@/hoc/withAuth";
-import ShortTextWithTooltip from "../component/shorten_len"; // make sure the path is correct
+import ShortTextWithTooltip from "../component/shorten_len";
 
 // Customer Types
 interface Customer {
@@ -65,6 +65,33 @@ interface Customer {
   updated_at: string;
 }
 
+// User interface for props
+interface User {
+  businesses_one?: Array<{
+    currency?: string;
+  }>;
+}
+
+// Delete Modal Props
+interface DeleteConfirmationModalProps {
+  customer: Customer | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isSubmitting: boolean;
+  currencySymbol: string;
+}
+
+// Error Response Interface
+interface ErrorResponse {
+  userMessage?: string;
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
 // Delete Modal Component
 const DeleteConfirmationModal = ({
   customer,
@@ -73,14 +100,7 @@ const DeleteConfirmationModal = ({
   onConfirm,
   isSubmitting,
   currencySymbol,
-}: {
-  customer: Customer | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  isSubmitting: boolean;
-  currencySymbol: string;
-}) => {
+}: DeleteConfirmationModalProps) => {
   if (!isOpen || !customer) return null;
 
   const getFullName = (customer: Customer) => {
@@ -185,7 +205,7 @@ const DeleteConfirmationModal = ({
                   </div>
                   <p className="font-medium text-gray-900">
                     {formatDate(
-                      customer.registration_date || customer.created_at
+                      customer.registration_date || customer.created_at,
                     )}
                   </p>
                 </div>
@@ -260,7 +280,7 @@ const DeleteConfirmationModal = ({
   );
 };
 
-const ManageCustomers = ({ user }) => {
+const ManageCustomers = ({ user }: { user: User }) => {
   // Get user currency symbol from backend
   const userCurrencySymbol = user?.businesses_one?.[0]?.currency || "$";
 
@@ -296,13 +316,11 @@ const ManageCustomers = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const router = useRouter();
-
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setCurrentPage(1); // Reset to first page when search changes
+      setCurrentPage(1);
     }, 300);
 
     return () => clearTimeout(timer);
@@ -314,13 +332,7 @@ const ManageCustomers = ({ user }) => {
   }, [statusFilter, typeFilter]);
 
   // Fetch customers on component mount or when forceRefresh changes
-  useEffect(() => {
-    if (!user) return;
-    fetchCustomers();
-  }, [user, forceRefresh]);
-
-  // API call to fetch all customers using in-memory cache
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -336,14 +348,22 @@ const ManageCustomers = ({ user }) => {
       if (forceRefresh) {
         setForceRefresh(false);
       }
-    } catch (err: any) {
-      const errorMessage = "Failed to fetch customers";
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? `Failed to fetch customers: ${err.message}`
+          : "Failed to fetch customers";
       toast.error(errorMessage);
       setCustomers([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [forceRefresh]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchCustomers();
+  }, [user, fetchCustomers]);
 
   // Force refresh customers (bypass cache)
   const handleForceRefresh = () => {
@@ -356,7 +376,7 @@ const ManageCustomers = ({ user }) => {
       isOpen: true,
       customer,
     });
-    setOpenRow(null); // Close any open action menu
+    setOpenRow(null);
   };
 
   // Close delete confirmation modal
@@ -367,9 +387,7 @@ const ManageCustomers = ({ user }) => {
     });
   };
 
-
-
-  // Handle customer deletion=====================
+  // Handle customer deletion
   const handleDelete = async (customerKey: string) => {
     if (isSubmitting) return;
 
@@ -378,18 +396,19 @@ const ManageCustomers = ({ user }) => {
       // OPTIMISTIC UPDATE
       setCustomers((prevCustomers) =>
         prevCustomers.filter(
-          (customer) => customer.customer_key !== customerKey
-        )
+          (customer) => customer.customer_key !== customerKey,
+        ),
       );
       await apiDelete(`/customers/${customerKey}`, {}, ["/customers"]);
       toast.success("Customer deleted successfully!");
       handleCloseDeleteModal();
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as ErrorResponse;
       // Revert optimistic update on error
       setForceRefresh(true);
       const errorMessage =
-        err.userMessage ||
-        err.response?.data?.message ||
+        error.userMessage ||
+        error.response?.data?.message ||
         "Failed to delete customer";
       toast.error(errorMessage);
     } finally {
@@ -417,7 +436,7 @@ const ManageCustomers = ({ user }) => {
         .toLowerCase();
 
       const matchesSearch = searchableText.includes(
-        debouncedSearch.toLowerCase()
+        debouncedSearch.toLowerCase(),
       );
 
       const matchesType =
@@ -652,7 +671,7 @@ const ManageCustomers = ({ user }) => {
                     ? `${Math.round(
                         (customers.filter((c) => c.is_active).length /
                           customers.length) *
-                          100
+                          100,
                       )}% of total`
                     : "0%"}
                 </p>
@@ -918,7 +937,7 @@ const ManageCustomers = ({ user }) => {
                               <td className="px-4 sm:px-6 py-4 min-w-[100px] whitespace-nowrap">
                                 <span
                                   className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${getTypeBadgeColor(
-                                    customer
+                                    customer,
                                   )}`}
                                 >
                                   {customer.gender
@@ -932,13 +951,13 @@ const ManageCustomers = ({ user }) => {
                                   <div className="text-sm font-medium text-gray-900">
                                     {userCurrencySymbol}
                                     {Number(
-                                      customer.total_purchases
+                                      customer.total_purchases,
                                     ).toLocaleString()}
                                   </div>
                                   <div className="text-xs text-gray-500">
                                     Balance: {userCurrencySymbol}
                                     {Number(
-                                      customer.outstanding_balance
+                                      customer.outstanding_balance,
                                     ).toLocaleString()}
                                   </div>
                                 </div>
@@ -947,7 +966,7 @@ const ManageCustomers = ({ user }) => {
                               <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                                 <span
                                   className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusBadgeColor(
-                                    customer.is_active
+                                    customer.is_active,
                                   )}`}
                                 >
                                   {customer.is_active ? "Active" : "Inactive"}
@@ -1119,8 +1138,8 @@ const ManageCustomers = ({ user }) => {
                     </button>
 
                     <div className="flex items-center gap-1">
-                      {getPageNumbers().map((page, index) => (
-                        <React.Fragment key={index}>
+                      {getPageNumbers().map((page, idx) => (
+                        <React.Fragment key={idx}>
                           {page === "..." ? (
                             <span className="px-3 py-2 text-gray-400">...</span>
                           ) : (

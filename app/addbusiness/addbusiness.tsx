@@ -1,13 +1,24 @@
 'use client';
 
-import { useRouter } from "next/navigation"; // Removed unused useParams
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import Image from "next/image"; // Add this for Next.js Image component
-import { Building2, Plus, ArrowLeft } from "lucide-react"; // Removed unused Image, Upload, Hexagon
+import Image from "next/image";
+import { Building2, Plus, ArrowLeft } from "lucide-react";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { toast } from 'react-hot-toast';
+
+// Define proper types for props if they're being injected
+interface AddBusinessPageProps {
+  user?: {
+    id?: number;
+    name?: string;
+    email?: string;
+    // Add other user properties as needed
+  };
+  loading?: boolean;
+}
 
 // Define proper types
 interface FormState {
@@ -67,9 +78,10 @@ const subscriptionTypes = [
 ];
 
 const subscriptionPlans = ["monthly", "yearly"];
-const languages = ["en", "fr", "es"];
 
-export default function AddBusinessPage() {
+// Accept props but don't use them if not needed, or use underscore prefix to indicate they're intentionally unused
+// export default function AddBusinessPage({ user: _user, loading }: AddBusinessPageProps) {
+export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>({
     business_name: "",
@@ -83,7 +95,7 @@ export default function AddBusinessPage() {
     country: "",
     state: "",
     city: "",
-    subscription_type: "Free", // Changed from "free" to match subscriptionTypes
+    subscription_type: "Free",
     subscription_plan: "monthly",
     currency: "NGN",
     language: "en",
@@ -92,7 +104,7 @@ export default function AddBusinessPage() {
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null); // Add for preview
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
   const labelClass = "block text-sm font-medium text-gray-700 mb-2";
@@ -116,7 +128,6 @@ export default function AddBusinessPage() {
 
     setLogoFile(file);
     
-    // Create preview URL
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
@@ -135,7 +146,6 @@ export default function AddBusinessPage() {
     router.push('/business');
   };
 
-  // Fixed: Added proper typing and used the message parameter
   const showErrorAlert = (message: string) => {
     toast.error(message || 'Failed to create business. Please try again.');
   };
@@ -149,7 +159,6 @@ export default function AddBusinessPage() {
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
-        // Handle null/undefined values
         if (value !== null && value !== undefined) {
           formData.append(key, value);
         }
@@ -170,7 +179,6 @@ export default function AddBusinessPage() {
       if (response.data) {
         showSuccessAlert();
 
-        // Reset form
         setForm({
           business_name: "",
           slug: "",
@@ -192,8 +200,7 @@ export default function AddBusinessPage() {
         setLogoFile(null);
         setLogoPreview(null);
       }
-    } catch (err: unknown) { // Fixed: removed 'any' type
-      // Properly type the error
+    } catch (err: unknown) {
       const error = err as ErrorResponse;
       const errorMessage = error.response?.data?.message || "Failed to create business.";
       showErrorAlert(errorMessage);
@@ -203,6 +210,18 @@ export default function AddBusinessPage() {
   };
 
   const isFormValid = form.business_name.trim().length > 0;
+
+  // If you want to show a loading state while the wrapper is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white py-8">
@@ -228,9 +247,8 @@ export default function AddBusinessPage() {
           </div>
         </div>
 
-        {/* Form Card */}
+        {/* Rest of your component remains the same */}
         <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl">
-          {/* Card Header */}
           <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/10 rounded-lg">
@@ -243,7 +261,6 @@ export default function AddBusinessPage() {
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={onSubmit} className="p-6 space-y-8">
             {/* Basic Information */}
             <section>
@@ -288,7 +305,6 @@ export default function AddBusinessPage() {
                   </select>
                 </div>
 
-                {/* Logo Upload */}
                 <div className="md:col-span-2">
                   <label className={labelClass}>Business Logo</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50/50">
@@ -301,7 +317,6 @@ export default function AddBusinessPage() {
                     />
                     <label htmlFor="logo-upload" className="cursor-pointer">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        {/* Fixed: Using lucide-react Image icon, not next/image */}
                         <Building2 className="h-8 w-8 text-gray-400" />
                         <p className="text-sm font-medium text-gray-600">Click to upload logo</p>
                         <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 2MB</p>
@@ -310,7 +325,6 @@ export default function AddBusinessPage() {
                   </div>
                   {logoPreview && (
                     <div className="mt-3 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      {/* Fixed: Using Next.js Image component for preview */}
                       <Image
                         src={logoPreview}
                         alt="Logo preview"

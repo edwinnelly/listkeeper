@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import api from "@/lib/axios";
 import { 
   ArrowLeft, 
@@ -15,14 +16,12 @@ import {
   Users, 
   Calendar, 
   FileText, 
-  Shield, 
   Sparkles, 
   TrendingUp, 
   Activity,
   Check, 
   Star, 
   CreditCard, 
-  BarChart3, 
   Crown,
   Zap,
   Settings,
@@ -94,6 +93,8 @@ interface PaymentMethod {
   expiry?: string;
   isDefault: boolean;
 }
+
+type TabId = "overview" | "subscription" | "billing" | "settings";
 
 // =============================================================================
 // MOCK DATA
@@ -217,9 +218,8 @@ const BusinessProfilePage = () => {
   
   const [business, setBusiness] = useState<Business | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "subscription" | "billing" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string>("essentials");
 
   // ===========================================================================
   // FETCH BUSINESS DATA
@@ -313,7 +313,7 @@ const BusinessProfilePage = () => {
             <h2 className="text-3xl font-bold text-gray-900 mb-3">
               Business Not Found
             </h2>
-            <p className="text-gray-600 mb-8 text-lg">The business you're looking for doesn't exist or has been moved.</p>
+            <p className="text-gray-600 mb-8 text-lg">The business you&apos;re looking for doesn&apos;t exist or has been moved.</p>
             <Link
               href="/business"
               className="inline-flex items-center px-8 py-4 bg-gray-900 text-white font-semibold rounded-2xl hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -355,11 +355,14 @@ const BusinessProfilePage = () => {
               <div className="flex items-center space-x-8 mb-8 lg:mb-0">
                 <div className="flex items-center gap-6">
                   {business.logo ? (
-                    <img
-                      src={`http://localhost:8001/storage/${business.logo}`}
-                      alt="Business Logo"
-                      className="w-24 h-24 rounded-2xl object-cover border border-white/50 shadow-2xl shadow-gray-200/30 backdrop-blur-sm"
-                    />
+                    <div className="relative w-24 h-24">
+                      <Image
+                        src={`http://localhost:8001/storage/${business.logo}`}
+                        alt="Business Logo"
+                        fill
+                        className="rounded-2xl object-cover border border-white/50 shadow-2xl shadow-gray-200/30 backdrop-blur-sm"
+                      />
+                    </div>
                   ) : (
                     <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 border border-white/50 rounded-2xl flex items-center justify-center shadow-2xl shadow-gray-200/30 backdrop-blur-sm">
                       <Building2 className="h-10 w-10 text-gray-500" />
@@ -400,16 +403,16 @@ const BusinessProfilePage = () => {
           <div className="border-b border-gray-200/50 px-8">
             <nav className="flex space-x-8 -mb-px">
               {[
-                { id: "overview", label: "Overview", icon: Building2 },
-                { id: "subscription", label: "Subscription", icon: Crown },
-                { id: "billing", label: "Billing", icon: CreditCard },
-                { id: "settings", label: "Settings", icon: Settings }
+                { id: "overview" as TabId, label: "Overview", icon: Building2 },
+                { id: "subscription" as TabId, label: "Subscription", icon: Crown },
+                { id: "billing" as TabId, label: "Billing", icon: CreditCard },
+                { id: "settings" as TabId, label: "Settings", icon: Settings }
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`py-6 px-1 border-b-2 font-medium text-sm flex items-center gap-3 transition-all duration-300 ${
                       activeTab === tab.id
                         ? 'border-gray-500 text-gray-600'

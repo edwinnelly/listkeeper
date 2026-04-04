@@ -6,6 +6,7 @@ import api from "@/lib/axios";
 import Cookies from "js-cookie";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Building2,
   Globe2,
@@ -22,7 +23,6 @@ import {
   Calendar,
   ArrowUpRight,
   MoreVertical,
-  // Link
 } from "lucide-react";
 
 interface Business {
@@ -48,12 +48,8 @@ interface Business {
   };
 }
 
-interface DashboardPageProps {
-  user: any;
-  loading: boolean;
-}
-
-export default function DashboardPage({ user, loading }: DashboardPageProps) {
+// Remove unused props
+export default function DashboardPage() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [fetching, setFetching] = useState(true);
   const [switchingAccount, setSwitchingAccount] = useState(false);
@@ -73,7 +69,8 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
         });
         const businessData: Business = res.data?.business || res.data?.data?.business || res.data;
         setBusiness(businessData);
-      } catch (err) {
+      } catch {
+        // Error intentionally ignored - just log to console
         console.error("Error fetching business");
       } finally {
         setFetching(false);
@@ -103,7 +100,8 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
       setTimeout(() => {
         window.location.href = "/dashboard";
       }, 1500);
-    } catch (err) {
+    } catch {
+      // Error intentionally ignored - just log to console
       console.error("Error switching account");
     } finally {
       setSwitchingAccount(false);
@@ -238,11 +236,14 @@ export default function DashboardPage({ user, loading }: DashboardPageProps) {
           <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-center gap-6">
               {business.logo ? (
-                <img
-                  src={`http://localhost:8000/storage/${business.logo}`}
-                  alt="Business Logo"
-                  className="w-24 h-24 rounded-2xl object-cover border-2 border-white/20 shadow-2xl"
-                />
+                <div className="relative w-24 h-24">
+                  <Image
+                    src={`http://localhost:8000/storage/${business.logo}`}
+                    alt="Business Logo"
+                    fill
+                    className="rounded-2xl object-cover border-2 border-white/20 shadow-2xl"
+                  />
+                </div>
               ) : (
                 <div className="w-24 h-24 bg-white/5 border-2 border-white/20 rounded-2xl flex items-center justify-center shadow-2xl">
                   <Building2 className="h-10 w-10 text-white/60" />

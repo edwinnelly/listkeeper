@@ -34,6 +34,7 @@ import {
   Tag,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "react-hot-toast";
 import ShortTextWithTooltip from "../component/shorten_len";
 
@@ -94,6 +95,21 @@ interface Location {
   current_stock?: number;
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
+interface User {
+  businesses_one?: Array<{
+    currency?: string;
+  }>;
+}
+
 // ==============================================
 // Utility Functions
 // ==============================================
@@ -127,8 +143,6 @@ const LocationCard: React.FC<{
   selected: boolean;
   onSelect: () => void;
 }> = ({ location, selected, onSelect }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   const getIcon = () => {
     if (location.type?.toLowerCase().includes("warehouse")) {
       return <Warehouse className="h-5 w-5 text-white" />;
@@ -161,11 +175,9 @@ const LocationCard: React.FC<{
             ? "ring-2 ring-gray-600 ring-offset-2"
             : "hover:ring-2 hover:ring-stone-200 hover:ring-offset-2"
         }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={onSelect}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           onSelect();
         }
       }}
@@ -326,12 +338,13 @@ const ModernProductCard: React.FC<{
   onToggleSelect,
   formatCurrency,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const stockQty = toNumber(product.stock_quantity);
   const price = toNumber(product.price);
   const discount = toNumber(product.discount_percentage);
 
-  const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuantityInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const value = parseInt(e.target.value) || 0;
     onQuantityChange(Math.min(stockQty, Math.max(0, value)));
   };
@@ -345,7 +358,7 @@ const ModernProductCard: React.FC<{
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       onToggleSelect();
     }
   };
@@ -355,8 +368,6 @@ const ModernProductCard: React.FC<{
       className={`bg-white rounded-2xl border-2 transition-all duration-300 group
         ${isSelected ? "border-gray-600 shadow-lg shadow-gray-600/5" : "border-stone-200 hover:border-stone-300 hover:shadow-md"}
       `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="p-5">
         <div className="flex items-start gap-4">
@@ -383,14 +394,19 @@ const ModernProductCard: React.FC<{
             <div
               className={`w-16 h-16 rounded-xl bg-gradient-to-br from-gray-600/10 to-gray-600/5 
               flex items-center justify-center border-2 ${isSelected ? "border-gray-600" : "border-stone-200"}
-              ${isHovered ? "scale-105" : ""} transition-transform duration-300`}
+              transition-transform duration-300`}
             >
               {product.image ? (
-                <img
-                  src={`http://localhost:8000/storage/${product.image}`}
-                  alt={product.name}
-                  className="w-full h-full object-cover rounded-xl"
-                />
+                <div className="relative w-full h-full">
+                  <Image
+                    src={`http://localhost:8000/storage/${product.image}`}
+                    alt={product.name}
+                    fill
+                    className="object-cover rounded-xl"
+                    sizes="64px"
+                    unoptimized={process.env.NODE_ENV === "development"}
+                  />
+                </div>
               ) : (
                 <Package
                   className={`h-8 w-8 ${isSelected ? "text-gray-700-600" : "text-stone-400"}`}
@@ -559,16 +575,13 @@ const StatCard: React.FC<{
   title: string;
   value: string | number | React.ReactNode;
   icon: React.ElementType;
-  color: "primary" | "gray" | "gray" | "gray" | "gray" | "gray";
+  color: "primary" | "gray" | "emerald";
   subtitle?: string;
 }> = ({ title, value, icon: Icon, color, subtitle }) => {
   const colorClasses = {
     primary: "bg-gray-600/10 text-gray-700-700",
     emerald: "bg-gray-50 text-gray-700-700",
     gray: "bg-gray-50 text-gray-700-700",
-    // gray: "bg-gray-50 text-gray-700-700",
-    // gray: "bg-gray-50 text-gray-700-700",
-    // gray: "bg-gray-50 text-gray-700-700",
   };
 
   return (
@@ -667,7 +680,7 @@ const ConfirmationModal: React.FC<{
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       onClose();
     }
   };
@@ -783,7 +796,7 @@ const ConfirmationModal: React.FC<{
 // Main Component
 // ==============================================
 
-const AddToLocations = ({ user }: { user: any }) => {
+const AddToLocations = ({ user }: { user: User }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -847,7 +860,7 @@ const AddToLocations = ({ user }: { user: any }) => {
         res.data ??
         [];
       setProducts(Array.isArray(productsArray) ? productsArray : []);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch products");
       setProducts([]);
     }
@@ -863,7 +876,7 @@ const AddToLocations = ({ user }: { user: any }) => {
         res.data ??
         [];
       setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
-    } catch (err) {
+    } catch {
       setCategories([]);
     }
   };
@@ -873,7 +886,18 @@ const AddToLocations = ({ user }: { user: any }) => {
       const res = await apiGet("/locations_without_main", {}, false);
 
       // Extract locations using a function
-      const extractLocations = (response: any): Location[] => {
+      // Define a type for the API response structure
+      interface ApiResponse {
+        data?: {
+          data?: {
+            locations?: Location[];
+          };
+          locations?: Location[];
+        };
+        locations?: Location[];
+      }
+
+      const extractLocations = (response: ApiResponse): Location[] => {
         const data = response?.data?.data || response?.data || response;
         return Array.isArray(data?.locations)
           ? data.locations
@@ -884,14 +908,14 @@ const AddToLocations = ({ user }: { user: any }) => {
 
       const locationsArray = extractLocations(res);
       setLocations(Array.isArray(locationsArray) ? locationsArray : []);
-    } catch (err) {
+    } catch {
       setLocations([]);
     }
   };
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter((product) => {
+    const filtered = products.filter((product) => {
       const matchesSearch =
         !debouncedSearch ||
         product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
@@ -1077,9 +1101,10 @@ const AddToLocations = ({ user }: { user: any }) => {
 
       // Refresh data
       await fetchProducts();
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as ApiError;
       toast.error(
-        err.response?.data?.message || "Failed to distribute products",
+        error.response?.data?.message || "Failed to distribute products",
       );
     } finally {
       setIsSubmitting(false);
@@ -1131,7 +1156,11 @@ const AddToLocations = ({ user }: { user: any }) => {
                 }
                 className="p-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 
                   rounded-xl border border-stone-200"
-                aria-label={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+                aria-label={
+                  viewMode === "grid"
+                    ? "Switch to list view"
+                    : "Switch to grid view"
+                }
                 type="button"
               >
                 {viewMode === "grid" ? (
@@ -1293,7 +1322,11 @@ const AddToLocations = ({ user }: { user: any }) => {
                         </label>
                         <select
                           value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value as "name" | "price" | "stock")}
+                          onChange={(e) =>
+                            setSortBy(
+                              e.target.value as "name" | "price" | "stock",
+                            )
+                          }
                           className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg"
                           aria-label="Sort by"
                         >
@@ -1308,7 +1341,9 @@ const AddToLocations = ({ user }: { user: any }) => {
                         </label>
                         <select
                           value={sortOrder}
-                          onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+                          onChange={(e) =>
+                            setSortOrder(e.target.value as "asc" | "desc")
+                          }
                           className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg"
                           aria-label="Sort order"
                         >

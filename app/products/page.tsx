@@ -1,5 +1,4 @@
 'use client';
-import { useState } from "react";
 import Productlist from "../products/items";
 
 export default function DashboardPage() {

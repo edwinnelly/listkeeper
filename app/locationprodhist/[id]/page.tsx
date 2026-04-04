@@ -7,11 +7,8 @@ import {
   MoreVertical,
   X,
   ArrowLeft,
-  Loader2,
   RefreshCw,
   Eye,
-  CheckCircle,
-  XCircle,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -22,19 +19,13 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Layers,
-  Box,
   Calendar,
-  Scale,
-  AlertCircle,
   Clock,
-  User,
   FileText,
-  Building2,
-  Filter,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import { useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import ShortTextWithTooltip from "../../component/shorten_len";
 import DatePicker from "react-datepicker";
@@ -70,13 +61,6 @@ interface ProductHistory {
     dimensions: string | null;
     image: string | null;
   };
-}
-
-interface ApiResponse {
-  success: boolean;
-  count: number;
-  location_name?: string;
-  data: ProductHistory[];
 }
 
 // ==============================================
@@ -187,7 +171,7 @@ const LoadingState: React.FC = () => (
   </div>
 );
 
-// Product Image Component
+// Product Image Component with Next.js Image
 const ProductImage: React.FC<{
   src?: string | null;
   alt: string;
@@ -195,20 +179,27 @@ const ProductImage: React.FC<{
 }> = ({ src, alt, className = "w-10 h-10" }) => {
   const [error, setError] = useState(false);
 
+  if (error || !src) {
+    return (
+      <div
+        className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden`}
+      >
+        <Package className="h-5 w-5 text-[#1e3a5f]" />
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden`}
+      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden relative`}
     >
-      {src && !error ? (
-        <img
-          src={`http://localhost:8000/storage/${src}`}
-          alt={alt}
-          className="w-full h-full object-cover"
-          onError={() => setError(true)}
-        />
-      ) : (
-        <Package className="h-5 w-5 text-[#1e3a5f]" />
-      )}
+      <Image
+        src={`http://localhost:8000/storage/${src}`}
+        alt={alt}
+        fill
+        className="object-cover"
+        onError={() => setError(true)}
+      />
     </div>
   );
 };
@@ -372,9 +363,7 @@ const ProductHistoryRow: React.FC<{
   onToggleOpen,
   formatCurrency,
 }) => {
-  const { bg, text } = getTransactionTypeColor(history.type);
   const quantity = toNumber(history.quantity);
-  const cost = toNumber(history.cost);
   const price = toNumber(history.price);
   const totalValue = quantity * price;
 
@@ -382,7 +371,7 @@ const ProductHistoryRow: React.FC<{
     <tr className="hover:bg-stone-50/50 transition-colors group">
       <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
         {startIndex + index + 1}
-      </td>
+       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <ProductImage src={history.product?.image} alt={history.product?.name || ""} />
@@ -724,8 +713,11 @@ const DateRangeFilter: React.FC<{
 // Main Component
 // ==============================================
 
-const ProductHistory = ({ user }: { user?: any }) => {
-  const router = useRouter();
+interface User {
+  businesses_one?: Array<{ currency?: string }>;
+}
+
+const ProductHistory = ({ user }: { user?: User }) => {
   const params = useParams();
   const id = params.id as string;
 
@@ -750,7 +742,7 @@ const ProductHistory = ({ user }: { user?: any }) => {
   const debouncedSearch = useDebounce(searchTerm, 300);
 
   // Helper function used for both initial load and refresh
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
 
@@ -771,12 +763,12 @@ const ProductHistory = ({ user }: { user?: any }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   // Initial load
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   // Refresh handler
   const handleRefresh = async () => {

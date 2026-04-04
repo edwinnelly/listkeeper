@@ -52,7 +52,7 @@ const DeleteBusinessPage = () => {
       } else {
         throw new Error("Delete failed");
       }
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to delete business. Please try again.');
     } finally {
       setIsDeleting(false);

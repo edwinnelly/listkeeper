@@ -1,11 +1,31 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+// import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 
+// User type definition
+type User = {
+  id: string | number;
+  email: string;
+  name?: string;
+  avatar?: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
+} | null;
+
+// API Error type definition
+type ApiError = {
+  response?: {
+    status: number;
+    data?: unknown;
+  };
+  message?: string;
+};
+
 type AuthContextType = {
-  user: any;
+  user: User;
   loading: boolean;
 };
 
@@ -14,9 +34,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,8 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await api.get('/user');
         if (!mounted) return;
         setUser(res.data ?? null);
-      } catch (err: any) {
-        if (err?.response?.status === 401) {
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        if (error?.response?.status === 401) {
           setUser(null);
         }
       } finally {

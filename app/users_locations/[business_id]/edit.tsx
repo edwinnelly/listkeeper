@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Search,
   User,
@@ -12,7 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter,useParams } from "next/navigation";
+import Image from "next/image";
+import { useParams } from "next/navigation";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
 import { toast } from "react-hot-toast";
@@ -58,16 +59,15 @@ interface Location {
   location_name: string;
 }
 
+
 interface ViewUsersProps {
   locationId?: string;
 }
 
 const ViewUsers = ({ locationId }: ViewUsersProps) => {
+  const params = useParams();
+  const id = params.business_id as string;
 
-    const params = useParams();
-    // const router = useRouter();
-    const id = params.business_id as string;
-    
   // State for search functionality
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -81,8 +81,6 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
 
-  const router = useRouter();
-
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -92,14 +90,8 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch users and locations on component mount
-  useEffect(() => {
-    fetchUsers();
-    fetchLocations();
-  }, []);
-
   // API call to fetch all users
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
       await api.get("/sanctum/csrf-cookie");
@@ -118,7 +110,7 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
         : [];
 
       setUsers(usersArray);
-    } catch (err: any) {
+    } catch (err: ApiError) {
       const errorMessage =
         err.response?.data?.message || "Manage Users unavailable";
       toast.error(errorMessage);
@@ -126,10 +118,10 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   // API call to fetch locations
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
     try {
       await api.get("/sanctum/csrf-cookie");
       const res = await api.get("/locations", {
@@ -147,12 +139,18 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
         : [];
 
       setLocations(locationsArray);
-    } catch (err: any) {
+    } catch (err: ApiError) {
       console.error("Failed to fetch locations:", err);
       toast.error("Failed to fetch locations");
       setLocations([]);
     }
-  };
+  }, []);
+
+  // Fetch users and locations on component mount
+  useEffect(() => {
+    fetchUsers();
+    fetchLocations();
+  }, [fetchUsers, fetchLocations]);
 
   // Filter users based on search query, filters, and location ID
   const filteredUsers = useMemo(() => {
@@ -433,9 +431,11 @@ const ViewUsers = ({ locationId }: ViewUsersProps) => {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200/50">
                                 {user.profile_pic ? (
-                                  <img
+                                  <Image
                                     src={`http://localhost:8000/storage/${user.profile_pic}`}
                                     alt={user.name}
+                                    width={40}
+                                    height={40}
                                     className="w-full h-full object-cover rounded-xl"
                                   />
                                 ) : (

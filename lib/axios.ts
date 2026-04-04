@@ -1,15 +1,14 @@
-import axios from "axios";
+import axios, { AxiosResponse, AxiosError } from "axios";
 import Cookies from "js-cookie";
 
 // In-memory GET cache
-const getCache: Record<string, any> = {};
+const getCache: Record<string, AxiosResponse> = {};
 const cacheExpiry: Record<string, number> = {};
 const CACHE_TTL = 1000 * 60 * 1; // 1 minute TTL
 
 // CSRF state tracking
 let csrfFetchInProgress: Promise<void> | null = null;
 let csrfFetchTimeoutId: NodeJS.Timeout | null = null;
-let csrfLastFetchAttempt = 0;
 const CSRF_FETCH_TIMEOUT = 15000; // 15 seconds timeout for CSRF fetch
 const CSRF_RETRY_DELAY = 1000; // 1 second delay between retries
 const MAX_CSRF_RETRIES = 3;
@@ -30,6 +29,17 @@ const sanctumApi = axios.create({
   timeout: 10000, // 10 second timeout for CSRF endpoint
 });
 
+// Define types for API error responses
+interface ApiErrorResponse {
+  message?: string;
+  errors?: Record<string, string[]>;
+}
+
+// Define type for axios error with custom properties
+interface ExtendedAxiosError extends AxiosError {
+  userMessage?: string;
+  validationErrors?: Record<string, string[]> | null;
+}
 
 // Function to ensure CSRF token is set with timeout racing and retry logic
 export const ensureCsrfToken = async (retryCount = 0): Promise<void> => {
@@ -54,7 +64,7 @@ export const ensureCsrfToken = async (retryCount = 0): Promise<void> => {
   }
 
   // Create a new fetch promise with timeout racing
-  csrfFetchInProgress = new Promise(async (resolve, reject) => {
+  csrfFetchInProgress = new Promise(async (resolve) => {
     try {
       // Create timeout promise
       const timeoutPromise = new Promise((_, reject) => {
@@ -84,7 +94,6 @@ export const ensureCsrfToken = async (retryCount = 0): Promise<void> => {
         // Set token on both instances
         api.defaults.headers.common["X-XSRF-TOKEN"] = token;
         sanctumApi.defaults.headers.common["X-XSRF-TOKEN"] = token;
-        csrfLastFetchAttempt = Date.now();
         resolve();
       } else {
         throw new Error("CSRF token not found in cookies after fetch");
@@ -98,8 +107,9 @@ export const ensureCsrfToken = async (retryCount = 0): Promise<void> => {
 
       // Retry logic for network errors or timeouts
       if (retryCount < MAX_CSRF_RETRIES) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
         console.log(`CSRF fetch attempt ${retryCount + 1} failed, retrying...`, {
-          error: err.message,
+          error: errorMessage,
           retryCount: retryCount + 1
         });
         
@@ -114,11 +124,6 @@ export const ensureCsrfToken = async (retryCount = 0): Promise<void> => {
         return ensureCsrfToken(retryCount + 1);
       }
 
-      console.error("Failed to ensure CSRF token after retries:", {
-        error: err,
-        message: err.response?.data || err.message,
-        status: err.response?.status
-      });
       throw err;
     } finally {
       // Clear the in-progress flag
@@ -142,22 +147,34 @@ export const clearCsrfState = () => {
   csrfFetchInProgress = null;
 };
 
-export const withCsrf = async (requestFn: () => Promise<any>, retryCount = 0) => {
+// Define a type for the error with response property
+interface ApiError extends Error {
+  response?: {
+    status: number;
+    data?: ApiErrorResponse;
+  };
+  code?: string;
+  userMessage?: string;
+  validationErrors?: Record<string, string[]> | null;
+}
+
+export const withCsrf = async <T>(requestFn: () => Promise<T>, retryCount = 0): Promise<T> => {
   try {
     // Ensure CSRF token is available before making the request
     await ensureCsrfToken();
     return await requestFn();
   } catch (err) {
+    const error = err as ApiError;
     // Check for 419 CSRF mismatch or network errors
-    const isCsrfMismatch = err.response?.status === 419;
-    const isNetworkError = !err.response && err.code !== "ECONNABORTED";
-    const isTimeoutError = err.code === "ECONNABORTED";
+    const isCsrfMismatch = error.response?.status === 419;
+    const isNetworkError = !error.response && error.code !== "ECONNABORTED";
+    const isTimeoutError = error.code === "ECONNABORTED";
     
     // Retry on 419 (CSRF mismatch), network errors, or timeouts
     if ((isCsrfMismatch || isNetworkError || isTimeoutError) && retryCount < MAX_CSRF_RETRIES) {
-      console.log(`Request failed (${err.response?.status || 'network'}), retrying...`, {
+      console.log(`Request failed (${error.response?.status || 'network'}), retrying...`, {
         retryCount: retryCount + 1,
-        error: err.message
+        error: error.message
       });
 
       // Clear CSRF state on 419 or network errors to force a new token fetch
@@ -189,26 +206,27 @@ const invalidateCache = (urls: string[] = []) => {
 // Response interceptor for better error handling (only for main api instance)
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
+  async (error: AxiosError) => {
+    const extendedError = error as ExtendedAxiosError;
+    
     // Network / CORS / timeout errors (no response)
-    if (!error.response) {
-      error.userMessage =
-        error.code === "ECONNABORTED"
+    if (!extendedError.response) {
+      extendedError.userMessage =
+        extendedError.code === "ECONNABORTED"
           ? "Request timed out. Please check your connection."
           : "Network error. Please check your internet connection.";
-      return Promise.reject(error);
+      return Promise.reject(extendedError);
     }
 
-    const { status, data } = error.response;
+    const { status, data } = extendedError.response;
+    const responseData = data as ApiErrorResponse;
 
     // Handle 419 CSRF mismatch - but let withCsrf handle retries
     if (status === 419) {
-      error.userMessage = "Session expired. Please try again.";
+      extendedError.userMessage = "Session expired. Please try again.";
       // Clear CSRF token to force refresh on next request
       clearCsrfState();
-      return Promise.reject(error);
+      return Promise.reject(extendedError);
     }
 
     // Handle 401 Unauthorized - token expired
@@ -223,73 +241,73 @@ api.interceptors.response.use(
 
     switch (status) {
       case 400:
-        error.userMessage =
-          data?.message || "Invalid request. Please check your input.";
+        extendedError.userMessage =
+          responseData?.message || "Invalid request. Please check your input.";
         break;
 
       case 401:
-        error.userMessage =
-          data?.message || "Session expired. Please log in again.";
+        extendedError.userMessage =
+          responseData?.message || "Session expired. Please log in again.";
         break;
 
       case 403:
-        error.userMessage =
-          data?.message || "You don’t have permission to perform this action.";
+        extendedError.userMessage =
+          responseData?.message || "You don’t have permission to perform this action.";
         break;
 
       case 404:
-        error.userMessage =
-          data?.message || "The requested resource was not found.";
+        extendedError.userMessage =
+          responseData?.message || "The requested resource was not found.";
         break;
 
       case 409:
-        error.userMessage =
-          data?.message || "Conflict detected. This record may already exist.";
+        extendedError.userMessage =
+          responseData?.message || "Conflict detected. This record may already exist.";
         break;
 
       case 422:
         // Laravel validation errors
-        error.userMessage =
-          data?.message || "Validation failed. Please review your inputs.";
-        error.validationErrors = data?.errors || null;
+        extendedError.userMessage =
+          responseData?.message || "Validation failed. Please review your inputs.";
+        extendedError.validationErrors = responseData?.errors || null;
         break;
 
       case 429:
-        error.userMessage =
+        extendedError.userMessage =
           "Too many requests. Please slow down and try again.";
         break;
 
       case 500:
-        error.userMessage =
+        extendedError.userMessage =
           "Internal server error. Please try again later.";
         break;
 
       case 502:
-        error.userMessage =
+        extendedError.userMessage =
           "Bad gateway. Server is temporarily unavailable.";
         break;
 
       case 503:
-        error.userMessage =
+        extendedError.userMessage =
           "Service unavailable. Please try again shortly.";
         break;
 
       case 504:
-        error.userMessage =
+        extendedError.userMessage =
           "Server timeout. Please try again later.";
         break;
 
       default:
-        error.userMessage =
-          data?.message || "An unexpected error occurred.";
+        extendedError.userMessage =
+          responseData?.message || "An unexpected error occurred.";
     }
 
-    return Promise.reject(error);
+    return Promise.reject(extendedError);
   }
 );
 
 // GET request with caching
-export const apiGet = async (url: string, config = {}, useCache = true) =>
+export const apiGet = async (url: string, config = {}, useCache = true): Promise<AxiosResponse> =>
   withCsrf(async () => {
     if (useCache) {
       const now = Date.now();
@@ -309,7 +327,12 @@ export const apiGet = async (url: string, config = {}, useCache = true) =>
   });
 
 // POST request wrapper
-export const apiPost = async (url: string, data: any, config = {}, invalidateUrls: string[] = []) =>
+export const apiPost = async <T>(
+  url: string, 
+  data: T, 
+  config = {}, 
+  invalidateUrls: string[] = []
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
     const response = await api.post(url, data, config);
     invalidateCache(invalidateUrls);
@@ -317,7 +340,12 @@ export const apiPost = async (url: string, data: any, config = {}, invalidateUrl
   });
 
 // PUT request wrapper
-export const apiPut = async (url: string, data: any, config = {}, invalidateUrls: string[] = []) =>
+export const apiPut = async <T>(
+  url: string, 
+  data: T, 
+  config = {}, 
+  invalidateUrls: string[] = []
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
     const response = await api.put(url, data, config);
     invalidateCache(invalidateUrls);
@@ -325,7 +353,12 @@ export const apiPut = async (url: string, data: any, config = {}, invalidateUrls
   });
 
 // PATCH request wrapper
-export const apiPatch = async (url: string, data: any, config = {}, invalidateUrls: string[] = []) =>
+export const apiPatch = async <T>(
+  url: string, 
+  data: T, 
+  config = {}, 
+  invalidateUrls: string[] = []
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
     const response = await api.patch(url, data, config);
     invalidateCache(invalidateUrls);
@@ -333,7 +366,11 @@ export const apiPatch = async (url: string, data: any, config = {}, invalidateUr
   });
 
 // DELETE request wrapper
-export const apiDelete = async (url: string, config = {}, invalidateUrls: string[] = []) =>
+export const apiDelete = async (
+  url: string, 
+  config = {}, 
+  invalidateUrls: string[] = []
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
     const response = await api.delete(url, config);
     invalidateCache(invalidateUrls);

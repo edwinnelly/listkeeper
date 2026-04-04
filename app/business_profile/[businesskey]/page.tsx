@@ -16,8 +16,6 @@ import {
   Calendar, 
   FileText, 
   Shield, 
-  Sparkles, 
-  TrendingUp, 
   Activity,
   CreditCard,
   BarChart,
@@ -30,16 +28,10 @@ import {
   XCircle,
   AlertTriangle,
   DollarSign,
-  Briefcase,
   Target,
   Award,
-  Layers,
   Settings,
-  PieChart,
-  MailOpen,
-  Link2,
   MoreHorizontal,
-  BookOpen,
   Star,
   Zap
 } from "lucide-react";
@@ -54,6 +46,8 @@ interface Business {
   phone: string;
   website: string;
   address: string;
+  city?: string;
+  country?: string;
   industry: string;
   employee_count: number;
   founded_date: string;
@@ -64,6 +58,8 @@ interface Business {
 
 const STATIC_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+type TabType = "overview" | "analytics" | "team" | "settings";
+
 const ViewBusinessPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -71,7 +67,7 @@ const ViewBusinessPage = () => {
   
   const [business, setBusiness] = useState<Business | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "team" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<TabType>("overview");
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -98,15 +94,8 @@ const ViewBusinessPage = () => {
     router.push(`/editbusiness/${id}`);
   }, [router, id]);
 
-  const handleTabChange = useCallback((tab: "overview" | "analytics" | "team" | "settings") => {
+  const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
-  }, []);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent, action: () => void) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      action();
-    }
   }, []);
 
   const getStatusConfig = useCallback((status: string) => {
@@ -179,7 +168,7 @@ const ViewBusinessPage = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Business Not Found</h2>
           <p className="text-gray-600 mb-6">
-            The business profile you're looking for doesn't exist or may have been removed.
+            The business profile you&apos;re looking for doesn&apos;t exist or may have been removed.
           </p>
           <Link
             href="/business"
@@ -308,14 +297,14 @@ const ViewBusinessPage = () => {
           {/* Tabs */}
           <div className="flex gap-6 mt-8 border-b border-gray-200">
             {[
-              { id: "overview", label: "Overview", icon: Building2 },
-              { id: "analytics", label: "Analytics", icon: BarChart },
-              { id: "team", label: "Team", icon: Users },
-              { id: "settings", label: "Settings", icon: Settings }
+              { id: "overview" as TabType, label: "Overview", icon: Building2 },
+              { id: "analytics" as TabType, label: "Analytics", icon: BarChart },
+              { id: "team" as TabType, label: "Team", icon: Users },
+              { id: "settings" as TabType, label: "Settings", icon: Settings }
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => handleTabChange(tab.id as any)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                   activeTab === tab.id
                     ? "border-gray-600 text-gray-600"
@@ -369,7 +358,7 @@ const ViewBusinessPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
                       { icon: Mail, label: "Email", value: business.email, href: `mailto:${business.email}` },
-                      { icon: Phone, label: "Phone", value: business.phone || "Not provided", href: `tel:${business.phone}` },
+                      { icon: Phone, label: "Phone", value: business.phone || "Not provided", href: business.phone ? `tel:${business.phone}` : null },
                       { icon: Globe, label: "Website", value: business.website || "Not provided", href: business.website, external: true },
                       { icon: MapPin, label: "Address", value: business.address || "Not provided", href: business.address ? `https://maps.google.com/?q=${encodeURIComponent(business.address)}` : null, external: true }
                     ].map((item, idx) => (

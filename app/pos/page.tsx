@@ -1,6 +1,6 @@
 "use client";
 import { withAuth } from "@/hoc/withAuth";
-import { apiGet, apiPost } from "@/lib/axios";
+import { apiGet } from "@/lib/axios";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Search,
@@ -15,13 +15,10 @@ import {
   Printer,
   User,
   Package,
-  Tag,
-  DollarSign,
-  Receipt,
   Smartphone,
   Laptop,
   Coffee,
-  ChevronRight ,
+  ChevronRight,
   Beer,
   ShoppingBag,
   Gift,
@@ -29,9 +26,7 @@ import {
   BookOpen,
   Grid,
   List,
-  TrendingUp,
   Award,
-  Zap,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -39,45 +34,29 @@ import {
   Banknote,
   Landmark,
   QrCode,
-  Scan,
-  Percent,
   ChevronDown,
   ChevronUp,
-  Settings,
   RefreshCw,
   Download,
   Mail,
   Phone,
-  MapPin,
-  Calendar,
   Star,
-  Heart,
   Shield,
-  Truck,
-  PackageCheck,
-  PackageX,
   BadgePercent,
-  Gift as GiftIcon,
   Sparkles,
-  Flame,
-  Leaf,
   Crown,
   Gem,
-  Rocket,
-  Globe,
   Moon,
   Sun,
   Bell,
-  Menu,
   Users,
   UserPlus,
-  UserCheck,
   UserX,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 // ==============================================
 // TypeScript Interfaces
@@ -236,20 +215,6 @@ const fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 },
-  transition: { duration: 0.3 },
-};
-
-const scaleIn = {
-  initial: { opacity: 0, scale: 0.9 },
-  animate: { opacity: 1, scale: 1 },
-  exit: { opacity: 0, scale: 0.9 },
-  transition: { duration: 0.2 },
-};
-
-const slideInRight = {
-  initial: { opacity: 0, x: 50 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: 50 },
   transition: { duration: 0.3 },
 };
 
@@ -445,7 +410,7 @@ const ModernCategoryPills: React.FC<{
   );
 };
 
-// Modern Product Card - Smaller Image Version
+// Modern Product Card - Smaller Image Version with Next.js Image
 const ModernProductCard: React.FC<{
   product: Product;
   onAddToCart: (product: Product) => void;
@@ -503,13 +468,15 @@ const ModernProductCard: React.FC<{
         )}
       </div>
 
-      {/* Image Container - Smaller */}
+      {/* Image Container - Using Next.js Image */}
       <div className="relative aspect-square w-32 mx-auto mt-3">
         <div className="w-full h-full bg-gradient-to-br from-stone-50 to-stone-100 rounded-lg flex items-center justify-center overflow-hidden">
           {product.image && !imageError ? (
-            <img
+            <Image
               src={`http://localhost:8000/storage/${product.image}`}
               alt={product.name}
+              width={128}
+              height={128}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               onError={() => setImageError(true)}
             />
@@ -625,9 +592,11 @@ const ModernCartItem: React.FC<{
         {/* Product Image */}
         <div className="w-16 h-16 bg-gradient-to-br from-stone-50 to-stone-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
           {item.image ? (
-            <img
+            <Image
               src={`http://localhost:8000/storage/${item.image}`}
               alt={item.name}
+              width={64}
+              height={64}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -1183,6 +1152,7 @@ const ModernCartSummary: React.FC<{
 };
 
 // Modern Payment Modal
+// Modern Payment Modal
 const ModernPaymentModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
@@ -1198,7 +1168,6 @@ const ModernPaymentModal: React.FC<{
   total,
   isSubmitting,
   formatCurrency,
-  currencySymbol,
 }) => {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState(total.toString());
@@ -1269,7 +1238,7 @@ const ModernPaymentModal: React.FC<{
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500 font-medium">
-                    {currencySymbol}
+                    $
                   </span>
                   <input
                     type="number"
@@ -1587,7 +1556,11 @@ Thank you for your business!
 // Main Component
 // ==============================================
 
-const PointOfSale = ({ user }) => {
+interface User {
+  businesses_one?: Array<{ currency?: string }>;
+}
+
+const PointOfSale = ({ user }: { user?: User }) => {
   const router = useRouter();
 
   // State
@@ -1608,7 +1581,6 @@ const PointOfSale = ({ user }) => {
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(
     null,
   );
-  const [taxRate, setTaxRate] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState<"percentage" | "fixed">(
     "percentage",
@@ -1625,6 +1597,23 @@ const PointOfSale = ({ user }) => {
   }, []);
 
   // Category icons mapping
+  // const categoryIcons: Record<
+  //   string,
+  //   { icon: React.ElementType; color: string }
+  // > = {
+  //   food: { icon: Coffee, color: "from-orange-500 to-red-500" },
+  //   beverages: { icon: Beer, color: "from-amber-500 to-yellow-500" },
+  //   electronics: { icon: Laptop, color: "from-gray-500 to-indigo-500" },
+  //   clothing: { icon: ShoppingBag, color: "from-gray-500 to-gray-500" },
+  //   home: { icon: Home, color: "from-emerald-500 to-teal-500" },
+  //   gifts: { icon: Gift, color: "from-rose-500 to-gray-500" },
+  //   books: { icon: BookOpen, color: "from-stone-500 to-stone-700" },
+  // };
+
+  // Fetch data
+ // Fetch data
+const fetchData = React.useCallback(async () => {
+  // Category icons mapping - moved inside the callback
   const categoryIcons: Record<
     string,
     { icon: React.ElementType; color: string }
@@ -1638,76 +1627,74 @@ const PointOfSale = ({ user }) => {
     books: { icon: BookOpen, color: "from-stone-500 to-stone-700" },
   };
 
-  // Fetch data
+  setIsLoading(true);
+  try {
+    const [productsRes, categoriesRes, customersRes] = await Promise.all([
+      apiGet("/products", {}, false),
+      apiGet("/product-categories", {}, false),
+      apiGet("/customers", {}, false),
+    ]);
+
+    // Parse products
+    const productsArray =
+      productsRes.data?.data?.products ??
+      productsRes.data?.data ??
+      productsRes.data?.products ??
+      productsRes.data ??
+      [];
+    setProducts(Array.isArray(productsArray) ? productsArray : []);
+
+    // Parse categories with counts
+    const categoriesArray =
+      categoriesRes.data?.data?.product_categories ??
+      categoriesRes.data?.product_categories ??
+      categoriesRes.data?.data ??
+      categoriesRes.data ??
+      [];
+
+    const productsList = Array.isArray(productsArray) ? productsArray : [];
+
+    const dbCategories = Array.isArray(categoriesArray)
+      ? categoriesArray
+      : [];
+    const formattedCategories: Category[] = dbCategories.map((c: Category) => {
+      const iconConfig =
+        categoryIcons[c.name.toLowerCase()] || categoryIcons.food;
+      return {
+        id: c.id,
+        name: c.name,
+        icon: iconConfig.icon,
+        color: iconConfig.color,
+        count: productsList.filter((p) => p.category_id === c.id).length,
+      };
+    });
+
+    setCategories(formattedCategories);
+
+    // Parse customers
+    let customersArray: Customer[] = [];
+    if (customersRes.data?.data?.customers) {
+      customersArray = customersRes.data.data.customers;
+    } else if (customersRes.data?.customers) {
+      customersArray = customersRes.data.customers;
+    } else if (customersRes.data?.data) {
+      customersArray = customersRes.data.data;
+    } else if (Array.isArray(customersRes.data)) {
+      customersArray = customersRes.data;
+    }
+
+    setCustomers(Array.isArray(customersArray) ? customersArray : []);
+  } catch {
+    console.error("Failed to load data");
+    toast.error("Failed to load data");
+  } finally {
+    setIsLoading(false);
+  }
+}, []); // Empty dependency array since categoryIcons is now inside the callback
+
   useEffect(() => {
     fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const [productsRes, categoriesRes, customersRes] = await Promise.all([
-        apiGet("/products", {}, false),
-        apiGet("/product-categories", {}, false),
-        apiGet("/customers", {}, false),
-      ]);
-
-      // Parse products
-      const productsArray =
-        productsRes.data?.data?.products ??
-        productsRes.data?.data ??
-        productsRes.data?.products ??
-        productsRes.data ??
-        [];
-      setProducts(Array.isArray(productsArray) ? productsArray : []);
-
-      // Parse categories with counts
-      const categoriesArray =
-        categoriesRes.data?.data?.product_categories ??
-        categoriesRes.data?.product_categories ??
-        categoriesRes.data?.data ??
-        categoriesRes.data ??
-        [];
-
-      const productsList = Array.isArray(productsArray) ? productsArray : [];
-
-      const dbCategories = Array.isArray(categoriesArray)
-        ? categoriesArray
-        : [];
-      const formattedCategories: Category[] = dbCategories.map((c: any) => {
-        const iconConfig =
-          categoryIcons[c.name.toLowerCase()] || categoryIcons.food;
-        return {
-          id: c.id,
-          name: c.name,
-          icon: iconConfig.icon,
-          color: iconConfig.color,
-          count: productsList.filter((p) => p.category_id === c.id).length,
-        };
-      });
-
-      setCategories(formattedCategories);
-
-      // Parse customers
-      let customersArray = [];
-      if (customersRes.data?.data?.customers) {
-        customersArray = customersRes.data.data.customers;
-      } else if (customersRes.data?.customers) {
-        customersArray = customersRes.data.customers;
-      } else if (customersRes.data?.data) {
-        customersArray = customersRes.data.data;
-      } else if (Array.isArray(customersRes.data)) {
-        customersArray = customersRes.data;
-      }
-
-      setCustomers(Array.isArray(customersArray) ? customersArray : []);
-    } catch (err: any) {
-      console.error("Failed to load data:", err);
-      toast.error("Failed to load data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [fetchData]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -1739,7 +1726,7 @@ const PointOfSale = ({ user }) => {
     return Math.min(discount, cartSubtotal);
   }, [cartSubtotal, discount, discountType]);
 
-  const cartTax = (cartSubtotal - cartDiscount) * (taxRate / 100);
+  const cartTax = 0; // taxRate is 0
   const cartTotal = cartSubtotal - cartDiscount + cartTax;
 
   // Cart functions
@@ -1810,14 +1797,7 @@ const PointOfSale = ({ user }) => {
   };
 
   const removeFromCart = (productId: number) => {
-    const item = cart.find((i) => i.id === productId);
     setCart((prev) => prev.filter((item) => item.id !== productId));
-    if (item) {
-    //   toast.success(`${item.name} removed from cart`, {
-    //     icon: "🗑️",
-    //     duration: 1500,
-    //   });
-    }
   };
 
   const addItemNote = (productId: number, note: string) => {
@@ -1839,8 +1819,8 @@ const PointOfSale = ({ user }) => {
 
   const handleCheckout = async (
     paymentMethod: string,
-    amountPaid: number,
-    reference?: string,
+    // amountPaid: number,
+    // reference?: string,
   ) => {
     if (cart.length === 0) {
       toast.error("Cart is empty");
@@ -1873,7 +1853,7 @@ const PointOfSale = ({ user }) => {
 
       // Clear cart after successful payment
       clearCart();
-    } catch (err: any) {
+    } catch {
       toast.error("Payment failed");
     } finally {
       setIsSubmitting(false);

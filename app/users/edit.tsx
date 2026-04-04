@@ -4,7 +4,6 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
-  useRef,
 } from "react";
 import {
   Plus,
@@ -16,7 +15,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   Phone,
-  Mail,
   User,
   Loader2,
   Shield,
@@ -27,13 +25,11 @@ import {
   Camera,
   Filter,
   Download,
-  ChevronDown,
-  Settings,
   RefreshCw,
-  MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
+// import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { apiGet, apiPost, apiDelete } from "@/lib/axios";
 
@@ -116,10 +112,67 @@ interface Location {
   location_name: string;
 }
 
-interface ApiResponse<T> {
-  data?: T;
-  success?: boolean;
-  message?: string;
+interface StatsCardProps {
+  title: string;
+  value: number;
+  icon: React.ElementType;
+  color?: string;
+}
+
+interface SearchBarProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+}
+
+interface FilterSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  placeholder: string;
+}
+
+interface ActionMenuProps {
+  user: User;
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
+  onClose: () => void;
+  isOpen: boolean;
+}
+
+interface UserTableRowProps {
+  user: User;
+  index: number;
+  isMenuOpen: boolean;
+  onMenuToggle: (id: number | null) => void;
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
+}
+
+interface EmptyStateProps {
+  hasSearch: boolean;
+  onAddClick: () => void;
+}
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: React.ReactNode;
+  children: React.ReactNode;
+  showHeader?: boolean;
+}
+
+interface UserFormProps {
+  form: UserFormData;
+  handleInputChange: (field: keyof UserFormData, value: string) => void;
+  handleFileChange: (file: File | null) => void;
+  inputClass: string;
+  labelClass: string;
+  roles: Array<{ value: UserRole; label: string }>;
+  locations: Location[];
+  isEdit: boolean;
+  previewUrl: string | null;
+  isUploading: boolean;
+  errors: FormErrors;
 }
 
 // Constants
@@ -215,6 +268,17 @@ const useDebounce = <T,>(value: T, delay: number): T => {
   return debouncedValue;
 };
 
+interface ApiError {
+  userMessage?: string;
+  response?: {
+    data?: {
+      message?: string;
+      errors?: Record<string, string[]>;
+    };
+    status?: number;
+  };
+}
+
 export const useUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -239,11 +303,12 @@ export const useUsers = () => {
       const normalizedUsers = Array.isArray(usersArray) ? usersArray : [];
 
       setUsers(normalizedUsers);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as ApiError;
       // Use userMessage from interceptor if available
       const errorMessage =
-        err.userMessage ||
-        err.response?.data?.message ||
+        error.userMessage ||
+        error.response?.data?.message ||
         "Failed to fetch users";
 
       console.error("Failed to fetch users:", err);
@@ -277,10 +342,11 @@ export const useLocations = () => {
         [];
 
       setLocations(Array.isArray(locationsArray) ? locationsArray : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as ApiError;
       // Use userMessage from interceptor if available
       console.error("Failed to fetch locations:", err);
-      toast.error(err.userMessage || "Failed to fetch locations");
+      toast.error(error.userMessage || "Failed to fetch locations");
       setLocations([]);
     } finally {
       setIsLoading(false);
@@ -294,11 +360,8 @@ export const useLocations = () => {
 // COMPONENTS
 // ============================================================================
 
-const StatsCard = ({ title, value, icon: Icon, color = "gray" }: any) => {
-  const colorClasses = {
-    gray: "bg-gray-50 text-gray-600",
-    gray: "bg-gray-50 text-gray-600",
-    gray: "bg-gray-50 text-gray-600",
+const StatsCard = ({ title, value, icon: Icon, color = "gray" }: StatsCardProps) => {
+  const colorClasses: Record<string, string> = {
     gray: "bg-gray-50 text-gray-600",
   };
 
@@ -319,7 +382,7 @@ const StatsCard = ({ title, value, icon: Icon, color = "gray" }: any) => {
   );
 };
 
-const SearchBar = ({ search, onSearchChange }: any) => (
+const SearchBar = ({ search, onSearchChange }: SearchBarProps) => (
   <div className="relative flex-1 max-w-md">
     <Search
       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -335,14 +398,14 @@ const SearchBar = ({ search, onSearchChange }: any) => (
   </div>
 );
 
-const FilterSelect = ({ value, onChange, options, placeholder }: any) => (
+const FilterSelect = ({ value, onChange, options, placeholder }: FilterSelectProps) => (
   <select
     value={value}
     onChange={(e) => onChange(e.target.value)}
     className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
   >
     <option value="all">{placeholder}</option>
-    {options.map((option: any) => (
+    {options.map((option) => (
       <option key={option.value} value={option.value}>
         {option.label}
       </option>
@@ -350,7 +413,7 @@ const FilterSelect = ({ value, onChange, options, placeholder }: any) => (
   </select>
 );
 
-const ActionMenu = ({ user, onEdit, onDelete, onClose, isOpen }: any) => {
+const ActionMenu = ({ user, onEdit, onDelete, onClose, isOpen }: ActionMenuProps) => {
   if (!isOpen) return null;
 
   return (
@@ -389,90 +452,98 @@ const ActionMenu = ({ user, onEdit, onDelete, onClose, isOpen }: any) => {
 };
 
 const UserTableRow = React.memo(
-  ({ user, index, isMenuOpen, onMenuToggle, onEdit, onDelete }: any) => (
-    <tr className="hover:bg-gray-50/50 transition-colors group">
-      <td className="px-6 py-4 text-center">
-        <span className="text-sm font-medium text-gray-500">{index + 1}</span>
-      </td>
-      <td className="px-6 py-4 min-w-[250px]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200/50">
-            {user.profile_pic ? (
-              <img
-                src={`http://localhost:8000/storage/${user.profile_pic}`}
-                alt={user.name}
-                className="w-full h-full object-cover rounded-xl"
-                loading="lazy"
-              />
-            ) : (
-              <User className="h-5 w-5 text-gray-600" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="font-semibold text-gray-900 truncate group-hover:text-gray-600 transition-colors">
-              {user.name}
+  ({ user, index, isMenuOpen, onMenuToggle, onEdit, onDelete }: UserTableRowProps) => {
+    const getImageUrl = (profilePic: string) => {
+      if (!profilePic) return null;
+      return `http://localhost:8000/storage/${profilePic}`;
+    };
+
+    return (
+      <tr className="hover:bg-gray-50/50 transition-colors group">
+        <td className="px-6 py-4 text-center">
+          <span className="text-sm font-medium text-gray-500">{index + 1}</span>
+        </td>
+        <td className="px-6 py-4 min-w-[250px]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-gray-200/50 relative overflow-hidden">
+              {user.profile_pic ? (
+                <Image
+                  src={getImageUrl(user.profile_pic) || ""}
+                  alt={user.name}
+                  fill
+                  className="object-cover rounded-xl"
+                  sizes="40px"
+                />
+              ) : (
+                <User className="h-5 w-5 text-gray-600" />
+              )}
             </div>
-            <div className="text-xs text-gray-500 truncate mt-0.5">
-              {user.email}
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-gray-900 truncate group-hover:text-gray-600 transition-colors">
+                {user.name}
+              </div>
+              <div className="text-xs text-gray-500 truncate mt-0.5">
+                {user.email}
+              </div>
             </div>
           </div>
-        </div>
-      </td>
-      <td className="px-6 py-4 min-w-[150px] whitespace-nowrap hidden md:table-cell">
-        {user.phone_number && (
+        </td>
+        <td className="px-6 py-4 min-w-[150px] whitespace-nowrap hidden md:table-cell">
+          {user.phone_number && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Phone className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+              <span className="text-sm font-medium">{user.phone_number}</span>
+            </div>
+          )}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
           <div className="flex items-center gap-2 text-gray-600">
-            <Phone className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-            <span className="text-sm font-medium">{user.phone_number}</span>
+            <Building className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+            <span className="text-sm font-medium">
+              {user.address || "Not assigned"}
+            </span>
           </div>
-        )}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-        <div className="flex items-center gap-2 text-gray-600">
-          <Building className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-          <span className="text-sm font-medium">
-            {user.address || "Not assigned"}
+        </td>
+        <td className="px-6 py-4 min-w-[120px] whitespace-nowrap">
+          <span
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${getRoleBadgeColor(user.role)}`}
+          >
+            {user.role}
           </span>
-        </div>
-      </td>
-      <td className="px-6 py-4 min-w-[120px] whitespace-nowrap">
-        <span
-          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${getRoleBadgeColor(user.role)}`}
-        >
-          {user.role}
-        </span>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span
-          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusBadgeColor(user.is_active ? "active" : "inactive")}`}
-        >
-          {user.is_active ? "Active" : "Inactive"}
-        </span>
-      </td>
-      <td className="px-6 py-4 text-center relative whitespace-nowrap">
-        <button
-          onClick={() => onMenuToggle(user.id)}
-          className="p-2 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600 group/action"
-        >
-          <MoreVertical
-            size={18}
-            className="group-hover/action:scale-110 transition-transform"
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <span
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusBadgeColor(user.is_active ? "active" : "inactive")}`}
+          >
+            {user.is_active ? "Active" : "Inactive"}
+          </span>
+        </td>
+        <td className="px-6 py-4 text-center relative whitespace-nowrap">
+          <button
+            onClick={() => onMenuToggle(user.id)}
+            className="p-2 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600 group/action"
+          >
+            <MoreVertical
+              size={18}
+              className="group-hover/action:scale-110 transition-transform"
+            />
+          </button>
+          <ActionMenu
+            user={user}
+            isOpen={isMenuOpen}
+            onClose={() => onMenuToggle(null)}
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
-        </button>
-        <ActionMenu
-          user={user}
-          isOpen={isMenuOpen}
-          onClose={() => onMenuToggle(null)}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      </td>
-    </tr>
-  ),
+        </td>
+      </tr>
+    );
+  }
 );
 
 UserTableRow.displayName = "UserTableRow";
 
-const EmptyState = ({ hasSearch, onAddClick }: any) => (
+const EmptyState = ({ hasSearch, onAddClick }: EmptyStateProps) => (
   <tr>
     <td colSpan={7} className="text-center py-16">
       <div className="flex flex-col items-center gap-4 max-w-sm mx-auto">
@@ -508,6 +579,7 @@ const EmptyState = ({ hasSearch, onAddClick }: any) => (
 // ============================================================================
 
 const ManageUsers = () => {
+  // const router = useRouter();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -834,14 +906,15 @@ const ManageUsers = () => {
           resetForm();
           await fetchUsers();
         }
-      } catch (err: any) {
-        if (err.response?.status === 403) {
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        if (error.response?.status === 403) {
           toast.error(
             "User limit reached for your current subscription plan. Please upgrade your plan to add more users.",
           );
-        } else if (err.response?.status === 422) {
+        } else if (error.response?.status === 422) {
           // Handle validation errors from API
-          const apiErrors = err.response?.data?.errors;
+          const apiErrors = error.response?.data?.errors;
           if (apiErrors) {
             const newErrors: FormErrors = {};
             Object.keys(apiErrors).forEach((key) => {
@@ -854,7 +927,7 @@ const ManageUsers = () => {
             setFormErrors(newErrors);
           }
         } else {
-          toast.error(err.response?.data?.message || "Failed to create user");
+          toast.error(error.response?.data?.message || "Failed to create user");
         }
       } finally {
         setIsSubmitting(false);
@@ -942,10 +1015,11 @@ const ManageUsers = () => {
           resetForm();
           await fetchUsers();
         }
-      } catch (err: any) {
-        if (err.response?.status === 422) {
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        if (error.response?.status === 422) {
           // Handle validation errors from API
-          const apiErrors = err.response?.data?.errors;
+          const apiErrors = error.response?.data?.errors;
           if (apiErrors) {
             const newErrors: FormErrors = {};
             Object.keys(apiErrors).forEach((key) => {
@@ -958,7 +1032,7 @@ const ManageUsers = () => {
             setFormErrors(newErrors);
           }
         } else {
-          toast.error(err.response?.data?.message || "Failed to update user");
+          toast.error(error.response?.data?.message || "Failed to update user");
         }
       } finally {
         setIsSubmitting(false);
@@ -990,8 +1064,9 @@ const ManageUsers = () => {
       toast.success(response.data?.message || "User deleted successfully!");
       setModalState({ type: null, user: null });
       await fetchUsers();
-    } catch (err: any) {
-      toast.error(err.userMessage || "Failed to delete user");
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      toast.error(error.userMessage || "Failed to delete user");
       setModalState({ type: null, user: null });
     } finally {
       setIsSubmitting(false);
@@ -1369,13 +1444,7 @@ const ManageUsers = () => {
 // MODAL COMPONENT
 // ============================================================================
 
-const Modal = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-  showHeader = true,
-}: any) => {
+const Modal = ({ isOpen, onClose, title, children, showHeader = true }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -1422,7 +1491,7 @@ const UserForm = React.memo(
     previewUrl,
     isUploading = false,
     errors = {},
-  }: any) => (
+  }: UserFormProps) => (
     <div className="space-y-6">
       {/* Photo Upload Section */}
       <div className="flex flex-col items-center space-y-4">
@@ -1430,13 +1499,15 @@ const UserForm = React.memo(
 
         <div className="relative group">
           <div
-            className={`w-24 h-24 rounded-2xl border-2 border-dashed ${errors.photo ? "border-red-300 bg-red-50" : "border-gray-300"} overflow-hidden bg-gray-50 flex items-center justify-center group-hover:border-gray-400 transition-colors`}
+            className={`w-24 h-24 rounded-2xl border-2 border-dashed ${errors.photo ? "border-red-300 bg-red-50" : "border-gray-300"} overflow-hidden bg-gray-50 flex items-center justify-center group-hover:border-gray-400 transition-colors relative`}
           >
             {previewUrl ? (
-              <img
+              <Image
                 src={previewUrl}
                 alt="Profile preview"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                sizes="96px"
               />
             ) : (
               <User className="h-8 w-8 text-gray-400" />
@@ -1541,7 +1612,7 @@ const UserForm = React.memo(
             onChange={(e) => handleInputChange("role", e.target.value)}
             className={inputClass}
           >
-            {roles.map((role: any) => (
+            {roles.map((role) => (
               <option key={role.value} value={role.value}>
                 {role.label}
               </option>
@@ -1557,7 +1628,7 @@ const UserForm = React.memo(
             className={`${inputClass} ${errors.location_id ? "border-red-500 focus:ring-red-500/20 focus:border-red-500" : ""}`}
           >
             <option value="">No location assigned</option>
-            {locations.map((location: Location) => (
+            {locations.map((location) => (
               <option key={location.id} value={location.id}>
                 {location.location_name}
               </option>

@@ -1,0 +1,13 @@
+export { HeroSlider } from "./HeroSlider";
+export { Navbar } from "./Navbar";
+export { StatsCounter } from "./StatsCounter";
+export { Features } from "./Features";
+export { Testimonials } from "./Testimonials";
+export { Pricing } from "./Pricing";
+export { Integrations } from "./Integrations";
+export { CTASection } from "./CTASection";
+export { Footer } from "./Footer";
+export { AIAssistant } from "./AIAssistant";
+export { TrustedBy } from "./TrustedBy";
+export { ProductShowcase } from "./ProductShowcase";
+export { DemoVideo } from "./DemoVideo";

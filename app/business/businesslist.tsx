@@ -1,7 +1,7 @@
 "use client";
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet } from "@/lib/axios";
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import {
   Search,
   Building2,
@@ -51,9 +51,27 @@ interface Business {
   ekey: number;
 }
 
+// Define proper type for the HOC props
+interface WithAuthProps {
+  user?: UserType;
+  loading?: boolean;
+}
+
+// Define user type for withAuth HOC
+interface UserType {
+  id?: number;
+  name?: string;
+  email?: string;
+  businesses_one?: Array<{
+    id: number;
+    business_name: string;
+  }>;
+}
+
 const STATIC_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-const ManageBusinesses = () => {
+// const ManageBusinesses = ({ user: _user, loading: _loading }: WithAuthProps = {}) => {
+  const ManageBusinesses = ({}: WithAuthProps = {}) => {
   // State
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -69,7 +87,7 @@ const ManageBusinesses = () => {
   const dropdownRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   // Debounced search
-  useEffect(() => {
+  React.useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
     }, 300);
@@ -80,7 +98,7 @@ const ManageBusinesses = () => {
   }, [search]);
 
   // Click outside handler
-  useEffect(() => {
+  React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (openDropdown !== null) {
         const dropdownElement = dropdownRefs.current[openDropdown];
@@ -95,7 +113,7 @@ const ManageBusinesses = () => {
   }, [openDropdown]);
 
   // Fetch businesses
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchBusinesses = async () => {
       try {
         setLoading(true);
@@ -167,14 +185,6 @@ const ManageBusinesses = () => {
   }, [businesses, debouncedSearch, statusFilter, planFilter, sortBy]);
 
   // Handlers
-  const handleSelectAll = useCallback((checked: boolean) => {
-    if (checked) {
-      setSelectedBusinesses(filteredBusinesses.map(biz => biz.id));
-    } else {
-      setSelectedBusinesses([]);
-    }
-  }, [filteredBusinesses]);
-
   const handleSelectBusiness = useCallback((businessId: number, checked: boolean) => {
     setSelectedBusinesses(prev => 
       checked ? [...prev, businessId] : prev.filter(id => id !== businessId)

@@ -1,11 +1,9 @@
 'use client';
-import { useState, useEffect } from "react";
+
 import Business from "../business/businesslist";
 
-export default function DashboardPage({ user, loading }: { user: any; loading: boolean }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
+// Remove the DashboardPageProps interface entirely since you're not using props
+export default function DashboardPage() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Main Content */}

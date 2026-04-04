@@ -4,8 +4,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Search,
   ArrowLeft,
-  Loader2,
-  Filter,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
@@ -69,11 +67,8 @@ const ManageProductUnits = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null);
 
-  // Loading States
-  const [isLoading, setIsLoading] = useState(false);
-
   // Data States - Hardcoded product units with 2026 dates
-  const [units, setUnits] = useState<ProductUnit[]>([
+  const [units] = useState<ProductUnit[]>([
     {
       id: 1,
       owner_id: 1,

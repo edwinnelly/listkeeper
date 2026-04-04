@@ -1,5 +1,4 @@
-"use client"; 
-import { withAuth } from "@/hoc/withAuth"; // Higher Order Component for authentication protection
+"use client";
 import { apiGet, apiPut } from "@/lib/axios"; // Custom HTTP client methods for GET and PUT requests
 import { apiPost } from "@/lib/axios"; // Custom HTTP client method for POST requests
 import React, { useState, useEffect, useMemo } from "react"; // React hooks for state management, side effects, and memoization
@@ -14,18 +13,10 @@ import {
   ArrowLeft,
   Loader2,
   Filter,
-  Download,
-  ChevronDown,
-  Settings,
   RefreshCw,
-  MoreHorizontal,
   Folder,
   FolderOpen,
-  Tag,
   Grid,
-  List,
-  Eye,
-  EyeOff,
   CheckCircle,
   XCircle,
   ChevronLeft,
@@ -34,9 +25,7 @@ import {
   ChevronsRight,
 } from "lucide-react"; // Icon library for UI components
 import Link from "next/link"; // Next.js component for client-side navigation
-import { useRouter } from "next/navigation"; // Next.js hook for programmatic navigation
 import api from "@/lib/axios"; // API client instance
-import Cookies from "js-cookie"; // Library for client-side cookie management
 import { toast } from "react-hot-toast"; // Toast notification library for user feedback
 
 // TypeScript interfaces for type safety
@@ -72,12 +61,25 @@ interface Business {
   business_name: string; // Business display name
 }
 
+// API Response type
+interface ApiResponse {
+  data?: {
+    data?: {
+      product_categories?: ProductCategory[];
+    };
+    product_categories?: ProductCategory[];
+    categories?: ProductCategory[];
+  };
+  product_categories?: ProductCategory[];
+  categories?: ProductCategory[];
+}
+
 const ManageProductCategories = () => {
   // Search and Filter States
   const [search, setSearch] = useState(""); // Real-time search input value
   const [debouncedSearch, setDebouncedSearch] = useState(""); // Debounced search value (300ms delay)
   const [statusFilter, setStatusFilter] = useState<string>("all"); // Filter by active/inactive status
-  const [businessFilter, setBusinessFilter] = useState<string>("all"); // Filter by business
+  const [businessFilter] = useState<string>("all"); // Filter by business (unused but kept for future use)
 
   // UI Interaction States
   const [openRow, setOpenRow] = useState<number | null>(null); // Tracks which row's action menu is open
@@ -88,7 +90,8 @@ const ManageProductCategories = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false); // Controls visibility of Delete Confirmation modal
 
   // Selected Item State
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null); // Currently selected category for edit/delete operations
+  const [selectedCategory, setSelectedCategory] =
+    useState<ProductCategory | null>(null); // Currently selected category for edit/delete operations
 
   // Loading States
   const [isLoading, setIsLoading] = useState(true); // Indicates if data is being fetched
@@ -96,7 +99,8 @@ const ManageProductCategories = () => {
 
   // Data States
   const [categories, setCategories] = useState<ProductCategory[]>([]); // List of all product categories
-  const [businesses, setBusinesses] = useState<Business[]>([]); // List of all businesses
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [businesses] = useState<Business[]>([]); // List of all businesses (kept for future use)
 
   // Form State
   const [form, setForm] = useState<CategoryFormData>({
@@ -108,8 +112,6 @@ const ManageProductCategories = () => {
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1); // Current page number (1-indexed)
   const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items to display per page
-
-  const router = useRouter(); // Next.js router instance for navigation
 
   // Effect for debouncing search input
   useEffect(() => {
@@ -123,8 +125,8 @@ const ManageProductCategories = () => {
 
   // Effect to reset pagination when filters change
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when status or business filter changes
-  }, [statusFilter, businessFilter]);
+    setCurrentPage(1); // Reset to first page when status filter changes
+  }, [statusFilter]);
 
   // Effect to fetch data on component mount
   useEffect(() => {
@@ -137,7 +139,7 @@ const ManageProductCategories = () => {
   const fetchCategories = async () => {
     setIsLoading(true); // Set loading state
     try {
-      const res = await apiGet("/product-categories"); // API call to get categories
+      const res = (await apiGet("/product-categories")) as ApiResponse; // API call to get categories
 
       // Normalize API response to ensure it's always an array
       // Handles different API response structures
@@ -149,12 +151,13 @@ const ManageProductCategories = () => {
         [];
 
       setCategories(Array.isArray(categoriesArray) ? categoriesArray : []); // Set categories state
-    } catch (err: any) {
+    } catch (err) {
       // Handle API errors
+      const error = err as { response?: { status?: number } };
       toast.error(
-        err.response?.status === 403
+        error.response?.status === 403
           ? "You don't have permission to access product categories"
-          : "Failed to fetch categories"
+          : "Failed to fetch categories",
       );
       setCategories([]); // Set empty array on error
     } finally {
@@ -182,7 +185,7 @@ const ManageProductCategories = () => {
 
       // Check if category matches search term
       const matchesSearch = searchableText.includes(
-        debouncedSearch.toLowerCase()
+        debouncedSearch.toLowerCase(),
       );
 
       // Check if category matches status filter
@@ -191,7 +194,7 @@ const ManageProductCategories = () => {
         (statusFilter === "active" && category.is_active) ||
         (statusFilter === "inactive" && !category.is_active);
 
-      // Check if category matches business filter
+      // Check if category matches business filter (currently always true)
       const matchesBusiness =
         businessFilter === "all" || category.business_key === businessFilter;
 
@@ -218,7 +221,7 @@ const ManageProductCategories = () => {
    * Includes ellipsis for large page ranges
    */
   const getPageNumbers = () => {
-    const pageNumbers = [];
+    const pageNumbers: (number | string)[] = [];
     const maxVisiblePages = 5; // Maximum number of page buttons to show
 
     if (totalPages <= maxVisiblePages) {
@@ -299,19 +302,19 @@ const ManageProductCategories = () => {
    */
   const validateForm = (formData: CategoryFormData): string[] => {
     const errors: string[] = [];
-    
+
     // Name validation
     if (!formData.name.trim()) errors.push("Category name is required");
     if (formData.name.length < 2)
       errors.push("Category name must be at least 2 characters");
     if (formData.name.length > 100)
       errors.push("Category name must be less than 100 characters");
-    
+
     // Description validation (optional but has max length)
-    if (formData.description && formData.description.length > 150) {
+    if (formData.description && formData.description.length > 500) {
       errors.push("Description must be less than 500 characters");
     }
-    
+
     return errors;
   };
 
@@ -331,6 +334,9 @@ const ManageProductCategories = () => {
 
     setIsSubmitting(true);
 
+    // Create temporary ID for optimistic update
+    const tempId = -Math.abs(Date.now()); // Use negative timestamp as temporary ID
+
     try {
       const payload = {
         name: form.name,
@@ -338,37 +344,36 @@ const ManageProductCategories = () => {
         is_active: form.is_active,
       };
 
-      // OPTIMISTIC UPDATE: Create temporary ID for immediate UI update
-      const tempId = -Math.abs(Date.now()); // Use negative timestamp as temporary ID
-      
       // Create temporary category object for optimistic update
-      const optimisticCategory = {
+      const optimisticCategory: ProductCategory = {
         id: tempId,
         owner_id: 0, // Placeholder
         business_key: "temp", // Placeholder
         name: form.name,
-        slug: form.name.toLowerCase().replace(/\s+/g, '-'), // Generate slug from name
+        slug: form.name.toLowerCase().replace(/\s+/g, "-"), // Generate slug from name
         description: form.description,
         is_active: form.is_active,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         owner: { id: 0, name: "", email: "" },
-        business: { business_key: "temp", business_name: "Temporary" }
+        business: { business_key: "temp", business_name: "Temporary" },
       };
-      
+
       // Add to UI immediately for better UX
-      setCategories(prev => [optimisticCategory, ...prev]);
+      setCategories((prev) => [optimisticCategory, ...prev]);
 
       // Make API call to create category
-      const response = await apiPost("/add_categories", payload, {}, ["/categories"]);
-      
+      const response = await apiPost("/add_categories", payload, {}, [
+        "/categories",
+      ]);
+
       // Replace temporary category with actual data from server response
       if (response.data?.data) {
         const actualCategory = response.data.data;
-        setCategories(prev => 
-          prev.map(cat => 
-            cat.id === tempId ? actualCategory : cat // Replace temp with actual
-          )
+        setCategories((prev) =>
+          prev.map(
+            (cat) => (cat.id === tempId ? actualCategory : cat), // Replace temp with actual
+          ),
         );
       } else {
         // If no data returned, refresh the list
@@ -377,24 +382,27 @@ const ManageProductCategories = () => {
 
       toast.success("Category created successfully");
       setModalOpen(false); // Close modal
-      
+
       // Reset form
       setForm({
         name: "",
         description: "",
         is_active: true,
       });
-    } catch (err: any) {
-      const status = err.response?.status;
-      
+    } catch (err) {
+      const error = err as { response?: { status?: number } };
+      const status = error.response?.status;
+
       // Remove the optimistic update on error
-      setCategories(prev => prev.filter(cat => cat.id !== tempId));
-      
+      setCategories((prev) => prev.filter((cat) => cat.id !== tempId));
+
       // Handle specific error cases
       if (status === 403) {
         toast.error("You do not have permission to perform this action.");
       } else if (status === 422) {
         toast.error("Failed to create category.");
+      } else {
+        toast.error("An error occurred while creating the category.");
       }
     } finally {
       setIsSubmitting(false);
@@ -429,31 +437,30 @@ const ManageProductCategories = () => {
         `/updateCategory/${selectedCategory.id}`,
         payload,
         { _method: "PUT" }, // Method override for Laravel compatibility
-        ["/categories"] // Cache tags for invalidation
+        ["/categories"], // Cache tags for invalidation
       );
 
       toast.success("Category updated successfully");
-      
+
       // OPTIMISTIC UPDATE: Update UI immediately
-      setCategories(prevCategories => 
-        prevCategories.map(category => 
-          category.id === selectedCategory.id 
-            ? { 
-                ...category, 
+      setCategories((prevCategories) =>
+        prevCategories.map((category) =>
+          category.id === selectedCategory.id
+            ? {
+                ...category,
                 name: form.name,
                 description: form.description,
                 is_active: form.is_active,
-                updated_at: new Date().toISOString() // Update timestamp
+                updated_at: new Date().toISOString(), // Update timestamp
               }
-            : category
-        )
+            : category,
+        ),
       );
-      
+
       setEditModalOpen(false); // Close modal
-      
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to update category");
-      
+
       // Revert optimistic update if there's an error
       fetchCategories(); // Fall back to fetching fresh data
     } finally {
@@ -472,20 +479,21 @@ const ManageProductCategories = () => {
 
     try {
       // OPTIMISTIC UPDATE: Remove from UI immediately
-      setCategories(prevCategories => 
-        prevCategories.filter(category => category.id !== selectedCategory.id)
+      setCategories((prevCategories) =>
+        prevCategories.filter(
+          (category) => category.id !== selectedCategory.id,
+        ),
       );
-      
+
       // Make API call to delete category
       await api.delete(`/delete-categories/${selectedCategory.id}`);
 
       toast.success("Category deleted successfully!");
       setDeleteModalOpen(false); // Close modal
       setSelectedCategory(null); // Clear selection
-      
-    } catch (err: any) {
+    } catch{
       toast.error("Failed to delete category");
-      
+
       // Revert optimistic update if there's an error
       fetchCategories(); // Fetch fresh data to restore
     } finally {
@@ -498,7 +506,10 @@ const ManageProductCategories = () => {
    * @param field - The form field to update
    * @param value - The new value for the field
    */
-  const handleInputChange = (field: keyof CategoryFormData, value: any) => {
+  const handleInputChange = (
+    field: keyof CategoryFormData,
+    value: string | boolean,
+  ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -699,23 +710,6 @@ const ManageProductCategories = () => {
                     <option value="inactive">Inactive</option>
                   </select>
 
-                  {/* Business filter commented out for now */}
-                  {/* <select
-                    value={businessFilter}
-                    onChange={(e) => setBusinessFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
-                  >
-                    <option value="all">All Businesses</option>
-                    {businesses.map((business) => (
-                      <option
-                        key={business.business_key}
-                        value={business.business_key}
-                      >
-                        {business.business_name}
-                      </option>
-                    ))}
-                  </select> */}
-
                   <button className="flex items-center gap-2 px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 hover:border-gray-400 transition-colors font-medium text-sm">
                     <Filter size={16} />
                     More Filters
@@ -794,7 +788,7 @@ const ManageProductCategories = () => {
                                 {startIndex + index + 1}
                               </span>
                             </td>
-                            
+
                             {/* Category Name and Icon */}
                             <td className="px-6 py-4 min-w-[200px]">
                               <div className="flex items-center gap-3">
@@ -811,19 +805,19 @@ const ManageProductCategories = () => {
                                 </div>
                               </div>
                             </td>
-                            
+
                             {/* Description (hidden on mobile) */}
                             <td className="px-6 py-4 min-w-[150px] hidden md:table-cell">
                               <div className="text-gray-600 text-sm line-clamp-2">
                                 {category.description || "No description"}
                               </div>
                             </td>
-                            
+
                             {/* Status Badge */}
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span
                                 className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusBadgeColor(
-                                  category.is_active
+                                  category.is_active,
                                 )}`}
                               >
                                 {category.is_active ? (
@@ -839,20 +833,22 @@ const ManageProductCategories = () => {
                                 )}
                               </span>
                             </td>
-                            
+
                             {/* Created Date */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(
-                                category.created_at
+                                category.created_at,
                               ).toLocaleDateString()}
                             </td>
-                            
+
                             {/* Action Menu */}
                             <td className="px-6 py-4 text-center relative whitespace-nowrap">
                               <button
                                 onClick={() =>
                                   setOpenRow(
-                                    openRow === category.id ? null : category.id
+                                    openRow === category.id
+                                      ? null
+                                      : category.id,
                                   )
                                 }
                                 className="p-2 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed group/action"
@@ -919,7 +915,7 @@ const ManageProductCategories = () => {
                       ) : (
                         // Empty State
                         <tr>
-                          <td colSpan={7} className="text-center py-16">
+                          <td colSpan={6} className="text-center py-16">
                             <div className="flex flex-col items-center gap-4 max-w-sm mx-auto">
                               <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
                                 <Folder size={24} className="text-gray-400" />
@@ -1279,7 +1275,10 @@ const CategoryForm = ({
   labelClass,
 }: {
   form: CategoryFormData;
-  handleInputChange: (field: keyof CategoryFormData, value: any) => void;
+  handleInputChange: (
+    field: keyof CategoryFormData,
+    value: string | boolean,
+  ) => void;
   inputClass: string;
   labelClass: string;
 }) => (

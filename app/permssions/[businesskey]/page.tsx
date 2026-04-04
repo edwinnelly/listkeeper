@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Shield,
   Save,
@@ -15,8 +15,9 @@ import {
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 // -------------------------------
 // User Profile Interface
@@ -263,7 +264,6 @@ const PermissionsForm = () => {
     can_adjust_stock: false,
     can_transfer_stock: false,
     can_view_cost: false,
-
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -272,7 +272,6 @@ const PermissionsForm = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const params = useParams();
-  const router = useRouter();
   // The ID from the URL is already encrypted
   const encryptedId = params?.businesskey as string;
 
@@ -302,7 +301,7 @@ const PermissionsForm = () => {
         month: "short",
         day: "numeric",
       });
-    } catch (error) {
+    } catch {
       return "Invalid date";
     }
   };
@@ -310,7 +309,7 @@ const PermissionsForm = () => {
   // -------------------------------
   // Fetch user information
   // -------------------------------
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = useCallback(async () => {
     if (!encryptedId) return;
 
     try {
@@ -334,17 +333,18 @@ const PermissionsForm = () => {
 
       const userData = data.user || data;
       setUser(userData);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Failed to load user information.";
-      setFetchError(errorMessage);
-      toast.error(errorMessage);
+    } catch (error) {
+      console.error("Error loading user info:", error);
+      toast.error("Failed to load user information");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [encryptedId]);
 
   // -------------------------------
   // Fetch user permissions
   // -------------------------------
-  const fetchPermissions = async () => {
+  const fetchPermissions = useCallback(async () => {
     if (!encryptedId) return;
 
     try {
@@ -361,28 +361,30 @@ const PermissionsForm = () => {
       const responseData = res.data?.data || {};
       // Update permissions state based on the response
       if (responseData && typeof responseData === "object") {
-        const updatedState = Object.keys(permissions).reduce(
-          (acc, key) => {
-            // Check if the permission exists in response and has value "yes"
-            // Your backend might store permissions differently - adjust as needed
-            acc[key as keyof PermissionsState] = 
-              responseData[key] === "yes" || responseData[key] === true || false;
-            return acc;
-          },
-          {} as PermissionsState,
-        );
-
-        setPermissions(updatedState);
+        setPermissions((prevPermissions) => {
+          const updatedState = Object.keys(prevPermissions).reduce(
+            (acc, key) => {
+              // Check if the permission exists in response and has value "yes"
+              // Your backend might store permissions differently - adjust as needed
+              acc[key as keyof PermissionsState] =
+                responseData[key] === "yes" || responseData[key] === true || false;
+              return acc;
+            },
+            {} as PermissionsState
+          );
+          return updatedState;
+        });
       }
-    } catch (error: any) { 
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
       // Handle specific error cases
-      if (error.response?.status === 400) {
-        const errorDetails = error.response?.data?.details || "";
-      }
+      // if (error.response?.status === 400) {
+      //   const errorDetails = error.response?.data?.details || "";
+      // }
     } finally {
       setLoading(false);
     }
-  };
+  }, [encryptedId]);
 
   useEffect(() => {
     if (encryptedId) {
@@ -391,13 +393,13 @@ const PermissionsForm = () => {
         await fetchUserInfo();
         await fetchPermissions();
       };
-      
+
       fetchData();
     } else {
       setLoading(false);
       setFetchError("Invalid user ID");
     }
-  }, [encryptedId]);
+  }, [encryptedId, fetchUserInfo, fetchPermissions]);
 
   // -------------------------------
   // Toggle functions
@@ -429,7 +431,7 @@ const PermissionsForm = () => {
 
     try {
       const selected = Object.entries(permissions)
-        .filter(([_, value]) => value)
+        .filter(([value]) => value)
         .map(([key]) => key);
 
       const formData = new FormData();
@@ -438,11 +440,6 @@ const PermissionsForm = () => {
       });
       formData.append("selected_permissions", JSON.stringify(selected));
 
-    //     // ✅ Proper payload logging
-    // console.log("=== FormData Payload ===");
-    // for (const [key, value] of formData.entries()) {
-    //   console.log(key, value);
-    // }
       await api.get("/sanctum/csrf-cookie");
 
       // Use the encrypted ID in the URL
@@ -454,10 +451,9 @@ const PermissionsForm = () => {
       });
 
       toast.success("Permissions updated successfully!");
-    } catch (err: any) {
-      toast.error(
-        err.response?.data?.message || "Failed to update permissions.",
-      );
+    } catch (error) {
+      console.error("Error updating permissions:", error);
+      toast.error("Failed to update permissions");
     } finally {
       setIsSubmitting(false);
     }
@@ -800,7 +796,7 @@ const PermissionsForm = () => {
             {fetchError || "User not found"}
           </p>
           <p className="text-gray-500 text-sm mt-1">
-            {fetchError 
+            {fetchError
               ? "There was an error loading the user profile."
               : "The user profile you're looking for doesn't exist."}
           </p>
@@ -894,12 +890,14 @@ const PermissionsForm = () => {
               {/* Profile Photo */}
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 overflow-hidden">
+                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 overflow-hidden relative">
                     {user.profile_pic ? (
-                      <img
+                      <Image
                         src={`http://localhost:8000/storage/${user.profile_pic}`}
                         alt={user.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 112px) 100vw, 112px"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -920,7 +918,7 @@ const PermissionsForm = () => {
                 <div className="flex flex-wrap gap-2 justify-center">
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                      user.role,
+                      user.role
                     )}`}
                   >
                     <Shield className="h-3 w-3 mr-1" />
@@ -929,7 +927,7 @@ const PermissionsForm = () => {
                   </span>
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(
-                      user.is_active,
+                      user.is_active
                     )}`}
                   >
                     {user.is_active ? "Active" : "Inactive"}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -16,8 +16,15 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { apiGet } from "@/lib/axios";
+
+// Define the error type instead of using 'any'
+interface ApiError {
+  userMessage?: string;
+  message?: string;
+}
 
 interface UserProfile {
   id: number;
@@ -49,13 +56,7 @@ const UserProfilePage = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserProfile();
-    }
-  }, [userId]);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -75,13 +76,20 @@ const UserProfilePage = () => {
       }
 
       setUser(userData);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to fetch user profile:", error);
-      toast.error(error.userMessage || "Failed to load user profile");
+      const apiError = error as ApiError;
+      toast.error(apiError.userMessage || "Failed to load user profile");
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserProfile();
+    }
+  }, [userId, fetchUserProfile]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role?.toLowerCase()) {
@@ -119,7 +127,7 @@ const UserProfilePage = () => {
         month: "long",
         day: "numeric",
       });
-    } catch (error) {
+    } catch{
       return "Invalid date";
     }
   };
@@ -141,7 +149,9 @@ const UserProfilePage = () => {
         <div className="text-center">
           <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
           <p className="text-gray-900 font-semibold text-lg">User not found</p>
-          <p className="text-gray-500 text-sm mt-1">The user profile you're looking for doesn't exist.</p>
+          <p className="text-gray-500 text-sm mt-1">
+            The user profile you&apos;re looking for doesn&apos;t exist.
+          </p>
           <Link
             href="/users"
             className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -189,12 +199,14 @@ const UserProfilePage = () => {
               {/* Profile Photo */}
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 overflow-hidden">
+                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 overflow-hidden relative">
                     {user.profile_pic ? (
-                      <img
+                      <Image
                         src={`http://localhost:8000/storage/${user.profile_pic}`}
                         alt={user.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 128px) 128px, 128px"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

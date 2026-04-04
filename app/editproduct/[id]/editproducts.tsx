@@ -1,17 +1,14 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
 import { apiGet, apiPost } from "@/lib/axios";
 import {
-  Package,
   Tag,
-  DollarSign,
   Image as ImageIcon,
   ArrowLeft,
-  Plus,
   Loader2,
   XCircle,
   Save,
@@ -114,6 +111,17 @@ interface Product {
   image: string | null;
 }
 
+interface VendorResponse {
+  id: number;
+  vid: number;
+  vendor_name?: string;
+  name?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  is_active?: boolean;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -127,6 +135,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const EditProductPage = () => {
   const params = useParams();
   const productId = params.id as string;
+  const router = useRouter();
+
   // ==========================================================================
   // STATE MANAGEMENT
   // ==========================================================================
@@ -158,7 +168,6 @@ const EditProductPage = () => {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -169,8 +178,6 @@ const EditProductPage = () => {
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-
-  const router = useRouter();
 
   // ==========================================================================
   // STYLING CONSTANTS
@@ -185,25 +192,142 @@ const EditProductPage = () => {
   // ==========================================================================
   // HELPER FUNCTIONS
   // ==========================================================================
-  const getFullImageUrl = (imagePath: string | null): string | null => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith("http")) return imagePath;
-    return `${API_BASE_URL}/storage/${imagePath}`;
-  };
+  const getFullImageUrl = useCallback(
+    (imagePath: string | null): string | null => {
+      if (!imagePath) return null;
+      if (imagePath.startsWith("http")) return imagePath;
+      return `${API_BASE_URL}/storage/${imagePath}`;
+    },
+    [],
+  );
 
-  // Format number to remove decimal places for integers
-  const formatIntegerString = (value: string): string => {
-    if (!value) return "";
-    // Remove any decimal points and everything after
-    return value.split(".")[0];
-  };
+  // ==========================================================================
+  // DATA FETCHING
+  // ==========================================================================
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await apiGet("/product-categories");
+      const categoriesArray =
+        res.data?.data?.product_categories ?? res.data?.data ?? [];
+      setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      setCategories([]);
+    }
+  }, []);
+
+  const fetchSuppliers = useCallback(async () => {
+    try {
+      const res = await apiGet("/vendors");
+      const suppliersArray = res.data?.data?.vendors ?? res.data?.data ?? [];
+      const transformedSuppliers = Array.isArray(suppliersArray)
+        ? suppliersArray.map((vendor: VendorResponse) => ({
+            id: vendor.id.toString(),
+            vid: vendor.vid,
+            vendor_name: vendor.vendor_name || vendor.name || "",
+            contact_person: vendor.contact_person,
+            email: vendor.email,
+            phone: vendor.phone,
+            is_active: vendor.is_active,
+          }))
+        : [];
+      setSuppliers(transformedSuppliers);
+    } catch (err) {
+      console.error("Error fetching suppliers:", err);
+      setSuppliers([]);
+    }
+  }, []);
+
+  const fetchProduct = useCallback(async () => {
+    try {
+      const res = await apiGet(`/products/${productId}`);
+      console.log("Product data:", res.data);
+
+      const productData = res.data?.data || res.data;
+
+      if (productData) {
+        setProduct(productData);
+
+        // Format dates for input fields (YYYY-MM-DD)
+        const formatDateForInput = (dateString: string | null): string => {
+          if (!dateString) return "";
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return "";
+          return date.toISOString().split("T")[0];
+        };
+
+        // Format integers without decimal places
+        const formatInteger = (value: number | null): string => {
+          if (value === null || value === undefined) return "";
+          return Math.floor(value).toString();
+        };
+
+        // Get full image URL
+        const imageUrl = getFullImageUrl(productData.image);
+
+        setForm({
+          name: productData.name || "",
+          sku: productData.sku || "",
+          description: productData.description || "",
+          category_id: productData.category_id?.toString() || "",
+          products_measurements: productData.products_measurements || "",
+          price: productData.price?.toString() || "",
+          cost_price: productData.cost_price?.toString() || "",
+          sale_price: productData.sale_price?.toString() || "",
+          stock_quantity: formatInteger(productData.stock_quantity),
+          low_stock_threshold: formatInteger(productData.low_stock_threshold),
+          discount_percentage:
+            productData.discount_percentage?.toString() || "",
+          discount_start_date: formatDateForInput(
+            productData.discount_start_date,
+          ),
+          discount_end_date: formatDateForInput(productData.discount_end_date),
+          manufactured_at: formatDateForInput(productData.manufactured_at),
+          expires_at: formatDateForInput(productData.expires_at),
+          weight: productData.weight?.toString() || "",
+          length: productData.length?.toString() || "",
+          width: productData.width?.toString() || "",
+          height: productData.height?.toString() || "",
+          supplier_id: productData.supplier_id?.toString() || "",
+          is_active: productData.is_active ?? false,
+          is_featured: productData.is_featured ?? false,
+          is_on_sale: productData.is_on_sale ?? false,
+          image: imageUrl,
+        });
+
+        if (imageUrl) {
+          setOriginalImageUrl(imageUrl);
+          setImagePreview(imageUrl);
+        }
+      } else {
+        toast.error("Product not found");
+        router.push("/products");
+      }
+    } catch {
+      toast.error("Failed to load product");
+      router.push("/products");
+    }
+  }, [productId, router, getFullImageUrl]);
+
+  const fetchAllData = useCallback(async () => {
+    setIsLoadingData(true);
+    setIsLoadingProduct(true);
+    try {
+      await Promise.all([fetchCategories(), fetchSuppliers(), fetchProduct()]);
+    } catch {
+      toast.error("Failed to load required data");
+    } finally {
+      setIsLoadingData(false);
+      setIsLoadingProduct(false);
+    }
+  }, [fetchCategories, fetchSuppliers, fetchProduct]);
 
   // ==========================================================================
   // LIFECYCLE METHODS
   // ==========================================================================
   useEffect(() => {
     fetchAllData();
-  }, [productId]);
+  }, [fetchAllData]);
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -252,354 +376,12 @@ const EditProductPage = () => {
   }, [form, product, imageFile]);
 
   // ==========================================================================
-  // DATA FETCHING
-  // ==========================================================================
-  const fetchAllData = async () => {
-    setIsLoadingData(true);
-    setIsLoadingProduct(true);
-    try {
-      await Promise.all([fetchCategories(), fetchSuppliers(), fetchProduct()]);
-    } catch (err: any) {
-      toast.error("Failed to load required data");
-    } finally {
-       setIsLoadingData(false);
-        setIsLoadingProduct(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const res = await apiGet("/product-categories");
-      const categoriesArray =
-        res.data?.data?.product_categories ?? res.data?.data ?? [];
-      setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
-    } catch (err) {
-      console.error("Error fetching categories:", err);
-      setCategories([]);
-    }
-  };
-
-  const fetchSuppliers = async () => {
-    try {
-      const res = await apiGet("/vendors");
-      const suppliersArray = res.data?.data?.vendors ?? res.data?.data ?? [];
-      const transformedSuppliers = Array.isArray(suppliersArray)
-        ? suppliersArray.map((vendor: any) => ({
-            id: vendor.id,
-            vid: vendor.vid,
-            vendor_name: vendor.vendor_name || vendor.name || "",
-            contact_person: vendor.contact_person,
-            email: vendor.email,
-            phone: vendor.phone,
-            is_active: vendor.is_active,
-          }))
-        : [];
-      setSuppliers(transformedSuppliers);
-    } catch (err) {
-      console.error("Error fetching suppliers:", err);
-      setSuppliers([]);
-    }
-  };
-
-  const fetchProduct = async () => {
-    try {
-      const res = await apiGet(`/products/${productId}`);
-      console.log("Product data:", res.data);
-
-      const productData = res.data?.data || res.data;
-
-      if (productData) {
-        setProduct(productData);
-
-        // Format dates for input fields (YYYY-MM-DD)
-        const formatDateForInput = (dateString: string | null): string => {
-          if (!dateString) return "";
-          const date = new Date(dateString);
-          if (isNaN(date.getTime())) return "";
-          return date.toISOString().split("T")[0];
-        };
-
-        // Format integers without decimal places
-        const formatInteger = (value: number | null): string => {
-          if (value === null || value === undefined) return "";
-          return Math.floor(value).toString(); // Ensure it's an integer
-        };
-
-        // Get full image URL
-        const imageUrl = getFullImageUrl(productData.image);
-
-        setForm({
-          name: productData.name || "",
-          sku: productData.sku || "",
-          description: productData.description || "",
-          category_id: productData.category_id?.toString() || "",
-          products_measurements: productData.products_measurements || "",
-          price: productData.price?.toString() || "",
-          cost_price: productData.cost_price?.toString() || "",
-          sale_price: productData.sale_price?.toString() || "",
-          stock_quantity: formatInteger(productData.stock_quantity),
-          low_stock_threshold: formatInteger(productData.low_stock_threshold),
-          discount_percentage:
-            productData.discount_percentage?.toString() || "",
-          discount_start_date: formatDateForInput(
-            productData.discount_start_date,
-          ),
-          discount_end_date: formatDateForInput(productData.discount_end_date),
-          manufactured_at: formatDateForInput(productData.manufactured_at),
-          expires_at: formatDateForInput(productData.expires_at),
-          weight: productData.weight?.toString() || "",
-          length: productData.length?.toString() || "",
-          width: productData.width?.toString() || "",
-          height: productData.height?.toString() || "",
-          supplier_id: productData.supplier_id?.toString() || "",
-          is_active: productData.is_active ?? false,
-          is_featured: productData.is_featured ?? false,
-          is_on_sale: productData.is_on_sale ?? false,
-          image: imageUrl,
-        });
-
-        if (imageUrl) {
-          setOriginalImageUrl(imageUrl);
-          setImagePreview(imageUrl);
-        }
-      } else {
-        toast.error("Product not found");
-        router.push("/products");
-      }
-    } catch (err: any) {
-      toast.error("Failed to load product");
-      router.push("/products");
-    }
-  };
-
-  // ==========================================================================
-  // IMAGE HANDLING
-  // ==========================================================================
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/avif",
-    ];
-    const maxSize = 2 * 1024 * 1024; // 2MB
-
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Please upload a JPEG, PNG, AVIF, or WEBP image.");
-      return;
-    }
-
-    if (file.size > maxSize) {
-      toast.error("Image must be smaller than 2MB.");
-      return;
-    }
-
-    setImageFile(file);
-
-    // Create preview URL for new upload
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
-    // Don't update form.image here as it's handled separately in submission
-  };
-
-  const removeImage = () => {
-    if (imagePreview && imagePreview !== originalImageUrl) {
-      URL.revokeObjectURL(imagePreview);
-    }
-    setImageFile(null);
-    setImagePreview(originalImageUrl);
-  };
-
-  // ==========================================================================
-  // FORM HANDLERS
-  // ==========================================================================
-  const handleInputChange = (
-    field: keyof ProductFormData,
-    value: string | boolean,
-  ) => {
-    // Special handling for integer fields to prevent decimal points
-    let processedValue = value;
-
-    if (field === "stock_quantity" || field === "low_stock_threshold") {
-      // For integer fields, remove any decimal points
-      if (typeof value === "string") {
-        // Remove any non-digit characters except empty string
-        processedValue = value.replace(/[^\d]/g, "");
-      }
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      [field]: processedValue,
-    }));
-
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: undefined,
-      }));
-    }
-
-    // Auto-calculate sale price when discount changes
-    if (field === "discount_percentage" || field === "price") {
-      calculateSalePrice();
-    }
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched((prev) => ({
-      ...prev,
-      [field]: true,
-    }));
-    validateField(field, form[field as keyof ProductFormData]);
-  };
-
-  // ==========================================================================
-  // VALIDATION
-  // ==========================================================================
-  const validateField = (field: string, value: any): string | undefined => {
-    switch (field) {
-      case "name":
-        if (!value || value.toString().trim().length === 0) {
-          return "Product name is required";
-        }
-        if (value.toString().trim().length < 2) {
-          return "Product name must be at least 2 characters";
-        }
-        return undefined;
-
-      case "sku":
-        if (!value || value.toString().trim().length === 0) {
-          return "SKU is required";
-        }
-        if (value.toString().trim().length < 3) {
-          return "SKU must be at least 3 characters";
-        }
-        return undefined;
-
-      case "category_id":
-        if (!value || value === "" || value === 0) {
-          return "Category is required";
-        }
-        return undefined;
-
-      case "price":
-        if (!value || value.toString().trim().length === 0) {
-          return "Price is required";
-        }
-        if (isNaN(parseFloat(value.toString()))) {
-          return "Price must be a valid number";
-        }
-        if (parseFloat(value.toString()) < 0) {
-          return "Price cannot be negative";
-        }
-        return undefined;
-
-      case "stock_quantity":
-        if (!value || value.toString().trim().length === 0) {
-          return "Stock quantity is required";
-        }
-        if (isNaN(parseInt(value.toString(), 10))) {
-          return "Stock quantity must be a valid number";
-        }
-        const stockInt = parseInt(value.toString(), 10);
-        if (stockInt < 0) {
-          return "Stock quantity cannot be negative";
-        }
-        // Check if it's not an integer (has decimal places)
-        if (value.toString().includes(".")) {
-          return "Stock quantity must be a whole number";
-        }
-        return undefined;
-
-      case "low_stock_threshold":
-        if (value && value.toString().trim().length > 0) {
-          if (isNaN(parseInt(value.toString(), 10))) {
-            return "Low stock threshold must be a valid number";
-          }
-          const thresholdInt = parseInt(value.toString(), 10);
-          if (thresholdInt < 0) {
-            return "Low stock threshold cannot be negative";
-          }
-          if (value.toString().includes(".")) {
-            return "Low stock threshold must be a whole number";
-          }
-        }
-        return undefined;
-
-      case "discount_percentage":
-        if (value && value.toString().trim().length > 0) {
-          if (isNaN(parseFloat(value.toString()))) {
-            return "Discount percentage must be a valid number";
-          }
-          const discount = parseFloat(value.toString());
-          if (discount < 0 || discount > 100) {
-            return "Discount percentage must be between 0 and 100";
-          }
-        }
-        return undefined;
-
-      case "cost_price":
-        if (value && value.toString().trim().length > 0) {
-          if (isNaN(parseFloat(value.toString()))) {
-            return "Cost price must be a valid number";
-          }
-          if (parseFloat(value.toString()) < 0) {
-            return "Cost price cannot be negative";
-          }
-        }
-        return undefined;
-
-      default:
-        return undefined;
-    }
-  };
-
-  const validateAllFields = (): boolean => {
-    const newErrors: FormErrors = {};
-    let isValid = true;
-
-    (Object.keys(form) as Array<keyof ProductFormData>).forEach((field) => {
-      // Skip validation for fields that are not required
-      if (
-        field === "description" ||
-        field === "image" ||
-        field === "products_measurements"
-      )
-        return;
-
-      const error = validateField(field, form[field]);
-      if (error) {
-        newErrors[field] = error;
-        isValid = false;
-      }
-    });
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  // ==========================================================================
   // CALCULATIONS
   // ==========================================================================
-  const generateSKU = (): string => {
-    const prefix = "PROD";
-    const randomNum = Math.floor(100000 + Math.random() * 900000);
-    return `${prefix}${randomNum}`;
-  };
-
-  const handleGenerateSKU = () => {
-    const sku = generateSKU();
-    setForm((prev) => ({ ...prev, sku }));
-  };
-
-  const calculateSalePrice = () => {
-    if (form.price && form.discount_percentage) {
-      const price = parseFloat(form.price);
-      const discount = parseFloat(form.discount_percentage);
+  const calculateSalePrice = useCallback((currentForm: ProductFormData) => {
+    if (currentForm.price && currentForm.discount_percentage) {
+      const price = parseFloat(currentForm.price);
+      const discount = parseFloat(currentForm.discount_percentage);
       if (
         !isNaN(price) &&
         !isNaN(discount) &&
@@ -612,20 +394,297 @@ const EditProductPage = () => {
           sale_price: salePrice.toFixed(2),
           is_on_sale: true,
         }));
+        return;
       }
-    } else {
-      setForm((prev) => ({
-        ...prev,
-        sale_price: "",
-        is_on_sale: false,
-      }));
     }
-  };
+    setForm((prev) => ({
+      ...prev,
+      sale_price: "",
+      is_on_sale: false,
+    }));
+  }, []);
+
+  const generateSKU = useCallback((): string => {
+    const prefix = "PROD";
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    return `${prefix}${randomNum}`;
+  }, []);
+
+  // ==========================================================================
+  // IMAGE HANDLING
+  // ==========================================================================
+  const handleImageUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/avif",
+      ];
+      const maxSize = 2 * 1024 * 1024; // 2MB
+
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Please upload a JPEG, PNG, AVIF, or WEBP image.");
+        return;
+      }
+
+      if (file.size > maxSize) {
+        toast.error("Image must be smaller than 2MB.");
+        return;
+      }
+
+      setImageFile(file);
+
+      // Create preview URL for new upload
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      // Don't update form.image here as it's handled separately in submission
+    },
+    [],
+  );
+
+  const removeImage = useCallback(() => {
+    if (imagePreview && imagePreview !== originalImageUrl) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImageFile(null);
+    setImagePreview(originalImageUrl);
+  }, [imagePreview, originalImageUrl]);
+
+  // ==========================================================================
+  // VALIDATION - FIXED: Updated to accept number type
+  // ==========================================================================
+  const validateField = useCallback(
+    (field: string, value: string | boolean | number): string | undefined => {
+      // Convert to string for validation
+      const stringValue = value?.toString().trim() || "";
+
+      switch (field) {
+        case "name":
+          if (!stringValue) {
+            return "Product name is required";
+          }
+          if (stringValue.length < 2) {
+            return "Product name must be at least 2 characters";
+          }
+          return undefined;
+
+        case "sku":
+          if (!stringValue) {
+            return "SKU is required";
+          }
+          if (stringValue.length < 3) {
+            return "SKU must be at least 3 characters";
+          }
+          return undefined;
+
+        case "category_id":
+          // Handle different possible types for category_id
+          if (!value) return "Category is required";
+
+          // If it's a string, check if it's empty or "0"
+          if (typeof value === "string") {
+            if (value === "" || value === "0") {
+              return "Category is required";
+            }
+          }
+
+          // If it's a number, check if it's 0
+          if (typeof value === "number") {
+            if (value === 0) {
+              return "Category is required";
+            }
+          }
+
+          return undefined;
+
+        case "price":
+          if (!stringValue) {
+            return "Price is required";
+          }
+          if (isNaN(parseFloat(stringValue))) {
+            return "Price must be a valid number";
+          }
+          if (parseFloat(stringValue) < 0) {
+            return "Price cannot be negative";
+          }
+          return undefined;
+
+        case "stock_quantity":
+          if (!stringValue && stringValue !== "0") {
+            return "Stock quantity is required";
+          }
+          if (isNaN(parseInt(stringValue, 10))) {
+            return "Stock quantity must be a valid number";
+          }
+          const stockInt = parseInt(stringValue, 10);
+          if (stockInt < 0) {
+            return "Stock quantity cannot be negative";
+          }
+          // Check if it's not an integer (has decimal places)
+          if (stringValue.includes(".")) {
+            return "Stock quantity must be a whole number";
+          }
+          return undefined;
+
+        case "low_stock_threshold":
+          if (stringValue) {
+            if (isNaN(parseInt(stringValue, 10))) {
+              return "Low stock threshold must be a valid number";
+            }
+            const thresholdInt = parseInt(stringValue, 10);
+            if (thresholdInt < 0) {
+              return "Low stock threshold cannot be negative";
+            }
+            if (stringValue.includes(".")) {
+              return "Low stock threshold must be a whole number";
+            }
+          }
+          return undefined;
+
+        case "discount_percentage":
+          if (stringValue) {
+            if (isNaN(parseFloat(stringValue))) {
+              return "Discount percentage must be a valid number";
+            }
+            const discount = parseFloat(stringValue);
+            if (discount < 0 || discount > 100) {
+              return "Discount percentage must be between 0 and 100";
+            }
+          }
+          return undefined;
+
+        case "cost_price":
+          if (stringValue) {
+            if (isNaN(parseFloat(stringValue))) {
+              return "Cost price must be a valid number";
+            }
+            if (parseFloat(stringValue) < 0) {
+              return "Cost price cannot be negative";
+            }
+          }
+          return undefined;
+
+        default:
+          return undefined;
+      }
+    },
+    [],
+  );
+
+  const validateAllFields = useCallback((): boolean => {
+    const newErrors: FormErrors = {};
+    let isValid = true;
+
+    (Object.keys(form) as Array<keyof ProductFormData>).forEach((field) => {
+      // Skip validation for fields that are not required
+      if (
+        field === "description" ||
+        field === "image" ||
+        field === "products_measurements"
+      )
+        return;
+
+      const value = form[field];
+      // Convert to appropriate type for validation
+      let validationValue: string | boolean | number = "";
+      
+      if (typeof value === "string") {
+        validationValue = value;
+      } else if (typeof value === "boolean") {
+        validationValue = value;
+      } else if (typeof value === "number") {
+        validationValue = value;
+      } else {
+        validationValue = "";
+      }
+      
+      const error = validateField(field, validationValue);
+      if (error) {
+        newErrors[field] = error;
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    return isValid;
+  }, [form, validateField]);
+
+  // ==========================================================================
+  // FORM HANDLERS
+  // ==========================================================================
+  const handleInputChange = useCallback(
+    (field: keyof ProductFormData, value: string | boolean) => {
+      // Special handling for integer fields to prevent decimal points
+      let processedValue = value;
+
+      if (field === "stock_quantity" || field === "low_stock_threshold") {
+        // For integer fields, remove any decimal points
+        if (typeof value === "string") {
+          // Remove any non-digit characters except empty string
+          processedValue = value.replace(/[^\d]/g, "");
+        }
+      }
+
+      setForm((prev) => {
+        const newForm = {
+          ...prev,
+          [field]: processedValue,
+        };
+
+        // Auto-calculate sale price when discount or price changes
+        if (field === "discount_percentage" || field === "price") {
+          calculateSalePrice(newForm);
+        }
+
+        return newForm;
+      });
+
+      if (errors[field]) {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: undefined,
+        }));
+      }
+    },
+    [errors, calculateSalePrice],
+  );
+
+  const handleBlur = useCallback(
+    (field: string) => {
+      const value = form[field as keyof ProductFormData];
+      let validationValue: string | boolean | number = "";
+      
+      if (typeof value === "string") {
+        validationValue = value;
+      } else if (typeof value === "boolean") {
+        validationValue = value;
+      } else if (typeof value === "number") {
+        validationValue = value;
+      }
+      
+      const error = validateField(field, validationValue);
+      if (error) {
+        setErrors((prev) => ({ ...prev, [field]: error }));
+      } else {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    },
+    [form, validateField],
+  );
+
+  const handleGenerateSKU = useCallback(() => {
+    const sku = generateSKU();
+    setForm((prev) => ({ ...prev, sku }));
+  }, [generateSKU]);
 
   // ==========================================================================
   // FORM SUBMISSION
   // ==========================================================================
-  const prepareFormData = (): FormData => {
+  const prepareFormData = useCallback((): FormData => {
     const formData = new FormData();
     formData.append("_method", "PUT"); // For Laravel or similar frameworks
 
@@ -691,117 +750,133 @@ const EditProductPage = () => {
     }
 
     return formData;
-  };
+  }, [form, imageFile]);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+  const onSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (isSubmitting) return;
 
-    // Mark all fields as touched
-    const allTouched: Record<string, boolean> = {};
-    (Object.keys(form) as Array<keyof ProductFormData>).forEach((field) => {
-      allTouched[field] = true;
-    });
-    setTouched(allTouched);
-
-    if (!validateAllFields()) {
-      const firstError = Object.values(errors).find((error) => error);
-      if (firstError) {
-        toast.error(firstError);
+      if (!validateAllFields()) {
+        const firstError = Object.values(errors).find((error) => error);
+        if (firstError) {
+          toast.error(firstError);
+        }
+        return;
       }
-      return;
-    }
 
-    setIsSubmitting(true);
+      setIsSubmitting(true);
 
-    try {
-      const formData = prepareFormData();
+      try {
+        const formData = prepareFormData();
 
-      const response = await apiPost(`products/${productId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      console.log("API Response:", response);
-
-      if (response.success || response.data) {
-        toast.success("Product updated successfully!", {
-          id: "update-product",
+        const response = await apiPost(`products/${productId}`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
 
-        setTimeout(() => {
-          router.push("/products");
-        }, 1500);
-      } else {
-        toast.error("Failed to update product. Invalid response.");
-      }
-    } catch (err: any) {
-      console.error("Full API Error:", err);
+        console.log("API Response:", response);
 
-      const status = err.response?.status;
-      if (status === 422) {
-        const errors = err.response?.data?.errors;
-
-        if (errors) {
-          const formErrors: FormErrors = {};
-          Object.keys(errors).forEach((key) => {
-            const errorMessage = Array.isArray(errors[key])
-              ? errors[key][0]
-              : errors[key];
-            formErrors[key] = errorMessage;
+        if (response.data) {
+          toast.success("Product updated successfully!", {
+            id: "update-product",
           });
-          setErrors(formErrors);
 
-          const firstErrorKey = Object.keys(errors)[0];
-          if (firstErrorKey && errors[firstErrorKey]) {
-            const firstError = Array.isArray(errors[firstErrorKey])
-              ? errors[firstErrorKey][0]
-              : errors[firstErrorKey];
-            toast.error(`${firstErrorKey}: ${firstError}`);
-          }
+          setTimeout(() => {
+            router.push("/products");
+          }, 1500);
         } else {
-          toast.error("Validation failed. Please check the form.");
+          toast.error("Failed to update product. Invalid response.");
         }
-      } else if (status === 404) {
-        toast.error("Product not found");
-        router.push("/products");
-      } else if (status === 500) {
-        const errorMessage =
-          err.response?.data?.message ||
-          err.response?.data?.error ||
-          "Internal server error";
-        toast.error(`Server error: ${errorMessage}`);
-      } else {
-        toast.error(
-          err.response?.data?.message ||
-            "Failed to update product. Please try again.",
-        );
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      } catch (err) {
+        const error = err as {
+          response?: {
+            status?: number;
+            data?: {
+              errors?: Record<string, string[]>;
+              message?: string;
+              error?: string;
+            };
+          };
+        };
+        console.error("Full API Error:", error);
 
-  const handleCancel = () => {
+        const status = error.response?.status;
+        if (status === 422) {
+          const errorsData = error.response?.data?.errors;
+
+          if (errorsData) {
+            const formErrors: FormErrors = {};
+            Object.keys(errorsData).forEach((key) => {
+              const errorMessage = Array.isArray(errorsData[key])
+                ? errorsData[key][0]
+                : errorsData[key];
+              formErrors[key] = errorMessage;
+            });
+            setErrors(formErrors);
+
+            const firstErrorKey = Object.keys(errorsData)[0];
+            if (firstErrorKey && errorsData[firstErrorKey]) {
+              const firstError = Array.isArray(errorsData[firstErrorKey])
+                ? errorsData[firstErrorKey][0]
+                : errorsData[firstErrorKey];
+              toast.error(`${firstErrorKey}: ${firstError}`);
+            }
+          } else {
+            toast.error("Validation failed. Please check the form.");
+          }
+        } else if (status === 404) {
+          toast.error("Product not found");
+          router.push("/products");
+        } else if (status === 500) {
+          const errorMessage =
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            "Internal server error";
+          toast.error(`Server error: ${errorMessage}`);
+        } else {
+          toast.error(
+            error.response?.data?.message ||
+              "Failed to update product. Please try again.",
+          );
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [
+      isSubmitting,
+      validateAllFields,
+      errors,
+      prepareFormData,
+      productId,
+      router,
+    ],
+  );
+  
+  const handleCancel = useCallback(() => {
     router.push("/products");
-  };
+  }, [router]);
 
   // ==========================================================================
   // FORM VALIDATION
   // ==========================================================================
-  const isFormValid =
-    form.name.trim().length > 0 &&
-    form.sku.trim().length > 0 &&
-    form.category_id !== "" &&
-    form.category_id !== 0 &&
-    form.price !== "" &&
-    form.stock_quantity !== "" &&
-    !errors.name &&
-    !errors.sku &&
-    !errors.category_id &&
-    !errors.price &&
-    !errors.stock_quantity;
+  const isFormValid = useCallback(() => {
+    return (
+      form.name.trim().length > 0 &&
+      form.sku.trim().length > 0 &&
+      form.category_id !== "" &&
+      form.category_id !== 0 &&
+      form.price !== "" &&
+      form.stock_quantity !== "" &&
+      !errors.name &&
+      !errors.sku &&
+      !errors.category_id &&
+      !errors.price &&
+      !errors.stock_quantity
+    );
+  }, [form, errors]);
 
   // ==========================================================================
   // RENDER
@@ -1036,18 +1111,20 @@ const EditProductPage = () => {
                     </label>
                   </div>
 
-                  {/* Image Preview */}
+                  {/* Image Preview - Using Next.js Image component */}
                   {imagePreview && (
                     <div className="mt-4 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="w-16 h-16 rounded overflow-hidden border border-gray-300 bg-white">
-                        <img
+                      <div className="relative w-16 h-16 rounded overflow-hidden border border-gray-300 bg-white">
+                        <Image
                           src={imagePreview}
                           alt="Product preview"
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="64px"
                           onError={(e) => {
                             // Fallback if image fails to load
-                            e.currentTarget.src =
-                              "https://via.placeholder.com/64?text=No+Image";
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.style.display = "none";
                           }}
                         />
                       </div>
@@ -1071,7 +1148,7 @@ const EditProductPage = () => {
                       <button
                         type="button"
                         onClick={removeImage}
-                        className="ml-auto text-red-500 hover:text-red-700"
+                        className="ml-auto text-red-500 hover:text-red-700 transition-colors"
                         title="Remove image"
                       >
                         <XCircle size={18} />
@@ -1190,10 +1267,7 @@ const EditProductPage = () => {
                                 e.target.value,
                               )
                             }
-                            onBlur={() => {
-                              handleBlur("discount_percentage");
-                              calculateSalePrice();
-                            }}
+                            onBlur={() => handleBlur("discount_percentage")}
                             className={`${errors.discount_percentage ? errorInputClass : inputClass} pr-10`}
                             placeholder="0.00"
                           />
@@ -1251,7 +1325,7 @@ const EditProductPage = () => {
                       </label>
                       <input
                         type="number"
-                        step="1" // This ensures only integers can be entered via spinner
+                        step="1"
                         min="0"
                         value={form.stock_quantity}
                         onChange={(e) =>
@@ -1263,8 +1337,8 @@ const EditProductPage = () => {
                         }
                         placeholder="0"
                         required
-                        pattern="[0-9]*" // Only allow digits
-                        inputMode="numeric" // Show numeric keyboard on mobile
+                        pattern="[0-9]*"
+                        inputMode="numeric"
                       />
                       {errors.stock_quantity && (
                         <div className={errorTextClass}>
@@ -1278,7 +1352,7 @@ const EditProductPage = () => {
                       <label className={labelClass}>Low Stock Alert</label>
                       <input
                         type="number"
-                        step="1" // This ensures only integers can be entered via spinner
+                        step="1"
                         min="0"
                         value={form.low_stock_threshold}
                         onChange={(e) =>
@@ -1294,8 +1368,8 @@ const EditProductPage = () => {
                             : inputClass
                         }
                         placeholder="5"
-                        pattern="[0-9]*" // Only allow digits
-                        inputMode="numeric" // Show numeric keyboard on mobile
+                        pattern="[0-9]*"
+                        inputMode="numeric"
                       />
                       {errors.low_stock_threshold && (
                         <div className={errorTextClass}>
@@ -1553,7 +1627,7 @@ const EditProductPage = () => {
                 <div className="flex justify-end pt-6 border-t border-gray-200">
                   <button
                     type="submit"
-                    disabled={!isFormValid || isSubmitting || !hasChanges}
+                    disabled={!isFormValid() || isSubmitting || !hasChanges}
                     className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                   >
                     {isSubmitting ? (

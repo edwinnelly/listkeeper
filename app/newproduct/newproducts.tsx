@@ -7,27 +7,11 @@ import { apiGet, apiPost } from "@/lib/axios";
 import {
   Package,
   Tag,
-  DollarSign,
-  Hash,
-  Star,
-  Percent,
   Image as ImageIcon,
-  FolderTree,
-  Truck,
   ArrowLeft,
   Plus,
   Loader2,
-  CheckCircle,
   XCircle,
-  Save,
-  Scale,
-  Box,
-  Calendar,
-  Weight,
-  Ruler,
-  ChevronDown,
-  Upload,
-  BarChart3,
 } from "lucide-react";
 import { withAuth } from "@/hoc/withAuth";
 
@@ -103,6 +87,27 @@ interface Supplier {
   is_active?: boolean;
 }
 
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      error?: string;
+      errors?: Record<string, string[] | string>;
+    };
+  };
+}
+interface VendorApiResponse {
+  id: string | number;
+  vid: number;
+  vendor_name?: string;
+  name?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  is_active?: boolean;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -161,7 +166,6 @@ const AddProductPage = () => {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [units] = useState<Unit[]>(staticUnits);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -187,6 +191,7 @@ const AddProductPage = () => {
   // ==========================================================================
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Clean up preview URL when component unmounts
@@ -205,7 +210,7 @@ const AddProductPage = () => {
     setIsLoadingData(true);
     try {
       await Promise.all([fetchCategories(), fetchSuppliers()]);
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to load required data");
     } finally {
       setIsLoadingData(false);
@@ -218,31 +223,31 @@ const AddProductPage = () => {
       const categoriesArray =
         res.data?.data?.product_categories ?? res.data?.data ?? [];
       setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
-    } catch (err) {
+    } catch {
       setCategories([]);
     }
   };
 
   const fetchSuppliers = async () => {
-    try {
-      const res = await apiGet("/vendors");
-      const suppliersArray = res.data?.data?.vendors ?? res.data?.data ?? [];
-      const transformedSuppliers = Array.isArray(suppliersArray)
-        ? suppliersArray.map((vendor) => ({
-            id: vendor.id,
-            vid: vendor.vid,
-            vendor_name: vendor.vendor_name || vendor.name || "",
-            contact_person: vendor.contact_person,
-            email: vendor.email,
-            phone: vendor.phone,
-            is_active: vendor.is_active,
-          }))
-        : [];
-      setSuppliers(transformedSuppliers);
-    } catch (err) {
-      setSuppliers([]);
-    }
-  };
+  try {
+    const res = await apiGet("/vendors");
+    const suppliersArray = res.data?.data?.vendors ?? res.data?.data ?? [];
+    const transformedSuppliers = Array.isArray(suppliersArray)
+      ? suppliersArray.map((vendor: VendorApiResponse) => ({
+          id: vendor.id,
+          vid: vendor.vid,
+          vendor_name: vendor.vendor_name || vendor.name || "",
+          contact_person: vendor.contact_person,
+          email: vendor.email,
+          phone: vendor.phone,
+          is_active: vendor.is_active,
+        }))
+      : [];
+    setSuppliers(transformedSuppliers);
+  } catch {
+    setSuppliers([]);
+  }
+};
 
   // ==========================================================================
   // IMAGE HANDLING
@@ -298,17 +303,13 @@ const AddProductPage = () => {
   };
 
   const handleBlur = (field: string) => {
-    setTouched((prev) => ({
-      ...prev,
-      [field]: true,
-    }));
     validateField(field, form[field as keyof ProductFormData]);
   };
 
   // ==========================================================================
   // VALIDATION
   // ==========================================================================
-  const validateField = (field: string, value: any): string | undefined => {
+  const validateField = (field: string, value: string | number | boolean | null): string | undefined => {
     switch (field) {
       case "name":
         if (!value || value.toString().trim().length === 0) {
@@ -513,7 +514,7 @@ const AddProductPage = () => {
     
     // Log FormData contents for debugging
     console.log('FormData prepared:');
-    for (let pair of formData.entries()) {
+    for (const pair of formData.entries()) {
       console.log(pair[0] + ': ' + (pair[0] === 'image' ? '[FILE]' : pair[1]));
     }
     
@@ -525,13 +526,6 @@ const AddProductPage = () => {
     console.log("Form submitted");
     
     if (isSubmitting) return;
-
-    // Mark all fields as touched
-    const allTouched: Record<string, boolean> = {};
-    (Object.keys(form) as Array<keyof ProductFormData>).forEach((field) => {
-      allTouched[field] = true;
-    });
-    setTouched(allTouched);
 
     if (!validateAllFields()) {
       const firstError = Object.values(errors).find((error) => error);
@@ -589,7 +583,6 @@ const AddProductPage = () => {
           image: null,
         });
         setErrors({});
-        setTouched({});
         setImageFile(null);
         setImagePreview(null);
 
@@ -599,14 +592,15 @@ const AddProductPage = () => {
       } else {
         toast.error("Failed to create product. Invalid response.");
       }
-    } catch (err: any) {
-      console.error("Full API Error:", err);
-      console.error("Error response data:", err.response?.data);
-      console.error("Error response status:", err.response?.status);
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      console.error("Full API Error:", error);
+      console.error("Error response data:", error.response?.data);
+      console.error("Error response status:", error.response?.status);
 
-      const status = err.response?.status;
+      const status = error.response?.status;
       if (status === 422) {
-        const errors = err.response?.data?.errors;
+        const errors = error.response?.data?.errors;
         console.log("Validation errors from API:", errors);
 
         if (errors) {
@@ -615,7 +609,7 @@ const AddProductPage = () => {
             const errorMessage = Array.isArray(errors[key])
               ? errors[key][0]
               : errors[key];
-            formErrors[key] = errorMessage;
+            formErrors[key] = errorMessage as string;
           });
           setErrors(formErrors);
 
@@ -632,14 +626,14 @@ const AddProductPage = () => {
         }
       } else if (status === 500) {
         const errorMessage =
-          err.response?.data?.message ||
-          err.response?.data?.error ||
+          error.response?.data?.message ||
+          error.response?.data?.error ||
           "Internal server error";
         console.error("Server error details:", errorMessage);
         toast.error(`Server error: ${errorMessage}`);
       } else {
         toast.error(
-          err.response?.data?.message ||
+          error.response?.data?.message ||
             "Failed to create product. Please try again.",
         );
       }
@@ -914,6 +908,7 @@ const AddProductPage = () => {
                   </div>
                   {imagePreview && (
                     <div className="mt-4 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={imagePreview}
                         alt="Product preview"

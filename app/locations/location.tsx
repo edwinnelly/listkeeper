@@ -121,11 +121,9 @@ const StatCard: React.FC<{
   title: string;
   value: string | number;
   icon: React.ElementType;
-  color: "gray" | "gray" | "gray" | "amber" | "rose";
+  color: "gray" | "amber" | "rose";
 }> = ({ title, value, icon: Icon, color }) => {
   const colorClasses = {
-    gray: "bg-gray-50 text-gray-700",
-    gray: "bg-gray-50 text-gray-700",
     gray: "bg-gray-50 text-gray-700",
     amber: "bg-amber-50 text-amber-700",
     rose: "bg-rose-50 text-rose-700",
@@ -576,15 +574,16 @@ const LocationTableRow: React.FC<{
               </button>
             </Link>
 
-            <Link href={`/users_locations/${location.id}`}>
-              <button
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition border-b border-gray-100"
-                onClick={() => onToggleOpen(null)}
-              >
-                <UserRoundCheck size={15} className="text-gray-600" />
-                Employees
-              </button>
-            </Link>
+            <button
+              onClick={() => {
+                onEmployees(location.id);
+                onToggleOpen(null);
+              }}
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition border-b border-gray-100"
+            >
+              <UserRoundCheck size={15} className="text-gray-600" />
+              Employees
+            </button>
             <button
               onClick={() => {
                 onReports(location);
@@ -684,14 +683,13 @@ const LocationGridCard: React.FC<{
           >
             <ArchiveRestore className="h-3.5 w-3.5" />
           </button>
-          <Link href={`/users_locations/${location.id}`}>
-            <button
-              className="p-1.5 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-              title="Employees"
-            >
-              <Users className="h-3.5 w-3.5" />
-            </button>
-          </Link>
+          <button
+            onClick={() => onEmployees(location.id)}
+            className="p-1.5 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+            title="Employees"
+          >
+            <Users className="h-3.5 w-3.5" />
+          </button>
           <button
             onClick={() => onEdit(location)}
             className="p-1.5 text-gray-500 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
@@ -1309,15 +1307,16 @@ const ManageLocations = () => {
       setAddModalOpen(false);
       resetForm();
       await fetchLocations();
-    } catch (err: any) {
-      const s = err.response?.status;
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } };
+      const s = error.response?.status;
       if (s === 403)
         toast.error("Your subscription does not allow more locations.");
       else if (s === 412) toast.error("Business location limit reached.");
-      else if (err.response?.data?.errors)
-        Object.values(err.response.data.errors)
+      else if (error.response?.data?.errors)
+        Object.values(error.response.data.errors)
           .flat()
-          .forEach((e: any) => toast.error(e));
+          .forEach((e: string) => toast.error(e));
       else toast.error("Failed to create location.");
     } finally {
       setIsSubmitting(false);
@@ -1360,11 +1359,12 @@ const ManageLocations = () => {
       setSelectedLocation(null);
       resetForm();
       await fetchLocations();
-    } catch (err: any) {
-      if (err.response?.data?.errors)
-        Object.values(err.response.data.errors)
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { errors?: Record<string, string[]> } } };
+      if (error.response?.data?.errors)
+        Object.values(error.response.data.errors)
           .flat()
-          .forEach((e: any) => toast.error(e));
+          .forEach((e: string) => toast.error(e));
       else toast.error("Failed to update location");
     } finally {
       setIsSubmitting(false);
