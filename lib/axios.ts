@@ -15,7 +15,7 @@ const MAX_CSRF_RETRIES = 3;
 
 // Create separate axios instances
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://snowviewssl.net/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://snowviewssl.net",
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
   timeout: 30000, // 30 second timeout for all requests
