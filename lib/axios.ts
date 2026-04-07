@@ -47,7 +47,8 @@ setInterval(cleanCache, 60000);
    AXIOS INSTANCES
 ========================= */
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://snowviewssl.net/api",
+  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
   withCredentials: true,
   timeout: 30000,
   headers: { "Content-Type": "application/json" },
@@ -56,7 +57,8 @@ export const api = axios.create({
 const sanctumApi = axios.create({
   baseURL:
     process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-    "http://localhost:8000",
+    "https://snowviewssl.net",
+    // "http://localhost:8000",
   withCredentials: true,
   timeout: 10000,
 });
