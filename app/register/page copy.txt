@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import Image from "next/image"; // Add this import for Next.js Image component
 import { 
   MailRegular,
   LockClosedRegular,
@@ -17,19 +17,16 @@ import {
   PersonRegular,
   WindowRegular
 } from "@fluentui/react-icons";
-import { apiPost } from "@/lib/axios"; // Use the wrapper's apiPost instead of raw api
+import api from "@/lib/axios";
+import Cookies from "js-cookie";
 
 // Define error response type
 interface ErrorResponse {
   response?: {
     data?: {
       message?: string;
-      errors?: Record<string, string[]>;
     };
-    status?: number;
   };
-  userMessage?: string;
-  validationErrors?: Record<string, string[]> | null;
 }
 
 const RegisterPage = () => {
@@ -49,7 +46,6 @@ const RegisterPage = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   // Handle scroll events for the page
   useEffect(() => {
@@ -74,6 +70,7 @@ const RegisterPage = () => {
         const element = document.getElementById(window.location.hash.substring(1));
         if (element && containerRef.current) {
           const container = containerRef.current;
+          // Removed unused elementRect variable
           
           container.scrollTo({
             top: element.offsetTop - container.getBoundingClientRect().top + container.scrollTop,
@@ -108,10 +105,6 @@ const RegisterPage = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    // Clear field error for this field when user starts typing
-    if (fieldErrors[e.target.name]) {
-      setFieldErrors(prev => ({ ...prev, [e.target.name]: [] }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,38 +112,22 @@ const RegisterPage = () => {
     setLoading(true);
     setError("");
     setSuccess("");
-    setFieldErrors({});
 
     try {
-      // Using apiPost from your wrapper - it automatically handles:
-      // 1. CSRF token fetching
-      // 2. X-XSRF-TOKEN header injection
-      // 3. Request retries on 419 session expired
-      // 4. Cache invalidation for related endpoints
-      
-      await apiPost(
-        "/register", 
-        form,
-        {}, // config
-        ["/user", "/dashboard"] // Invalidate these cache URLs after successful registration
-      );
-      
+      await api.get("/sanctum/csrf-cookie");
+      const csrfToken = Cookies.get("XSRF-TOKEN");
+      await api.post("/register", form, {
+        headers: {
+          "X-XSRF-TOKEN": csrfToken || "",
+        },
+      });
       setSuccess("Inventory account created successfully! Redirecting to dashboard...");
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
     } catch (err) {
       const error = err as ErrorResponse;
-      
-      // Handle validation errors (422)
-      if (error.validationErrors) {
-        setFieldErrors(error.validationErrors);
-        setError("Please fix the errors below to continue.");
-      } 
-      // Handle other errors
-      else {
-        setError(error.userMessage || error.response?.data?.message || "Registration failed. Please try again.");
-      }
+      setError(error.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -172,11 +149,6 @@ const RegisterPage = () => {
         behavior: 'smooth'
       });
     }
-  };
-
-  // Helper to get field error message
-  const getFieldError = (fieldName: string): string => {
-    return fieldErrors[fieldName]?.[0] || "";
   };
 
   if (loading && success) {
@@ -228,6 +200,7 @@ const RegisterPage = () => {
             <div className="container mx-auto px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
+                  {/* Replace img with Next.js Image */}
                   <div className="relative h-8 w-8">
                     <Image 
                       src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
@@ -274,6 +247,7 @@ const RegisterPage = () => {
                 >
                   <div className="space-y-6 md:space-y-8 p-4 md:p-6 lg:p-8">
                     <div className="flex items-center space-x-3">
+                      {/* Replace img with Next.js Image */}
                       <div className={`relative ${isTablet ? 'h-10 w-10' : 'h-12 w-12 lg:h-14 lg:w-14'}`}>
                         <Image 
                           src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
@@ -375,10 +349,10 @@ const RegisterPage = () => {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="flex items-start p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg"
+                          className="flex items-start p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg"
                         >
-                          <CheckmarkCircleRegular className="text-green-600 w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-green-600">{success}</span>
+                          <CheckmarkCircleRegular className="text-gray-600 w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-600">{success}</span>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -397,18 +371,11 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="Warehouse Manager"
                             required
-                            className={`w-full px-4 py-3 pl-11 rounded-lg border ${
-                              getFieldError('name') 
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
-                                : 'border-slate-300 focus:border-gray-600 focus:ring-gray-600/20'
-                            } focus:ring-2 outline-none transition-all bg-white text-sm sm:text-base`}
+                            className="w-full px-4 py-3 pl-11 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <PersonRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                         </div>
-                        {getFieldError('name') && (
-                          <p className="text-xs text-red-600 mt-1">{getFieldError('name')}</p>
-                        )}
                       </div>
 
                       <div className="space-y-2">
@@ -424,18 +391,11 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="inventory@company.com"
                             required
-                            className={`w-full px-4 py-3 pl-11 rounded-lg border ${
-                              getFieldError('email') 
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
-                                : 'border-slate-300 focus:border-gray-600 focus:ring-gray-600/20'
-                            } focus:ring-2 outline-none transition-all bg-white text-sm sm:text-base`}
+                            className="w-full px-4 py-3 pl-11 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <MailRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                         </div>
-                        {getFieldError('email') && (
-                          <p className="text-xs text-red-600 mt-1">{getFieldError('email')}</p>
-                        )}
                       </div>
                     </div>
 
@@ -453,11 +413,7 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="Create secure password"
                             required
-                            className={`w-full px-4 py-3 pl-11 pr-10 rounded-lg border ${
-                              getFieldError('password') 
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
-                                : 'border-slate-300 focus:border-gray-600 focus:ring-gray-600/20'
-                            } focus:ring-2 outline-none transition-all bg-white text-sm sm:text-base`}
+                            className="w-full px-4 py-3 pl-11 pr-10 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <LockClosedRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -475,9 +431,6 @@ const RegisterPage = () => {
                             )}
                           </button>
                         </div>
-                        {getFieldError('password') && (
-                          <p className="text-xs text-red-600 mt-1">{getFieldError('password')}</p>
-                        )}
                         <p className="text-xs text-slate-500 mt-1">
                           Minimum 8 characters required
                         </p>
@@ -496,11 +449,7 @@ const RegisterPage = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="Re-enter password"
                             required
-                            className={`w-full px-4 py-3 pl-11 pr-10 rounded-lg border ${
-                              getFieldError('password_confirmation') 
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
-                                : 'border-slate-300 focus:border-gray-600 focus:ring-gray-600/20'
-                            } focus:ring-2 outline-none transition-all bg-white text-sm sm:text-base`}
+                            className="w-full px-4 py-3 pl-11 pr-10 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
                             disabled={loading || !!success}
                           />
                           <LockClosedRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -518,9 +467,6 @@ const RegisterPage = () => {
                             )}
                           </button>
                         </div>
-                        {getFieldError('password_confirmation') && (
-                          <p className="text-xs text-red-600 mt-1">{getFieldError('password_confirmation')}</p>
-                        )}
                       </div>
                     </div>
 
