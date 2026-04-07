@@ -17,7 +17,7 @@ const MAX_CSRF_RETRIES = 3;
 const getCache = new Map<string, AxiosResponse>();
 const cacheExpiry = new Map<string, number>();
 
-const buildCacheKey = (url: string, config?: any) =>
+const buildCacheKey = (url: string, config?: Record<string, unknown>) =>
   `${url}:${JSON.stringify(config || {})}`;
 
 const cleanCache = () => {
@@ -33,8 +33,10 @@ const cleanCache = () => {
   // LRU trim
   if (getCache.size > MAX_CACHE_SIZE) {
     const firstKey = getCache.keys().next().value;
-    getCache.delete(firstKey);
-    cacheExpiry.delete(firstKey);
+    if (firstKey) {
+      getCache.delete(firstKey);
+      cacheExpiry.delete(firstKey);
+    }
   }
 };
 
@@ -199,9 +201,10 @@ export const withCsrf = async <T>(
 ): Promise<T> => {
   try {
     return await fn();
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as ExtendedAxiosError;
     const shouldRetry =
-      (!err.response || err.response?.status === 419) &&
+      (!error.response || error.response?.status === 419) &&
       retry < MAX_CSRF_RETRIES;
 
     if (shouldRetry) {
@@ -237,7 +240,7 @@ const invalidateCache = (urls: string[]) => {
 ========================= */
 export const apiGet = async (
   url: string,
-  config = {},
+  config: Record<string, unknown> = {},
   useCache = true
 ): Promise<AxiosResponse> =>
   withCsrf(async () => {
@@ -246,7 +249,8 @@ export const apiGet = async (
     if (useCache) {
       const expiry = cacheExpiry.get(key);
       if (expiry && expiry > Date.now()) {
-        return getCache.get(key)!;
+        const cachedResponse = getCache.get(key);
+        if (cachedResponse) return cachedResponse;
       }
     }
 
@@ -263,7 +267,7 @@ export const apiGet = async (
 export const apiPost = async <T>(
   url: string,
   data: T,
-  config = {},
+  config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
 ) =>
   withCsrf(async () => {
@@ -275,7 +279,7 @@ export const apiPost = async <T>(
 export const apiPut = async <T>(
   url: string,
   data: T,
-  config = {},
+  config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
 ) =>
   withCsrf(async () => {
@@ -287,7 +291,7 @@ export const apiPut = async <T>(
 export const apiPatch = async <T>(
   url: string,
   data: T,
-  config = {},
+  config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
 ) =>
   withCsrf(async () => {
@@ -298,7 +302,7 @@ export const apiPatch = async <T>(
 
 export const apiDelete = async (
   url: string,
-  config = {},
+  config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
 ) =>
   withCsrf(async () => {
