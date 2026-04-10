@@ -201,7 +201,7 @@ const LoginPage: React.FC = () => {
                     className="h-8 w-8"
                     priority
                   />
-                  <span className="text-white font-bold text-lg">ListKeeping...</span>
+                  <span className="text-white font-bold text-lg">ListKeeping</span>
                 </div>
                 <div className="flex items-center space-x-4">
                   <Link

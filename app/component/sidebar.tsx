@@ -309,7 +309,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         <NavSection title="Purchase" sectionKey="purchase">
           <NavItem
-            href="/purchases"
+            href="/purchase"
             label="Manage Purchases"
             icon={ShoppingCart}
           />
