@@ -27,7 +27,7 @@ import {
   Trash2,
   FilterX,
   Building2,
-  ShoppingCart, // Add this line
+  ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -144,8 +144,8 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 
 const StatusBadge: React.FC<{ status: PurchaseOrder["status"] }> = ({ status }) => {
   const config = {
-    draft: { label: "Draft", color: "bg-stone-100 text-stone-700 border-stone-200", icon: FileText },
-    pending: { label: "Pending", color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
+    draft: { label: "Draft", color: "bg-stone-100 text-stone-700 border-stone-200", icon: CheckCircle },
+    pending: { label: "Pending", color: "bg-amber-50 text-amber-700 border-amber-200", icon: CheckCircle },
     approved: { label: "Approved", color: "bg-blue-50 text-blue-700 border-blue-200", icon: CheckCircle },
     received: { label: "Received", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Package },
     cancelled: { label: "Cancelled", color: "bg-rose-50 text-rose-700 border-rose-200", icon: XCircle },
@@ -442,12 +442,40 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     fetchSuppliers();
   }, []);
 
+  // Fixed: Map API response to match component structure
   const fetchPurchaseOrders = async () => {
     setIsLoading(true);
     try {
-      const res = await apiGet("/purchase-orders", {}, false);
+      const res = await apiGet("/product_purchase", {}, false);
+      console.log(res.data);
       const ordersArray = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
-      setOrders(ordersArray);
+      
+      // Map the API response to match component expectations
+      const mappedOrders: PurchaseOrder[] = ordersArray.map((order: any) => ({
+        id: order.id,
+        po_number: order.order_number, // Map order_number to po_number
+        supplier_id: order.vendors_id,
+        supplier: order.vendor ? {
+          id: order.vendor.id,
+          name: order.vendor.vendor_name,
+          email: order.vendor.email,
+          phone: order.vendor.phone,
+          contact_person: order.vendor.contact_person,
+        } : null,
+        order_date: order.order_date,
+        expected_delivery_date: order.expected_delivery_date,
+        status: order.status === "pending" ? "pending" : 
+                order.status === "draft" ? "draft" : 
+                order.status === "approved" ? "approved" : 
+                order.status === "received" ? "received" : "pending", // Default to pending
+        subtotal: parseFloat(order.subtotal) || 0,
+        total_amount: parseFloat(order.total_amount) || 0,
+        notes: order.notes,
+        items: [], // Initialize empty items array since API doesn't return items
+        created_at: order.created_at,
+      }));
+      
+      setOrders(mappedOrders);
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch purchase orders");
@@ -459,9 +487,17 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await apiGet("/suppliers", {}, false);
+      const res = await apiGet("/vendors", {}, false);
       const suppliersArray = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
-      setSuppliers(suppliersArray);
+      // Map vendor to supplier structure
+      const mappedSuppliers: Supplier[] = suppliersArray.map((vendor: any) => ({
+        id: vendor.id,
+        name: vendor.vendor_name,
+        email: vendor.email,
+        phone: vendor.phone,
+        contact_person: vendor.contact_person,
+      }));
+      setSuppliers(mappedSuppliers);
     } catch {
       setSuppliers([]);
     }
@@ -539,6 +575,8 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     const totalValue = orders.reduce((sum, o) => sum + o.total_amount, 0);
     return { totalOrders, draftOrders, pendingOrders, receivedOrders, totalValue };
   }, [orders]);
+
+
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -640,7 +678,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
             title={filters.search ? "No orders found" : "No purchase orders"}
             description={filters.search ? "Try adjusting your search" : "Create your first purchase order"}
             icon={ShoppingCart}
-            action={{ label: "Create Purchase Order", href: "/purchase-orders/new" }}
+            action={{ label: "Create Purchase Order", href: "/purchase-orders" }}
           />
         )}
 
