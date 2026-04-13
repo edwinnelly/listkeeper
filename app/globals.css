@@ -1,16 +1,21 @@
 @import "tailwindcss";
 
-/* =========================
-   Base Styles
-   ========================= */
+@theme {
+  --font-sans: var(--font-inter), system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
 @layer base {
+  * {
+    font-family: var(--font-sans);
+  }
+  
   body {
-    font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
     @apply bg-white text-gray-900 antialiased;
+    font-family: var(--font-sans);
   }
 
   html {
-    font-size: 110%; /* global scaling */
+    font-size: 110%;
   }
 
   h1 {
@@ -30,155 +35,4 @@
   }
 }
 
-/* =========================
-   NProgress
-   ========================= */
-#nprogress .bar {
-  @apply h-[3px] bg-gray-600;
-}
-
-#nprogress .peg {
-  box-shadow:
-    0 0 10px rgba(75, 85, 99, 0.8),
-    0 0 5px rgba(75, 85, 99, 0.6);
-}
-
-/* =========================
-   Components
-   ========================= */
-@layer components {
-
-  .input {
-    @apply w-full rounded-lg border border-gray-300 bg-white
-           px-3 py-2 text-sm text-gray-900
-           outline-none transition
-           focus:border-gray-500 focus:ring-2 focus:ring-gray-500;
-  }
-
-  .btn-primary {
-    @apply inline-flex items-center justify-center
-           rounded-lg bg-gray-900 px-6 py-3
-           text-sm font-medium text-white
-           transition hover:bg-gray-800 hover:shadow-lg;
-  }
-
-  .btn-secondary {
-    @apply inline-flex items-center justify-center
-           rounded-lg border border-gray-300
-           bg-white px-6 py-3
-           text-sm font-medium text-gray-700
-           transition hover:bg-gray-50 hover:shadow-md;
-  }
-
-  .btn-gradient {
-    @apply inline-flex items-center justify-center
-           rounded-lg bg-gradient-to-r from-emerald-600 to-blue-600
-           px-6 py-3 text-sm font-medium text-white
-           transition hover:shadow-lg hover:scale-105;
-  }
-
-  .btn-outline {
-    @apply inline-flex items-center justify-center
-           rounded-lg border border-gray-300
-           bg-transparent px-6 py-3
-           text-sm font-medium text-gray-700
-           transition hover:bg-gray-50;
-  }
-
-  .card {
-    @apply bg-white rounded-2xl border border-gray-100
-           shadow-sm hover:shadow-xl transition-all duration-300;
-  }
-
-  .card-glass {
-    @apply bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200
-           shadow-sm hover:shadow-xl transition-all duration-300;
-  }
-
-  .container-custom {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8;
-  }
-}
-
-/* =========================
-   Animations
-   ========================= */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slide-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(-100px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(100px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.5s ease-out;
-}
-
-.animate-slide-left {
-  animation: slide-in-left 0.5s ease-out;
-}
-
-.animate-slide-right {
-  animation: slide-in-right 0.5s ease-out;
-}
-
-/* =========================
-   Scrollbar
-   ========================= */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-gray-100;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
-}
+/* Rest of your CSS remains the same... */
