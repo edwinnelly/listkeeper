@@ -22,13 +22,23 @@ import {
   Printer,
   Download,
   RefreshCw,
-  MoreVertical,
+  MoreHorizontal,
   ChevronDown,
-  ChevronUp,
+  ChevronRight,
+  Copy,
+  Send,
+  CheckCheck,
+  Ban,
+  History,
+  DollarSign,
+  MapPin,
+  Hash,
+  ShoppingBag,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ==============================================
 // TypeScript Interfaces
@@ -105,7 +115,7 @@ const formatDate = (dateString: string | null): string => {
   if (!dateString) return "N/A";
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 };
@@ -130,6 +140,17 @@ const formatCurrency = (amount: number, currencySymbol: string = "$"): string =>
   }).format(amount).replace(/^\$/, currencySymbol);
 };
 
+const getStatusColor = (status: PurchaseOrder["status"]) => {
+  const colors = {
+    draft: "slate",
+    pending: "amber",
+    approved: "blue",
+    received: "emerald",
+    cancelled: "rose",
+  };
+  return colors[status];
+};
+
 // ==============================================
 // Sub-components
 // ==============================================
@@ -137,75 +158,128 @@ const formatCurrency = (amount: number, currencySymbol: string = "$"): string =>
 const StatusBadge: React.FC<{ status: PurchaseOrder["status"] }> = ({ status }) => {
   const config: Record<
     PurchaseOrder["status"],
-    { label: string; icon: React.ElementType; color: string }
+    { label: string; icon: React.ElementType; gradient: string }
   > = {
-    draft: { label: "Draft", icon: FileText, color: "text-gray-700 bg-gray-50 border-gray-200" },
-    pending: { label: "Pending", icon: Clock, color: "text-amber-700 bg-amber-50 border-amber-200" },
-    approved: { label: "Approved", icon: CheckCircle, color: "text-blue-700 bg-blue-50 border-blue-200" },
-    received: { label: "Received", icon: Package, color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-    cancelled: { label: "Cancelled", icon: XCircle, color: "text-rose-700 bg-rose-50 border-rose-200" },
+    draft: { 
+      label: "Draft", 
+      icon: FileText, 
+      gradient: "from-slate-500 to-slate-600" 
+    },
+    pending: { 
+      label: "Pending Approval", 
+      icon: Clock, 
+      gradient: "from-amber-500 to-amber-600" 
+    },
+    approved: { 
+      label: "Approved", 
+      icon: CheckCircle, 
+      gradient: "from-blue-500 to-blue-600" 
+    },
+    received: { 
+      label: "Received", 
+      icon: CheckCheck, 
+      gradient: "from-emerald-500 to-emerald-600" 
+    },
+    cancelled: { 
+      label: "Cancelled", 
+      icon: Ban, 
+      gradient: "from-rose-500 to-rose-600" 
+    },
   };
 
-  const { label, color, icon: Icon } = config[status];
+  const { label, gradient, icon: Icon } = config[status];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${color}`}>
-      <Icon className="h-4 w-4" />
+    <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${gradient} text-white shadow-sm`}>
+      <Icon className="h-3.5 w-3.5" />
       {label}
     </span>
   );
 };
 
 const LoadingState: React.FC = () => (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12">
-      <div className="flex flex-col items-center justify-center">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-gray-500/20 border-t-gray-600 rounded-full animate-spin" />
-          <Package className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-gray-600/60" />
-        </div>
-        <p className="mt-4 text-gray-600 font-medium">Loading purchase order...</p>
-        <p className="text-gray-400 text-sm mt-1">Please wait a moment</p>
-      </div>
+  <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center">
+    <div className="text-center">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        className="w-20 h-20 mx-auto mb-6"
+      >
+        <div className="w-full h-full rounded-full border-4 border-gray-200 border-t-gray-900" />
+      </motion.div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Purchase Order</h3>
+      <p className="text-gray-500">Please wait while we fetch the details...</p>
     </div>
   </div>
 );
 
 const ErrorState: React.FC<{ message: string; onRetry: () => void }> = ({ message, onRetry }) => (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 max-w-md">
-      <div className="flex flex-col items-center text-center">
-        <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-4">
+  <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full"
+    >
+      <div className="text-center">
+        <div className="w-16 h-16 bg-rose-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="h-8 w-8 text-rose-600" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Order</h3>
-        <p className="text-gray-500 text-sm mb-6">{message}</p>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Error Loading Order</h3>
+        <p className="text-gray-600 mb-6">{message}</p>
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all font-medium"
         >
           <RefreshCw className="h-4 w-4" />
           Try Again
         </button>
       </div>
-    </div>
+    </motion.div>
   </div>
 );
 
-const InfoRow: React.FC<{ label: string; value: React.ReactNode; icon?: React.ElementType }> = ({
-  label,
-  value,
-  icon: Icon,
-}) => (
-  <div className="flex items-start gap-3">
+const InfoCard: React.FC<{ 
+  title: string; 
+  icon: React.ElementType;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ title, icon: Icon, children, className = "" }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${className}`}
+  >
+    <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+          <Icon className="h-4 w-4 text-white" />
+        </div>
+        <h3 className="font-semibold text-gray-900">{title}</h3>
+      </div>
+    </div>
+    <div className="p-6">
+      {children}
+    </div>
+  </motion.div>
+);
+
+const InfoRow: React.FC<{ 
+  label: string; 
+  value: React.ReactNode; 
+  icon?: React.ElementType;
+  highlight?: boolean;
+}> = ({ label, value, icon: Icon, highlight }) => (
+  <div className="flex items-start gap-3 group">
     {Icon && (
-      <div className="w-5 h-5 flex-shrink-0 text-gray-400 mt-0.5">
+      <div className={`w-5 h-5 flex-shrink-0 ${highlight ? 'text-gray-900' : 'text-gray-400'} group-hover:text-gray-600 transition-colors mt-0.5`}>
         <Icon className="h-5 w-5" />
       </div>
     )}
     <div className="flex-1 min-w-0">
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <div className="text-sm text-gray-900 font-medium break-words">{value || "—"}</div>
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <div className={`text-sm ${highlight ? 'text-gray-900 font-semibold' : 'text-gray-700'} break-words`}>
+        {value || "—"}
+      </div>
     </div>
   </div>
 );
@@ -223,72 +297,131 @@ const StatusUpdateModal: React.FC<{
     setSelectedStatus(currentStatus);
   }, [currentStatus]);
 
-  if (!isOpen) return null;
-
-  const statusOptions: Array<{ value: PurchaseOrder["status"]; label: string; description: string }> = [
-    { value: "draft", label: "Draft", description: "Order is being prepared" },
-    { value: "pending", label: "Pending", description: "Waiting for approval" },
-    { value: "approved", label: "Approved", description: "Ready to be sent to supplier" },
-    { value: "received", label: "Received", description: "All items have been delivered" },
-    { value: "cancelled", label: "Cancelled", description: "Order has been cancelled" },
+  const statusOptions: Array<{ 
+    value: PurchaseOrder["status"]; 
+    label: string; 
+    description: string;
+    icon: React.ElementType;
+    color: string;
+  }> = [
+    { 
+      value: "draft", 
+      label: "Draft", 
+      description: "Order is being prepared and can be edited",
+      icon: FileText,
+      color: "slate"
+    },
+    { 
+      value: "pending", 
+      label: "Pending", 
+      description: "Waiting for approval from management",
+      icon: Clock,
+      color: "amber"
+    },
+    { 
+      value: "approved", 
+      label: "Approved", 
+      description: "Ready to be sent to supplier",
+      icon: CheckCircle,
+      color: "blue"
+    },
+    { 
+      value: "received", 
+      label: "Received", 
+      description: "All items have been delivered and verified",
+      icon: CheckCheck,
+      color: "emerald"
+    },
+    { 
+      value: "cancelled", 
+      label: "Cancelled", 
+      description: "Order has been cancelled",
+      icon: Ban,
+      color: "rose"
+    },
   ];
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Update Status</h2>
-          <div className="space-y-3 mb-6">
-            {statusOptions.map((option) => (
-              <label
-                key={option.value}
-                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedStatus === option.value
-                    ? "border-gray-600 bg-gray-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="status"
-                  value={option.value}
-                  checked={selectedStatus === option.value}
-                  onChange={() => setSelectedStatus(option.value)}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{option.label}</p>
-                  <p className="text-xs text-gray-500">{option.description}</p>
-                </div>
-              </label>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => onConfirm(selectedStatus)}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-gray-600 to-gray-700 text-white font-medium hover:from-gray-700 hover:to-gray-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
-              disabled={isSubmitting || selectedStatus === currentStatus}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Status"
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Update Order Status</h2>
+              <p className="text-sm text-gray-500 mb-6">Select the new status for this purchase order</p>
+              
+              <div className="space-y-2 mb-6">
+                {statusOptions.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = selectedStatus === option.value;
+                  
+                  return (
+                    <motion.button
+                      key={option.value}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedStatus(option.value)}
+                      className={`w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? `border-${option.color}-500 bg-${option.color}-50`
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-lg bg-${option.color}-100 flex items-center justify-center flex-shrink-0`}>
+                        <Icon className={`h-5 w-5 text-${option.color}-600`} />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="font-semibold text-gray-900">{option.label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle className={`h-5 w-5 text-${option.color}-600`} />
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => onConfirm(selectedStatus)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  disabled={isSubmitting || selectedStatus === currentStatus}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Confirm Update"
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
@@ -304,119 +437,206 @@ const ItemsTable: React.FC<{
 }> = ({ items, subtotal, taxAmount, discountAmount, shippingCost, total, formatCurrency, status }) => {
   const [expanded, setExpanded] = useState(true);
 
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const receivedItems = items.reduce((sum, item) => sum + (item.received_quantity || 0), 0);
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
-        <h2 className="text-lg font-bold text-gray-900">Order Items</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+            <ShoppingBag className="h-4 w-4 text-white" />
+          </div>
+          <div className="text-left">
+            <h2 className="font-semibold text-gray-900">Order Items</h2>
+            <p className="text-xs text-gray-500">{items.length} products, {totalItems} total units</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">{items.length} items</span>
+          {status === "received" && receivedItems > 0 && (
+            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+              {receivedItems} received
+            </span>
+          )}
           {expanded ? (
-            <ChevronUp className="h-5 w-5 text-gray-400" />
-          ) : (
             <ChevronDown className="h-5 w-5 text-gray-400" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-gray-400" />
           )}
         </div>
       </button>
 
-      {expanded && (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-y border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SKU</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Quantity</th>
-                  {status === "received" && (
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Received</th>
-                  )}
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Unit Cost</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {items.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4 text-gray-500">{index + 1}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Package className="h-4 w-4 text-gray-500" />
-                        </div>
-                        <span className="font-medium text-gray-900">{item.product?.name || `Product #${item.product_id}`}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 font-mono text-xs">
-                      {item.product?.sku || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-medium text-gray-900">{item.quantity}</span>
-                      {item.product?.unit && (
-                        <span className="text-gray-500 ml-1">{item.product.unit}</span>
-                      )}
-                    </td>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-y border-gray-200">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SKU</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Qty</th>
                     {status === "received" && (
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Received</th>
+                    )}
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Unit Price</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {items.map((item, index) => (
+                    <motion.tr
+                      key={item.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                            <Package className="h-5 w-5 text-gray-600" />
+                          </div>
+                          <span className="font-medium text-gray-900">
+                            {item.product?.name || `Product #${item.product_id}`}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
+                          {item.product?.sku || "—"}
+                        </code>
+                      </td>
                       <td className="px-6 py-4 text-right">
-                        <span className={`font-medium ${item.received_quantity === item.quantity ? 'text-emerald-600' : 'text-amber-600'}`}>
-                          {item.received_quantity || 0}
-                        </span>
+                        <span className="font-medium text-gray-900">{item.quantity}</span>
                         {item.product?.unit && (
-                          <span className="text-gray-500 ml-1">{item.product.unit}</span>
+                          <span className="text-gray-500 text-xs ml-1">{item.product.unit}</span>
                         )}
                       </td>
-                    )}
-                    <td className="px-6 py-4 text-right text-gray-700">
-                      {formatCurrency(item.unit_cost)}
-                    </td>
-                    <td className="px-6 py-4 text-right font-semibold text-gray-900">
-                      {formatCurrency(item.total)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      {status === "received" && (
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${((item.received_quantity || 0) / item.quantity) * 100}%` }}
+                                className={`h-full ${
+                                  (item.received_quantity || 0) === item.quantity 
+                                    ? 'bg-emerald-500' 
+                                    : 'bg-amber-500'
+                                }`}
+                              />
+                            </div>
+                            <span className={`font-medium ${
+                              (item.received_quantity || 0) === item.quantity 
+                                ? 'text-emerald-600' 
+                                : 'text-amber-600'
+                            }`}>
+                              {item.received_quantity || 0}
+                            </span>
+                          </div>
+                        </td>
+                      )}
+                      <td className="px-6 py-4 text-right text-gray-700">
+                        {formatCurrency(item.unit_cost)}
+                      </td>
+                      <td className="px-6 py-4 text-right font-semibold text-gray-900">
+                        {formatCurrency(item.total)}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Totals */}
-          <div className="border-t border-gray-200 bg-gray-50/50 px-6 py-4">
-            <div className="flex flex-col items-end gap-2">
-              <div className="flex justify-end gap-8 text-sm">
-                <span className="text-gray-600">Subtotal:</span>
-                <span className="font-medium text-gray-900 w-32 text-right">{formatCurrency(subtotal)}</span>
-              </div>
-              {discountAmount > 0 && (
-                <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-gray-600">Discount:</span>
-                  <span className="font-medium text-rose-600 w-32 text-right">-{formatCurrency(discountAmount)}</span>
+            {/* Totals Section */}
+            <div className="border-t border-gray-200 bg-gradient-to-b from-gray-50 to-white px-6 py-5">
+              <div className="flex justify-end">
+                <div className="w-80 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(subtotal)}</span>
+                  </div>
+                  
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Discount</span>
+                      <span className="font-medium text-rose-600">-{formatCurrency(discountAmount)}</span>
+                    </div>
+                  )}
+                  
+                  {taxAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tax</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(taxAmount)}</span>
+                    </div>
+                  )}
+                  
+                  {shippingCost > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Shipping</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(shippingCost)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="pt-3 mt-2 border-t-2 border-gray-200">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-base font-bold text-gray-900">Total</span>
+                      <span className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</span>
+                    </div>
+                  </div>
                 </div>
-              )}
-              {taxAmount > 0 && (
-                <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-gray-600">Tax:</span>
-                  <span className="font-medium text-gray-900 w-32 text-right">{formatCurrency(taxAmount)}</span>
-                </div>
-              )}
-              {shippingCost > 0 && (
-                <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-gray-600">Shipping:</span>
-                  <span className="font-medium text-gray-900 w-32 text-right">{formatCurrency(shippingCost)}</span>
-                </div>
-              )}
-              <div className="flex justify-end gap-8 text-base font-bold pt-2 border-t border-gray-200 mt-2">
-                <span className="text-gray-900">Total:</span>
-                <span className="text-gray-900 w-32 text-right">{formatCurrency(total)}</span>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
+const TimelineStep: React.FC<{
+  title: string;
+  timestamp: string | null;
+  icon: React.ElementType;
+  isCompleted: boolean;
+  isLast?: boolean;
+}> = ({ title, timestamp, icon: Icon, isCompleted, isLast }) => (
+  <div className="flex gap-4">
+    <div className="flex flex-col items-center">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          isCompleted 
+            ? 'bg-gray-900 text-white' 
+            : 'bg-gray-100 text-gray-400'
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+      </motion.div>
+      {!isLast && (
+        <div className={`w-0.5 h-full mt-2 ${isCompleted ? 'bg-gray-900' : 'bg-gray-200'}`} />
+      )}
+    </div>
+    <div className="flex-1 pb-6">
+      <p className={`font-medium ${isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>
+        {title}
+      </p>
+      {timestamp && (
+        <p className="text-xs text-gray-500 mt-1">{formatDateTime(timestamp)}</p>
+      )}
+    </div>
+  </div>
+);
 
 // ==============================================
 // Main Component
@@ -437,7 +657,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -521,188 +741,269 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
   };
 
   const handleExport = () => {
-    // Implement export functionality
     toast.success("Export started");
+  };
+
+  const handleDuplicate = () => {
+    router.push(`/purchase-orders/create?duplicate=${order?.id}`);
   };
 
   const canEdit = order?.status === "draft" || order?.status === "pending";
   const canReceive = order?.status === "approved" || order?.status === "pending";
+  const canApprove = order?.status === "pending";
+  const canCancel = order?.status !== "cancelled" && order?.status !== "received";
 
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={fetchOrder} />;
   if (!order) return <ErrorState message="Order not found" onRetry={fetchOrder} />;
 
+  const statusColor = getStatusColor(order.status);
+
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 print:bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm print:hidden">
-        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/purchase-orders/list"
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40 print:hidden">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.back()}
+                className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
               >
                 <ArrowLeft className="h-5 w-5" />
-              </Link>
+              </motion.button>
+              
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-bold text-gray-900">{order.po_number}</h1>
                   <StatusBadge status={order.status} />
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Created on {formatDate(order.order_date)}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm text-gray-500">
+                    Created {formatDate(order.order_date)}
+                  </p>
+                  {order.supplier && (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <p className="text-sm text-gray-500">
+                        {order.supplier.name}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
+
             <div className="flex items-center gap-2">
-              <button
-                onClick={handlePrint}
-                className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-                title="Print"
-              >
-                <Printer className="h-5 w-5" />
-              </button>
-              <button
-                onClick={handleExport}
-                className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-                title="Export"
-              >
-                <Download className="h-5 w-5" />
-              </button>
-              {canEdit && (
-                <Link
-                  href={`/purchase-orders/edit/${order.id}`}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              {/* Quick Actions */}
+              <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+                <button
+                  onClick={handlePrint}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
+                  title="Print Order"
                 >
-                  <Edit className="h-4 w-4" />
-                  Edit
+                  <Printer className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
+                  title="Export"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleDuplicate}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
+                  title="Duplicate"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Primary Actions */}
+              {canEdit && (
+                <Link href={`/purchase-orders/edit/${order.id}`}>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-all"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Order
+                  </motion.button>
                 </Link>
               )}
+              
               {canReceive && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => handleUpdateStatus("received")}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-medium rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-sm"
                 >
-                  <Package className="h-4 w-4" />
+                  <CheckCheck className="h-4 w-4" />
                   Receive Items
-                </button>
+                </motion.button>
               )}
-              <div className="relative">
-                <button
-                  onClick={() => setActionMenuOpen(!actionMenuOpen)}
-                  className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+
+              {canApprove && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleUpdateStatus("approved")}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm"
                 >
-                  <MoreVertical className="h-5 w-5" />
-                </button>
-                {actionMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(false)} />
-                    <div className="absolute right-0 top-12 z-20 w-48 bg-white border border-gray-200 rounded-xl shadow-lg">
-                      <button
-                        onClick={() => {
-                          setStatusModalOpen(true);
-                          setActionMenuOpen(false);
-                        }}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition rounded-t-xl border-b border-gray-100"
+                  <CheckCircle className="h-4 w-4" />
+                  Approve
+                </motion.button>
+              )}
+
+              {/* More Actions Dropdown */}
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowActions(!showActions)}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </motion.button>
+                
+                <AnimatePresence>
+                  {showActions && (
+                    <>
+                      <div className="fixed inset-0 z-30" onClick={() => setShowActions(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute right-0 top-12 z-40 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
                       >
-                        <RefreshCw size={15} className="text-gray-600" />
-                        Update Status
-                      </button>
-                      {order.status === "draft" && (
                         <button
                           onClick={() => {
-                            handleUpdateStatus("pending");
-                            setActionMenuOpen(false);
+                            setStatusModalOpen(true);
+                            setShowActions(false);
                           }}
-                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50 transition border-b border-gray-100"
+                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition"
                         >
-                          <Clock size={15} />
-                          Submit for Approval
+                          <RefreshCw className="h-4 w-4" />
+                          Update Status
                         </button>
-                      )}
-                      {order.status === "pending" && (
+                        
+                        {order.status === "draft" && (
+                          <button
+                            onClick={() => {
+                              handleUpdateStatus("pending");
+                              setShowActions(false);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-amber-700 hover:bg-amber-50 transition"
+                          >
+                            <Send className="h-4 w-4" />
+                            Submit for Approval
+                          </button>
+                        )}
+                        
+                        {canCancel && (
+                          <button
+                            onClick={() => {
+                              handleUpdateStatus("cancelled");
+                              setShowActions(false);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-700 hover:bg-rose-50 transition"
+                          >
+                            <Ban className="h-4 w-4" />
+                            Cancel Order
+                          </button>
+                        )}
+                        
+                        <hr className="border-gray-200" />
+                        
                         <button
                           onClick={() => {
-                            handleUpdateStatus("approved");
-                            setActionMenuOpen(false);
+                            handlePrint();
+                            setShowActions(false);
                           }}
-                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-blue-700 hover:bg-blue-50 transition border-b border-gray-100"
+                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition"
                         >
-                          <CheckCircle size={15} />
-                          Approve Order
+                          <Printer className="h-4 w-4" />
+                          Print Order
                         </button>
-                      )}
-                      <button
-                        onClick={() => {
-                          handlePrint();
-                          setActionMenuOpen(false);
-                        }}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition border-b border-gray-100"
-                      >
-                        <Printer size={15} className="text-gray-600" />
-                        Print Order
-                      </button>
-                      <button
-                        onClick={() => {
-                          // Navigate to duplicate
-                          router.push(`/purchase-orders/create?duplicate=${order.id}`);
-                          setActionMenuOpen(false);
-                        }}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition rounded-b-xl"
-                      >
-                        <FileText size={15} className="text-gray-600" />
-                        Duplicate Order
-                      </button>
-                    </div>
-                  </>
-                )}
+                        
+                        <button
+                          onClick={() => {
+                            handleDuplicate();
+                            setShowActions(false);
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition"
+                        >
+                          <Copy className="h-4 w-4" />
+                          Duplicate Order
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Print Header */}
-      <div className="hidden print:block p-8 pb-0">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Purchase Order</h1>
-            <p className="text-sm font-mono mt-1">{order.po_number}</p>
-          </div>
-          <div className="text-right">
-            <p className="font-bold text-lg">{businessInfo?.name || "Company Name"}</p>
-            <p className="text-sm text-gray-600">{businessInfo?.address || ""}</p>
-            <p className="text-sm text-gray-600">{businessInfo?.phone || ""}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <main className="max-w-screen-xl mx-auto px-4 sm:px-6 py-6 print:py-4">
+      <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:py-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Order Info */}
+          {/* Left Column - Main Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Supplier Info Card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-gray-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Supplier Information</h3>
-                  <p className="text-sm text-gray-500">Details of the supplying vendor</p>
-                </div>
+            {/* Supplier Information */}
+            <InfoCard title="Supplier Information" icon={Building2}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InfoRow 
+                  label="Supplier Name" 
+                  value={order.supplier?.name} 
+                  icon={Building2}
+                  highlight
+                />
+                <InfoRow 
+                  label="Contact Person" 
+                  value={order.supplier?.contact_person} 
+                  icon={User} 
+                />
+                <InfoRow 
+                  label="Email" 
+                  value={
+                    order.supplier?.email ? (
+                      <a href={`mailto:${order.supplier.email}`} className="text-blue-600 hover:underline">
+                        {order.supplier.email}
+                      </a>
+                    ) : null
+                  } 
+                  icon={Mail} 
+                />
+                <InfoRow 
+                  label="Phone" 
+                  value={
+                    order.supplier?.phone ? (
+                      <a href={`tel:${order.supplier.phone}`} className="text-blue-600 hover:underline">
+                        {order.supplier.phone}
+                      </a>
+                    ) : null
+                  } 
+                  icon={Phone} 
+                />
+                <InfoRow 
+                  label="Address" 
+                  value={order.supplier?.address} 
+                  icon={MapPin} 
+                />
+                <InfoRow 
+                  label="Tax ID" 
+                  value={order.supplier?.tax_id} 
+                  icon={Hash} 
+                />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InfoRow label="Supplier Name" value={order.supplier?.name} />
-                <InfoRow label="Contact Person" value={order.supplier?.contact_person} icon={User} />
-                <InfoRow label="Email" value={order.supplier?.email} icon={Mail} />
-                <InfoRow label="Phone" value={order.supplier?.phone} icon={Phone} />
-                <InfoRow label="Address" value={order.supplier?.address} icon={Building2} />
-                <InfoRow label="Tax ID" value={order.supplier?.tax_id} />
-              </div>
-            </div>
+            </InfoCard>
 
             {/* Items Table */}
             <ItemsTable
@@ -718,36 +1019,37 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
 
             {/* Notes & Terms */}
             {(order.notes || order.terms) && (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <InfoCard title="Additional Information" icon={FileText}>
                 {order.notes && (
-                  <div className="mb-4">
-                    <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-gray-500" />
-                      Notes
-                    </h3>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{order.notes}</p>
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Notes</h4>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 whitespace-pre-wrap">{order.notes}</p>
+                    </div>
                   </div>
                 )}
                 {order.terms && (
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-gray-500" />
-                      Terms & Conditions
-                    </h3>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{order.terms}</p>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Terms & Conditions</h4>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 whitespace-pre-wrap">{order.terms}</p>
+                    </div>
                   </div>
                 )}
-              </div>
+              </InfoCard>
             )}
           </div>
 
           {/* Right Column - Summary */}
           <div className="space-y-6">
-            {/* Order Summary Card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Order Summary</h3>
-              <div className="space-y-3">
-                <InfoRow label="Order Date" value={formatDate(order.order_date)} icon={Calendar} />
+            {/* Order Details */}
+            <InfoCard title="Order Details" icon={Calendar}>
+              <div className="space-y-4">
+                <InfoRow 
+                  label="Order Date" 
+                  value={formatDate(order.order_date)} 
+                  icon={Calendar} 
+                />
                 <InfoRow
                   label="Expected Delivery"
                   value={formatDate(order.expected_delivery_date)}
@@ -757,86 +1059,115 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
                   <InfoRow
                     label="Delivered Date"
                     value={formatDate(order.delivered_date)}
-                    icon={CheckCircle}
+                    icon={CheckCheck}
                   />
                 )}
-                <InfoRow label="Location" value={order.location?.location_name} icon={Building2} />
-                <InfoRow label="Created By" value={order.created_by?.name} icon={User} />
+                <InfoRow 
+                  label="Location" 
+                  value={order.location?.location_name} 
+                  icon={MapPin} 
+                />
+                <InfoRow 
+                  label="Created By" 
+                  value={order.created_by?.name} 
+                  icon={User} 
+                />
               </div>
-            </div>
+            </InfoCard>
 
-            {/* Totals Card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Totals</h3>
+            {/* Financial Summary */}
+            <InfoCard title="Financial Summary" icon={DollarSign}>
               <div className="space-y-3">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium text-gray-900">{formatCurr(order.subtotal)}</span>
+                  <span className="font-semibold text-gray-900">{formatCurr(order.subtotal)}</span>
                 </div>
+                
                 {order.discount_amount > 0 && (
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between items-center py-2">
                     <span className="text-gray-600">Discount</span>
-                    <span className="font-medium text-rose-600">-{formatCurr(order.discount_amount)}</span>
+                    <span className="font-semibold text-rose-600">-{formatCurr(order.discount_amount)}</span>
                   </div>
                 )}
+                
                 {order.tax_amount > 0 && (
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between items-center py-2">
                     <span className="text-gray-600">Tax</span>
-                    <span className="font-medium text-gray-900">{formatCurr(order.tax_amount)}</span>
+                    <span className="font-semibold text-gray-900">{formatCurr(order.tax_amount)}</span>
                   </div>
                 )}
+                
                 {order.shipping_cost > 0 && (
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between items-center py-2">
                     <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium text-gray-900">{formatCurr(order.shipping_cost)}</span>
+                    <span className="font-semibold text-gray-900">{formatCurr(order.shipping_cost)}</span>
                   </div>
                 )}
-                <div className="pt-3 border-t border-gray-200">
-                  <div className="flex justify-between">
-                    <span className="font-bold text-gray-900">Total</span>
-                    <span className="font-bold text-xl text-gray-900">{formatCurr(order.total_amount)}</span>
+                
+                <div className="pt-4 mt-2 border-t-2 border-gray-200">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-lg font-bold text-gray-900">Total</span>
+                    <span className="text-2xl font-bold text-gray-900">{formatCurr(order.total_amount)}</span>
                   </div>
                 </div>
               </div>
-            </div>
+            </InfoCard>
 
-            {/* Timeline Card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Activity</h3>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FileText className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Order Created</p>
-                    <p className="text-xs text-gray-500">{formatDateTime(order.created_at)}</p>
-                  </div>
-                </div>
-                {order.updated_at !== order.created_at && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Edit className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Last Updated</p>
-                      <p className="text-xs text-gray-500">{formatDateTime(order.updated_at)}</p>
-                    </div>
-                  </div>
+            {/* Timeline */}
+            <InfoCard title="Order Timeline" icon={History}>
+              <div className="pt-2">
+                <TimelineStep
+                  title="Order Created"
+                  timestamp={order.created_at}
+                  icon={FileText}
+                  isCompleted={true}
+                />
+                
+                {order.status !== "draft" && (
+                  <TimelineStep
+                    title="Order Submitted"
+                    timestamp={order.updated_at}
+                    icon={Send}
+                    isCompleted={order.status !== "draft"}
+                  />
                 )}
-                {order.status === "received" && order.delivered_date && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 bg-emerald-50 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Package className="h-4 w-4 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Order Received</p>
-                      <p className="text-xs text-gray-500">{formatDateTime(order.delivered_date)}</p>
-                    </div>
-                  </div>
+                
+                {order.status === "approved" || order.status === "received" ? (
+                  <TimelineStep
+                    title="Order Approved"
+                    timestamp={order.updated_at}
+                    icon={CheckCircle}
+                    isCompleted={order.status === "approved" || order.status === "received"}
+                  />
+                ) : null}
+                
+                {order.status === "received" && order.delivered_date ? (
+                  <TimelineStep
+                    title="Order Received"
+                    timestamp={order.delivered_date}
+                    icon={CheckCheck}
+                    isCompleted={true}
+                    isLast={true}
+                  />
+                ) : order.status === "cancelled" ? (
+                  <TimelineStep
+                    title="Order Cancelled"
+                    timestamp={order.updated_at}
+                    icon={Ban}
+                    isCompleted={true}
+                    isLast={true}
+                  />
+                ) : (
+                  <TimelineStep
+                    title={order.status === "approved" ? "Awaiting Delivery" : "Awaiting Approval"}
+                    timestamp={null}
+                    icon={Clock}
+                    isCompleted={false}
+                    isLast={true}
+                  />
                 )}
               </div>
-            </div>
+            </InfoCard>
           </div>
         </div>
       </main>
