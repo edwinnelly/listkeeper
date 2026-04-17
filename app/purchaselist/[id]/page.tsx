@@ -762,7 +762,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 print:bg-white">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40 print:hidden">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-40 print:hidden">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -824,7 +824,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
 
               {/* Primary Actions */}
               {canEdit && (
-                <Link href={`/purchase-orders/edit/${order.id}`}>
+                <Link href={`/purchaseedits/${orderId}`}>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
