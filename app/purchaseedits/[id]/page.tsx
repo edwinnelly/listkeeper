@@ -25,6 +25,7 @@ import {
   CheckCircle,
   Edit3,
   Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -167,6 +168,69 @@ const normalizeSupplier = (supplier: any): Supplier => {
 };
 
 // ==============================================
+// Financial Validation Function
+// ==============================================
+
+interface FinancialValidationResult {
+  isValid: boolean;
+  errors: {
+    discount?: string;
+    tax?: string;
+    shipping?: string;
+  };
+}
+
+const validateFinancials = (
+  subtotal: number,
+  discountAmount: number,
+  discountType: "fixed" | "percentage" = "fixed",
+  taxAmount: number,
+  shippingCost: number
+): FinancialValidationResult => {
+  const errors: { discount?: string; tax?: string; shipping?: string } = {};
+  
+  // Calculate actual discount value
+  const actualDiscount = discountType === "percentage" 
+    ? subtotal * (discountAmount / 100)
+    : discountAmount;
+  
+  // 1. Validate discount doesn't exceed subtotal
+  if (actualDiscount > subtotal) {
+    errors.discount = discountType === "percentage"
+      ? `Discount (${discountAmount}%) exceeds subtotal (${formatCurrency(subtotal)})`
+      : `Discount (${formatCurrency(discountAmount)}) cannot exceed subtotal (${formatCurrency(subtotal)})`;
+  }
+  
+  // 2. Validate discount percentage doesn't exceed 100%
+  if (discountType === "percentage" && discountAmount > 100) {
+    errors.discount = "Discount percentage cannot exceed 100%";
+  }
+  
+  // 3. Validate tax doesn't exceed subtotal after discount
+  const afterDiscount = Math.max(0, subtotal - actualDiscount);
+  if (taxAmount > afterDiscount) {
+    errors.tax = `Tax (${formatCurrency(taxAmount)}) cannot exceed the amount after discount (${formatCurrency(afterDiscount)})`;
+  }
+  
+  // 4. Validate shipping cost doesn't exceed subtotal after discount
+  if (shippingCost > afterDiscount) {
+    errors.shipping = `Shipping cost (${formatCurrency(shippingCost)}) cannot exceed the amount after discount (${formatCurrency(afterDiscount)})`;
+  }
+  
+  // 5. Validate combined tax + shipping doesn't exceed after-discount amount
+  if ((taxAmount + shippingCost) > afterDiscount) {
+    if (!errors.tax && !errors.shipping) {
+      errors.tax = `Combined tax and shipping (${formatCurrency(taxAmount + shippingCost)}) exceeds amount after discount (${formatCurrency(afterDiscount)})`;
+    }
+  }
+  
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors
+  };
+};
+
+// ==============================================
 // Validation Functions
 // ==============================================
 
@@ -174,6 +238,9 @@ interface ValidationErrors {
   supplier_id?: string;
   order_date?: string;
   items?: string;
+  discount_amount?: string;
+  tax_amount?: string;
+  shipping_cost?: string;
   [key: string]: string | undefined;
 }
 
@@ -215,6 +282,7 @@ const validateOrderForm = (order: Partial<PurchaseOrder>): ValidationErrors => {
     }
   }
   
+  // Basic negative value checks
   if (order.discount_amount && order.discount_amount < 0) {
     errors.discount_amount = "Discount cannot be negative";
   }
@@ -225,6 +293,33 @@ const validateOrderForm = (order: Partial<PurchaseOrder>): ValidationErrors => {
   
   if (order.shipping_cost && order.shipping_cost < 0) {
     errors.shipping_cost = "Shipping cost cannot be negative";
+  }
+  
+  // Financial validation - Discount, Tax, Shipping cannot exceed limits
+  const subtotal = order.subtotal || 0;
+  const discountAmount = order.discount_amount || 0;
+  const discountType = order.discount_type || "fixed";
+  const taxAmount = order.tax_amount || 0;
+  const shippingCost = order.shipping_cost || 0;
+  
+  const financialValidation = validateFinancials(
+    subtotal,
+    discountAmount,
+    discountType,
+    taxAmount,
+    shippingCost
+  );
+  
+  if (!financialValidation.isValid) {
+    if (financialValidation.errors.discount) {
+      errors.discount_amount = financialValidation.errors.discount;
+    }
+    if (financialValidation.errors.tax) {
+      errors.tax_amount = financialValidation.errors.tax;
+    }
+    if (financialValidation.errors.shipping) {
+      errors.shipping_cost = financialValidation.errors.shipping;
+    }
   }
   
   return errors;
@@ -532,6 +627,45 @@ const ItemsTable: React.FC<{
   );
 };
 
+// Financial Warning Banner Component
+const FinancialWarningBanner: React.FC<{
+  errors: ValidationErrors;
+}> = ({ errors }) => {
+  const financialErrors = [
+    errors.discount_amount,
+    errors.tax_amount,
+    errors.shipping_cost,
+  ].filter(Boolean);
+  
+  if (financialErrors.length === 0) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4"
+    >
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <h4 className="text-sm font-semibold text-amber-800 mb-2">Financial Validation Issues</h4>
+          <ul className="space-y-1">
+            {financialErrors.map((error, index) => (
+              <li key={index} className="text-xs text-amber-700 flex items-start gap-2">
+                <span className="block w-1 h-1 bg-amber-500 rounded-full mt-1.5 flex-shrink-0" />
+                {error}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-amber-600 mt-3">
+            Please adjust the values above. Discount, tax, and shipping costs cannot exceed the subtotal.
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 // ==============================================
 // Main Component
 // ==============================================
@@ -594,8 +728,6 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
           setIsLoading(false);
         }
       } catch (err) {
-        console.error("Failed to load data:", err);
-        setError("Failed to load required data");
         setIsLoading(false);
         setSuppliersLoading(false);
       }
@@ -640,7 +772,6 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
 
       setOrder(mappedOrder);
     } catch (err: any) {
-      console.error("Failed to load order:", err);
       setError(err?.response?.data?.message || "Failed to load purchase order");
     } finally {
       setIsLoading(false);
@@ -681,7 +812,7 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
     setValidationErrors(errors);
     
     if (Object.keys(errors).length > 0) {
-      toast.error("Please fix the validation errors before saving");
+      toast.error("Please fix the errors before saving");
       return;
     }
     
@@ -709,27 +840,24 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
           total: item.total,
         })),
       };
-      console.log(payload);
-      
+     
       let response;
       if (isEditMode) {
         response = await apiPut(`/product_purchase_updated/${orderId}`, payload);
         toast.success("Purchase order updated successfully");
-      } else {
-        response = await apiPost("/product_purchase", payload);
-        toast.success("Purchase order created successfully");
-      }
+      } 
       
-      const newOrderId = response.data?.data?.id || order.id;
-      router.push(`/purchase-orders/${newOrderId}`);
+      // if (isEditMode) {
+      //   router.push(`/purchase-orders/${orderId}`);
+      // }
     } catch (err: any) {
-      console.error("Failed to save order:", err);
       toast.error(err?.response?.data?.message || "Failed to save purchase order");
     } finally {
       setIsSaving(false);
     }
   };
 
+  
   const isEditable = !isEditMode || order.status === "draft" || order.status === "pending";
   const isLocked = isEditMode && order.status !== "draft" && order.status !== "pending";
 
@@ -791,17 +919,6 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
               
               {isEditable && (
                 <>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleSave("draft")}
-                    disabled={isSaving}
-                    className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 text-gray-700 text-xs sm:text-sm font-medium rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50"
-                  >
-                    <span className="hidden sm:inline">Save Draft</span>
-                    <Save className="h-4 w-4 sm:hidden" />
-                  </motion.button>
-                  
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -1068,6 +1185,11 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
               </div>
               
               <div className="p-4 sm:p-6">
+                {/* Financial Validation Warning Banner */}
+                {isEditable && (
+                  <FinancialWarningBanner errors={validationErrors} />
+                )}
+                
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-2">
                     <span className="text-gray-600 text-sm">Subtotal</span>
@@ -1085,7 +1207,8 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
                             step={order.discount_type === "percentage" ? "1" : "0.01"}
                             value={order.discount_amount || 0}
                             onChange={(e) => {
-                              setOrder(prev => ({ ...prev, discount_amount: Math.max(0, parseFloat(e.target.value) || 0) }));
+                              const value = parseFloat(e.target.value) || 0;
+                              setOrder(prev => ({ ...prev, discount_amount: Math.max(0, value) }));
                               setValidationErrors(prev => ({ ...prev, discount_amount: undefined }));
                             }}
                             className={`flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm border rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
@@ -1102,7 +1225,10 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
                           </select>
                         </div>
                         {validationErrors.discount_amount && (
-                          <p className="text-rose-500 text-xs mt-1">{validationErrors.discount_amount}</p>
+                          <p className="text-rose-500 text-xs mt-1 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {validationErrors.discount_amount}
+                          </p>
                         )}
                       </div>
                       
@@ -1114,7 +1240,8 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
                           step="0.01"
                           value={order.tax_amount || 0}
                           onChange={(e) => {
-                            setOrder(prev => ({ ...prev, tax_amount: Math.max(0, parseFloat(e.target.value) || 0) }));
+                            const value = parseFloat(e.target.value) || 0;
+                            setOrder(prev => ({ ...prev, tax_amount: Math.max(0, value) }));
                             setValidationErrors(prev => ({ ...prev, tax_amount: undefined }));
                           }}
                           className={`w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
@@ -1122,7 +1249,10 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
                           }`}
                         />
                         {validationErrors.tax_amount && (
-                          <p className="text-rose-500 text-xs mt-1">{validationErrors.tax_amount}</p>
+                          <p className="text-rose-500 text-xs mt-1 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {validationErrors.tax_amount}
+                          </p>
                         )}
                       </div>
                       
@@ -1134,7 +1264,8 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
                           step="0.01"
                           value={order.shipping_cost || 0}
                           onChange={(e) => {
-                            setOrder(prev => ({ ...prev, shipping_cost: Math.max(0, parseFloat(e.target.value) || 0) }));
+                            const value = parseFloat(e.target.value) || 0;
+                            setOrder(prev => ({ ...prev, shipping_cost: Math.max(0, value) }));
                             setValidationErrors(prev => ({ ...prev, shipping_cost: undefined }));
                           }}
                           className={`w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent ${
@@ -1142,7 +1273,10 @@ const EditPurchaseOrderPage = ({ user }: { user: User }) => {
                           }`}
                         />
                         {validationErrors.shipping_cost && (
-                          <p className="text-rose-500 text-xs mt-1">{validationErrors.shipping_cost}</p>
+                          <p className="text-rose-500 text-xs mt-1 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {validationErrors.shipping_cost}
+                          </p>
                         )}
                       </div>
                     </>

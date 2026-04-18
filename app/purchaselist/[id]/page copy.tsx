@@ -34,8 +34,6 @@ import {
   MapPin,
   Hash,
   ShoppingBag,
-  Percent,
-  Receipt,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -43,7 +41,7 @@ import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ==============================================
-// TypeScript Interfaces (unchanged)
+// TypeScript Interfaces
 // ==============================================
 
 interface Supplier {
@@ -87,7 +85,6 @@ interface PurchaseOrder {
   subtotal: number;
   tax_amount: number;
   discount_amount: number;
-  discount_type?: "fixed" | "percentage";
   shipping_cost: number;
   total_amount: number;
   notes: string | null;
@@ -111,7 +108,7 @@ interface User {
 }
 
 // ==============================================
-// Utility Functions (unchanged)
+// Utility Functions
 // ==============================================
 
 const formatDate = (dateString: string | null): string => {
@@ -433,21 +430,15 @@ const ItemsTable: React.FC<{
   subtotal: number;
   taxAmount: number;
   discountAmount: number;
-  discountType?: "fixed" | "percentage";
   shippingCost: number;
   total: number;
   formatCurrency: (amount: number) => string;
   status: PurchaseOrder["status"];
-}> = ({ items, subtotal, taxAmount, discountAmount, discountType, shippingCost, total, formatCurrency, status }) => {
+}> = ({ items, subtotal, taxAmount, discountAmount, shippingCost, total, formatCurrency, status }) => {
   const [expanded, setExpanded] = useState(true);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const receivedItems = items.reduce((sum, item) => sum + (item.received_quantity || 0), 0);
-
-  // Calculate discount display
-  const discountDisplay = discountType === "percentage" 
-    ? `${discountAmount}%` 
-    : formatCurrency(discountAmount);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -566,60 +557,39 @@ const ItemsTable: React.FC<{
               </table>
             </div>
 
-            {/* Totals Section - Updated with better styling */}
+            {/* Totals Section */}
             <div className="border-t border-gray-200 bg-gradient-to-b from-gray-50 to-white px-6 py-5">
               <div className="flex justify-end">
-                <div className="w-full sm:w-96 space-y-2">
-                  {/* Subtotal */}
-                  <div className="flex justify-between text-sm py-1.5">
-                    <span className="text-gray-600 flex items-center gap-2">
-                      <Receipt className="h-4 w-4" />
-                      Subtotal
-                    </span>
+                <div className="w-80 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium text-gray-900">{formatCurrency(subtotal)}</span>
                   </div>
                   
-                  {/* Discount */}
                   {discountAmount > 0 && (
-                    <div className="flex justify-between text-sm py-1.5 border-t border-gray-100">
-                      <span className="text-gray-600 flex items-center gap-2">
-                        <Percent className="h-4 w-4" />
-                        Discount {discountType === "percentage" && `(${discountAmount}%)`}
-                      </span>
-                      <span className="font-medium text-rose-600">
-                        -{discountType === "percentage" 
-                          ? formatCurrency(subtotal * (discountAmount / 100))
-                          : formatCurrency(discountAmount)}
-                      </span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Discount</span>
+                      <span className="font-medium text-rose-600">-{formatCurrency(discountAmount)}</span>
                     </div>
                   )}
                   
-                  {/* Tax */}
                   {taxAmount > 0 && (
-                    <div className="flex justify-between text-sm py-1.5 border-t border-gray-100">
-                      <span className="text-gray-600 flex items-center gap-2">
-                        <DollarSign className="h-4 w-4" />
-                        Tax
-                      </span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tax</span>
                       <span className="font-medium text-gray-900">{formatCurrency(taxAmount)}</span>
                     </div>
                   )}
                   
-                  {/* Shipping Cost */}
                   {shippingCost > 0 && (
-                    <div className="flex justify-between text-sm py-1.5 border-t border-gray-100">
-                      <span className="text-gray-600 flex items-center gap-2">
-                        <Truck className="h-4 w-4" />
-                        Shipping Cost
-                      </span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Shipping</span>
                       <span className="font-medium text-gray-900">{formatCurrency(shippingCost)}</span>
                     </div>
                   )}
                   
-                  {/* Total */}
-                  <div className="pt-4 mt-2 border-t-2 border-gray-200">
+                  <div className="pt-3 mt-2 border-t-2 border-gray-200">
                     <div className="flex justify-between items-baseline">
-                      <span className="text-base font-bold text-gray-900">Total Amount</span>
+                      <span className="text-base font-bold text-gray-900">Total</span>
                       <span className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</span>
                     </div>
                   </div>
@@ -720,9 +690,8 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
         delivered_date: data.delivered_date,
         status: data.status || "pending",
         subtotal: parseFloat(data.subtotal) || 0,
-        tax_amount: parseFloat(data.tax) || parseFloat(data.tax_amount) || 0,
-        discount_amount: parseFloat(data.discount) || parseFloat(data.discount_amount) || 0,
-        discount_type: data.discount_type || "fixed",
+        tax_amount: parseFloat(data.tax_amount) || 0,
+        discount_amount: parseFloat(data.discount_amount) || 0,
         shipping_cost: parseFloat(data.shipping_cost) || 0,
         total_amount: parseFloat(data.total_amount) || 0,
         notes: data.notes,
@@ -733,7 +702,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
           product: item.product,
           quantity: item.quantity,
           unit_cost: parseFloat(item.unit_cost) || 0,
-          total: parseFloat(item.total_cost) || parseFloat(item.total) || 0,
+          total: parseFloat(item.total) || 0,
           received_quantity: item.received_quantity,
         })),
         created_at: data.created_at,
@@ -792,7 +761,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 print:bg-white">
-      {/* Header - unchanged */}
+      {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-40 print:hidden">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -1036,13 +1005,12 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
               </div>
             </InfoCard>
 
-            {/* Items Table - Updated with all props */}
+            {/* Items Table */}
             <ItemsTable
               items={order.items}
               subtotal={order.subtotal}
               taxAmount={order.tax_amount}
               discountAmount={order.discount_amount}
-              discountType={order.discount_type}
               shippingCost={order.shipping_cost}
               total={order.total_amount}
               formatCurrency={formatCurr}
@@ -1107,56 +1075,35 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
               </div>
             </InfoCard>
 
-            {/* Financial Summary - Updated with better display */}
+            {/* Financial Summary */}
             <InfoCard title="Financial Summary" icon={DollarSign}>
               <div className="space-y-3">
-                {/* Subtotal */}
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600 flex items-center gap-2">
-                    <Receipt className="h-4 w-4" />
-                    Subtotal
-                  </span>
+                  <span className="text-gray-600">Subtotal</span>
                   <span className="font-semibold text-gray-900">{formatCurr(order.subtotal)}</span>
                 </div>
                 
-                {/* Discount */}
                 {order.discount_amount > 0 && (
-                  <div className="flex justify-between items-center py-2 border-t border-gray-100">
-                    <span className="text-gray-600 flex items-center gap-2">
-                      <Percent className="h-4 w-4" />
-                      Discount {order.discount_type === "percentage" && `(${order.discount_amount}%)`}
-                    </span>
-                    <span className="font-semibold text-rose-600">
-                      -{order.discount_type === "percentage" 
-                        ? formatCurr(order.subtotal * (order.discount_amount / 100))
-                        : formatCurr(order.discount_amount)}
-                    </span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Discount</span>
+                    <span className="font-semibold text-rose-600">-{formatCurr(order.discount_amount)}</span>
                   </div>
                 )}
                 
-                {/* Tax */}
                 {order.tax_amount > 0 && (
-                  <div className="flex justify-between items-center py-2 border-t border-gray-100">
-                    <span className="text-gray-600 flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      Tax
-                    </span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Tax</span>
                     <span className="font-semibold text-gray-900">{formatCurr(order.tax_amount)}</span>
                   </div>
                 )}
                 
-                {/* Shipping Cost */}
                 {order.shipping_cost > 0 && (
-                  <div className="flex justify-between items-center py-2 border-t border-gray-100">
-                    <span className="text-gray-600 flex items-center gap-2">
-                      <Truck className="h-4 w-4" />
-                      Shipping Cost
-                    </span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Shipping</span>
                     <span className="font-semibold text-gray-900">{formatCurr(order.shipping_cost)}</span>
                   </div>
                 )}
                 
-                {/* Total */}
                 <div className="pt-4 mt-2 border-t-2 border-gray-200">
                   <div className="flex justify-between items-baseline">
                     <span className="text-lg font-bold text-gray-900">Total</span>
