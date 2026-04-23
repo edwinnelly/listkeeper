@@ -756,7 +756,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
     if (isSubmitting || !order) return;
     setIsSubmitting(true);
     try {
-      await apiPut(`/product_purchase/${orderId}`, { status: newStatus });
+      await apiPut(`/product_purchase_status/${orderId}`, { status: newStatus });
       setOrder({ ...order, status: newStatus });
       toast.success(`Status updated to ${newStatus}`);
       setStatusModalOpen(false);
@@ -854,42 +854,49 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
               </div>
 
               {/* Primary Actions */}
-              {canEdit && (
-                <Link href={`/purchaseedits/${orderId}`}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-all"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit Order
-                  </motion.button>
-                </Link>
-              )}
+            
               
-              {canReceive && (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleUpdateStatus("received")}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-sm"
-                >
-                  <CheckCheck className="h-4 w-4" />
-                  Receive Items
-                </motion.button>
-              )}
+             <div className="flex items-center gap-2">
+  {/* Edit - Available for draft and pending */}
+  {canEdit && (
+    <Link href={`/purchaseedits/${orderId}`}>
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-all"
+      >
+        <Edit className="h-4 w-4" />
+        Edit Order
+      </motion.button>
+    </Link>
+  )}
+  
+  {/* Approve - First workflow action (pending → approved) */}
+  {canApprove && (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => handleUpdateStatus("approved")}
+      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm"
+    >
+      <CheckCircle className="h-4 w-4" />
+      Approve
+    </motion.button>
+  )}
 
-              {canApprove && (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleUpdateStatus("approved")}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Approve
-                </motion.button>
-              )}
+  {/* Receive Items - Second workflow action (approved → received) */}
+  {canReceive && (
+    
+
+<Link href={`/purchasereceive/${orderId}`} className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-sm">
+  <CheckCheck className="h-4 w-4" />  Receive Items
+</Link>
+
+
+  )}
+</div>
+
+
 
               {/* More Actions Dropdown */}
               <div className="relative">

@@ -240,8 +240,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         {collapsible ? (
           <button
             onClick={() => toggleSection(sectionKey)}
-            className="flex items-center justify-between w-full font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 py-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 group"
-            style={{ fontSize: "12px" }}
+            className="flex items-center justify-between w-full font-semibold capitalize tracking-wide text-gray-500 dark:text-gray-400 px-3 py-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 group"
+            style={{ fontSize: "16px" }}
           >
             <span>{title}</span>
             <ChevronDown
@@ -251,8 +251,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         ) : (
           <div
-            className="font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 py-2"
-            style={{ fontSize: "12px" }}
+            className="font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 px-3 py-2"
+            style={{ fontSize: "13px" }}
           >
             {title}
           </div>
@@ -347,8 +347,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         </NavSection>
 
         <NavSection title="Purchasing" sectionKey="purchasing">
-          <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
-          <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />
+          <NavItem href="/purchase-orders" label="Purchase Orders" icon={ShoppingCart} />
+          <NavItem href="/purchase-orders/create" label="Create PO" icon={BadgePlus} isSubItem />
           <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
           <NavItem href="/vendors" label="Suppliers" icon={Building2} />
         </NavSection>

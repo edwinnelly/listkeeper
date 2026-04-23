@@ -41,6 +41,7 @@ import {
   CheckCheck,
   Ban,
   Send,
+  MapPin,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,6 +60,11 @@ interface Supplier {
   contact_person: string | null;
 }
 
+interface Location {
+  id: number;
+  name: string;
+}
+
 interface PurchaseOrder {
   id: number;
   po_number: string;
@@ -66,6 +72,8 @@ interface PurchaseOrder {
   encrypted_id: string;
   supplier_id: number;
   supplier?: Supplier;
+  location_id?: number;
+  location?: Location;
   order_date: string;
   expected_delivery_date: string | null;
   status: "draft" | "pending" | "approved" | "received" | "cancelled";
@@ -79,6 +87,7 @@ interface FilterState {
   status: "all" | "draft" | "pending" | "approved" | "received" | "cancelled";
   supplier: "all" | string;
   dateRange: "all" | "today" | "week" | "month" | "custom";
+  location: "all" | string;
 }
 
 interface Statistics {
@@ -169,22 +178,22 @@ const StatCard: React.FC<{
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 transition-all hover:shadow-md"
+      whileHover={{ y: -2 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-3.5 transition-all hover:shadow-md"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${gradients[color]} flex items-center justify-center shadow-lg`}>
-          <Icon className="h-6 w-6 text-white" />
+      <div className="flex items-start justify-between mb-2">
+        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradients[color]} flex items-center justify-center shadow-md`}>
+          <Icon className="h-4 w-4 text-white" />
         </div>
         {trend !== undefined && (
-          <div className={`flex items-center gap-1 text-xs font-medium ${trend >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          <div className={`flex items-center gap-0.5 text-[10px] font-medium ${trend >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {trend >= 0 ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
             <span>{Math.abs(trend)}%</span>
           </div>
         )}
       </div>
-      <p className="text-sm text-gray-500 mb-1">{title}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-xs text-gray-500 mb-0.5">{title}</p>
+      <p className="text-lg font-bold text-gray-900">{value}</p>
     </motion.div>
   );
 };
@@ -521,6 +530,7 @@ const FilterDrawer: React.FC<{
   onClearFilters: () => void;
   activeFilterCount: number;
   suppliers: Supplier[];
+  locations: Location[];
 }> = ({
   isOpen,
   onClose,
@@ -530,6 +540,7 @@ const FilterDrawer: React.FC<{
   onClearFilters,
   activeFilterCount,
   suppliers,
+  locations,
 }) => {
   return (
     <AnimatePresence>
@@ -601,6 +612,7 @@ const FilterDrawer: React.FC<{
                 {/* Supplier Filter */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
+                    <Building2 className="h-3 w-3 inline mr-1" />
                     Supplier
                   </label>
                   <select
@@ -617,9 +629,30 @@ const FilterDrawer: React.FC<{
                   </select>
                 </div>
                 
+                {/* Location Filter */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
+                    <MapPin className="h-3 w-3 inline mr-1" />
+                    Location
+                  </label>
+                  <select
+                    value={filters.location}
+                    onChange={(e) => onFilterChange("location", e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:ring-2 focus:ring-gray-500 outline-none"
+                  >
+                    <option value="all">All Locations</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id.toString()}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
                 {/* Date Range */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
+                    <Calendar className="h-3 w-3 inline mr-1" />
                     Date Range
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -700,6 +733,12 @@ const PurchaseOrderCard: React.FC<{
               <Building2 className="h-3 w-3" />
               {order.supplier?.name || "N/A"}
             </p>
+            {order.location && (
+              <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3" />
+                {order.location.name}
+              </p>
+            )}
           </div>
         </div>
         
@@ -845,6 +884,12 @@ const PurchaseOrderTableRow: React.FC<{
         </div>
       </td>
       <td className="px-6 py-4">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-gray-400" />
+          <span className="text-sm text-gray-700">{order.location?.name || "N/A"}</span>
+        </div>
+      </td>
+      <td className="px-6 py-4">
         <span className="text-sm text-gray-600">{formatDate(order.order_date)}</span>
       </td>
       <td className="px-6 py-4">
@@ -882,47 +927,7 @@ const PurchaseOrderTableRow: React.FC<{
                     <Eye className="h-4 w-4" />
                     View Details
                   </button>
-                  
-                  {order.status === "draft" && (
-                    <button
-                      onClick={() => { onEdit(order); setShowActions(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit Order
-                    </button>
-                  )}
-                  
-                  {order.status === "draft" && (
-                    <button
-                      onClick={() => { onUpdateStatus(order.id, "pending"); setShowActions(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition"
-                    >
-                      <Send className="h-4 w-4" />
-                      Submit for Approval
-                    </button>
-                  )}
-                  
-                  {order.status === "pending" && (
-                    <button
-                      onClick={() => { onUpdateStatus(order.id, "approved"); setShowActions(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Approve
-                    </button>
-                  )}
-                  
-                  {order.status === "approved" && (
-                    <button
-                      onClick={() => { onUpdateStatus(order.id, "received"); setShowActions(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-emerald-600 hover:bg-emerald-50 transition"
-                    >
-                      <CheckCheck className="h-4 w-4" />
-                      Mark Received
-                    </button>
-                  )}
-                  
+
                   {(order.status === "draft" || order.status === "pending") && (
                     <>
                       <hr className="border-gray-100" />
@@ -957,6 +962,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   // State
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -971,6 +977,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     status: "all",
     supplier: "all",
     dateRange: "all",
+    location: "all",
   });
 
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -979,6 +986,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   useEffect(() => {
     fetchPurchaseOrders();
     fetchSuppliers();
+    fetchLocations();
   }, []);
 
   const fetchPurchaseOrders = async () => {
@@ -991,6 +999,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
         id: order.id,
         encrypted_id: order.encrypted_id,
         po_number: order.order_number || `PO-${order.id}`,
+        order_number: order.order_number,
         supplier_id: order.vendors_id,
         supplier: order.vendor ? {
           id: order.vendor.id,
@@ -998,6 +1007,11 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
           email: order.vendor.email,
           phone: order.vendor.phone,
           contact_person: order.vendor.contact_person,
+        } : undefined,
+        location_id: order.location_id,
+        location: order.location ? {
+          id: order.location.id,
+          name: order.location.name || order.location.location_name,
         } : undefined,
         order_date: order.order_date,
         expected_delivery_date: order.expected_delivery_date,
@@ -1033,6 +1047,21 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     }
   };
 
+  const fetchLocations = async () => {
+    try {
+      const res = await apiGet("/locations", {}, false);
+      console.log(res.data);
+      const locationsArray = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
+      const mappedLocations: Location[] = locationsArray.map((loc: any) => ({
+        id: loc.id,
+        name: loc.name || loc.location_name,
+      }));
+      setLocations(mappedLocations);
+    } catch {
+      setLocations([]);
+    }
+  };
+
   const handleRefresh = () => {
     fetchPurchaseOrders();
     toast.success("Data refreshed");
@@ -1042,7 +1071,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     if (isSubmitting || !selectedOrder) return;
     setIsSubmitting(true);
     try {
-      await apiDelete(`/product_purchase/${selectedOrder.id}`);
+      await apiDelete(`/product_purchase_delete/${selectedOrder.encrypted_id}`);
       setOrders((prev) => prev.filter((o) => o.id !== selectedOrder.id));
       toast.success("Purchase order deleted");
       setDeleteModalOpen(false);
@@ -1082,7 +1111,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   };
 
   const clearFilters = () => {
-    setFilters({ search: "", status: "all", supplier: "all", dateRange: "all" });
+    setFilters({ search: "", status: "all", supplier: "all", dateRange: "all", location: "all" });
     setCurrentPage(1);
   };
 
@@ -1091,6 +1120,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     if (filters.status !== "all") count++;
     if (filters.supplier !== "all") count++;
     if (filters.dateRange !== "all") count++;
+    if (filters.location !== "all") count++;
     if (filters.search) count++;
     return count;
   }, [filters]);
@@ -1107,6 +1137,9 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
         const matchesStatus = filters.status === "all" || order.status === filters.status;
         const matchesSupplier =
           filters.supplier === "all" || order.supplier_id.toString() === filters.supplier;
+
+        const matchesLocation =
+          filters.location === "all" || order.location_id?.toString() === filters.location;
 
         // Date range filtering
         let matchesDateRange = true;
@@ -1128,7 +1161,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
           }
         }
 
-        return matchesSearch && matchesStatus && matchesSupplier && matchesDateRange;
+        return matchesSearch && matchesStatus && matchesSupplier && matchesLocation && matchesDateRange;
       })
       .sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
   }, [orders, debouncedSearch, filters]);
@@ -1145,7 +1178,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     const totalValue = orders.reduce((sum, o) => sum + o.total_amount, 0);
     
     // Calculate monthly change (mock calculation - replace with actual logic)
-    const monthlyChange = 12.5;
+    const monthlyChange = 0;
     
     return {
       totalOrders: orders.length,
@@ -1162,7 +1195,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Sticky Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-30">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-40 print:hidden">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -1182,24 +1215,6 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Export/Import */}
-              <div className="hidden sm:flex items-center gap-1 bg-gray-100 rounded-xl p-1">
-                <button
-                  onClick={() => toast.success("Export started")}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
-                  title="Export"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => toast.success("Import ready")}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
-                  title="Import"
-                >
-                  <Upload className="h-4 w-4" />
-                </button>
-              </div>
-              
               {/* View Toggle */}
               <div className="hidden md:flex items-center gap-1 bg-gray-100 rounded-xl p-1">
                 <button
@@ -1247,7 +1262,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
       {/* Main Content */}
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <StatCard
             title="Total Orders"
             value={statistics.totalOrders}
@@ -1325,8 +1340,8 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           <FilterChip
             label="All Orders"
-            active={filters.status === "all"}
-            onClick={() => handleFilterChange("status", "all")}
+            active={filters.status === "all" && filters.supplier === "all" && filters.location === "all" && filters.dateRange === "all"}
+            onClick={clearFilters}
           />
           <FilterChip
             label="Draft"
@@ -1431,12 +1446,13 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px]">
+              <table className="w-full min-w-[1200px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">PO Number</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Supplier</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order Date</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Expected</th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
@@ -1488,6 +1504,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
         onClearFilters={clearFilters}
         activeFilterCount={activeFilterCount}
         suppliers={suppliers}
+        locations={locations}
       />
 
       {/* Delete Modal */}

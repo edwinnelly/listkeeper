@@ -15,7 +15,6 @@ import {
   BarChart3,
   PieChart,
   Sparkles,
-  Percent,
   User,
   Settings,
   Power,
@@ -25,27 +24,7 @@ import {
   Folder,
   X,
   ChevronDown,
-  ChevronRight,
   ShoppingBagIcon,
-  DollarSign,
-  Receipt,
-  Banknote,
-  Calendar,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  Landmark,
-  FileSpreadsheet,
-  Scale,
-  Calculator,
-  History,
-  ArrowLeftRight,
-  Package,
-  Truck,
-  Tags,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import api from "@/lib/axios";
@@ -110,6 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toggleSection = useCallback((sectionKey: string) => {
     if (!navRef.current) return;
 
+    // Save current scroll position before state update
     const currentScrollTop = navRef.current.scrollTop;
 
     setOpenSections((prev) => {
@@ -122,10 +102,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       return newSet;
     });
 
+    // Restore scroll position after state update
     setTimeout(() => {
       if (navRef.current && !isScrollingProgrammatically.current) {
         isScrollingProgrammatically.current = true;
         navRef.current.scrollTop = currentScrollTop;
+        // Reset flag after a short delay
         setTimeout(() => {
           isScrollingProgrammatically.current = false;
         }, 50);
@@ -133,7 +115,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     }, 0);
   }, []);
 
+  // Save scroll position when user scrolls
   const handleNavScroll = useCallback(() => {
+    // Only save if not programmatically scrolling
     if (!isScrollingProgrammatically.current && navRef.current) {
       sessionStorage.setItem(
         "sidebarScroll",
@@ -142,6 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, []);
 
+  // Restore scroll position on component mount
   useEffect(() => {
     const savedScroll = sessionStorage.getItem("sidebarScroll");
     if (savedScroll && navRef.current) {
@@ -166,21 +151,17 @@ const Sidebar: React.FC<SidebarProps> = ({
     disabled?: boolean;
     isNew?: boolean;
     count?: number;
-    indent?: boolean;
-    isSubItem?: boolean;
   }> = React.memo(
-    ({ href, label, icon: Icon, badge, disabled, isNew, count, indent, isSubItem }) => {
-      const isActive = pathname === href || pathname?.startsWith(href + '/');
+    ({ href, label, icon: Icon, badge, disabled, isNew, count }) => {
+      const isActive = pathname === href;
 
       return (
         <Link
           href={href}
-          className={`group relative flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all duration-200 ease-out ${
-            indent ? "ml-6" : ""
-          } ${
+          className={`group relative flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-bold transition-all duration-200 ease-out ${
             isActive
               ? "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300 border-r-2 border-gray-500"
-              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 border-r-2 border-transparent"
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60 border-r-2 border-transparent"
           } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
           onClick={closeSidebar}
           aria-current={isActive ? "page" : undefined}
@@ -193,24 +174,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                   : "text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300"
               }`}
             >
-              <Icon size={isSubItem ? 16 : 18} />
+              <Icon size={18} />
             </div>
-            <span className="truncate text-sm">{label}</span>
+            <span className="truncate">{label}</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0 ml-2">
             {isNew && (
-              <span className="px-1.5 py-0.5 text-[10px] bg-blue-500 text-white rounded font-medium">
+              <span className="px-1.5 py-0.5 text-xs bg-gray-500 text-white rounded font-medium">
                 New
               </span>
             )}
             {badge && (
-              <span className="px-1.5 py-0.5 text-[10px] bg-gray-500 text-white rounded font-medium">
+              <span className="px-1.5 py-0.5 text-xs bg-gray-500 text-white rounded font-medium">
                 {badge}
               </span>
             )}
             {count !== undefined && (
               <span
-                className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium ${
+                className={`px-2 py-0.5 text-xs rounded-full font-medium ${
                   isActive
                     ? "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
@@ -240,8 +221,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         {collapsible ? (
           <button
             onClick={() => toggleSection(sectionKey)}
-            className="flex items-center justify-between w-full font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 py-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 group"
-            style={{ fontSize: "12px" }}
+            className="flex items-center justify-between w-full font-semibold capitalize tracking-wider text-gray-500 dark:text-gray-400 px-3 py-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 group"
+            style={{ fontSize: "15px" }}
           >
             <span>{title}</span>
             <ChevronDown
@@ -252,7 +233,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <div
             className="font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 py-2"
-            style={{ fontSize: "12px" }}
+            style={{ fontSize: "15px" }}
           >
             {title}
           </div>
@@ -271,51 +252,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   });
   NavSection.displayName = "NavSection";
 
-  // -------------------- Nested Sub-Section (for grouped items) --------------------
-  const NavSubSection: React.FC<{
-    title: string;
-    sectionKey: string;
-    icon: React.ElementType;
-    children: React.ReactNode;
-    defaultOpen?: boolean;
-  }> = React.memo(({ title, sectionKey, icon: Icon, children, defaultOpen = false }) => {
-    const isOpen = openSections.has(sectionKey);
-
-    return (
-      <div className="space-y-0.5">
-        <button
-          onClick={() => toggleSection(sectionKey)}
-          className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors duration-200 group"
-        >
-          <div className="flex items-center gap-3">
-            <Icon size={16} className="text-gray-500 group-hover:text-gray-700" />
-            <span className="text-sm">{title}</span>
-          </div>
-          <ChevronRight
-            size={14}
-            className={`transition-all duration-200 flex-shrink-0 text-gray-400 group-hover:text-gray-600 ${
-              isOpen ? "rotate-90" : ""
-            }`}
-          />
-        </button>
-        <div
-          className={`grid transition-all duration-300 ease-out ${
-            isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-          <div className="overflow-hidden min-h-0">
-            <div className="pl-2 space-y-0.5 pt-0.5">
-              {children}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  });
-  NavSubSection.displayName = "NavSubSection";
-
   // -------------------- App Navigation --------------------
   const renderAppSections = () => {
+    // Add null check here
     if (!user || Number(user.active_business_key) === 0) {
       return (
         <NavSection title="Main" sectionKey="main">
@@ -339,146 +278,56 @@ const Sidebar: React.FC<SidebarProps> = ({
           <NavItem href="/customers" label="Customers" icon={Users} />
         </NavSection>
 
-        <NavSection title="Inventory" sectionKey="inventory">
-          <NavItem href="/products" label="Products Catalog" icon={Package} />
-          <NavItem href="/productsecat" label="Product Categories" icon={Tags} />
-          <NavItem href="/stock-transfer" label="Stock Transfer" icon={ArrowLeftRight} />
-          <NavItem href="/product-units" label="Units of Measure" icon={Scale} />
-        </NavSection>
-
-        <NavSection title="Purchasing" sectionKey="purchasing">
-          <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
-          <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />
-          <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
-          <NavItem href="/vendors" label="Suppliers" icon={Building2} />
-        </NavSection>
-
-        {/* ============================================ */}
-        {/* ACCOUNTING SECTION - GROUPED INTO SUB-SECTIONS */}
-        {/* ============================================ */}
-        
-        <NavSection title="Accounting" sectionKey="accounting">
-          {/* Accounting Dashboard */}
-          <NavItem 
-            href="/accounting" 
-            label="Accounting Dashboard" 
-            icon={LayoutDashboard} 
+        <NavSection title="Products catalogs" sectionKey="products">
+          <NavItem
+            href="/products"
+            label="Products catalogs "
+            icon={BadgePlus}
           />
-
-          {/* Accounts Payable Group */}
-          <NavSubSection 
-            title="Accounts Payable" 
-            sectionKey="accounting-payables" 
-            icon={CreditCard}
-          >
-            <NavItem href="/accounting/payables" label="Overview" icon={CreditCard} indent isSubItem />
-            <NavItem href="/accounting/payables/bills" label="Bills" icon={Receipt} indent isSubItem />
-            <NavItem href="/accounting/payables/payments" label="Payments" icon={Banknote} indent isSubItem />
-            <NavItem href="/accounting/payables/schedule" label="Payment Schedule" icon={Calendar} indent isSubItem />
-            <NavItem href="/accounting/payables/aging" label="Aged Payables" icon={Clock} indent isSubItem />
-          </NavSubSection>
-
-          {/* Accounts Receivable Group */}
-          <NavSubSection 
-            title="Accounts Receivable" 
-            sectionKey="accounting-receivables" 
-            icon={Wallet}
-          >
-            <NavItem href="/accounting/receivables" label="Overview" icon={Wallet} indent isSubItem />
-            <NavItem href="/accounting/receivables/invoices" label="Invoices" icon={FileText} indent isSubItem />
-            <NavItem href="/accounting/receivables/payments" label="Receive Payments" icon={TrendingUp} indent isSubItem />
-            <NavItem href="/accounting/receivables/aging" label="Aged Receivables" icon={Clock} indent isSubItem />
-          </NavSubSection>
-
-          {/* Banking Group */}
-          <NavSubSection 
-            title="Banking" 
-            sectionKey="accounting-banking" 
-            icon={Landmark}
-          >
-            <NavItem href="/accounting/banking" label="Overview" icon={Landmark} indent isSubItem />
-            <NavItem href="/accounting/banking/accounts" label="Bank Accounts" icon={Building2} indent isSubItem />
-            <NavItem href="/accounting/banking/transactions" label="Transactions" icon={ArrowLeftRight} indent isSubItem />
-            <NavItem href="/accounting/banking/reconciliation" label="Reconciliation" icon={CheckCircle} indent isSubItem />
-          </NavSubSection>
-
-          {/* Expenses Group */}
-          <NavSubSection 
-            title="Expenses" 
-            sectionKey="accounting-expenses" 
-            icon={TrendingDown}
-          >
-            <NavItem href="/accounting/expenses" label="All Expenses" icon={TrendingDown} indent isSubItem />
-            <NavItem href="/accounting/expenses/categories" label="Categories" icon={Folder} indent isSubItem />
-            <NavItem href="/accounting/expenses/recurring" label="Recurring" icon={History} indent isSubItem />
-          </NavSubSection>
-
-          {/* General Ledger Group */}
-          <NavSubSection 
-            title="General Ledger" 
-            sectionKey="accounting-ledger" 
-            icon={Book}
-          >
-            <NavItem href="/accounting/ledger" label="General Ledger" icon={Book} indent isSubItem />
-            <NavItem href="/accounting/chart-of-accounts" label="Chart of Accounts" icon={FileSpreadsheet} indent isSubItem />
-            <NavItem href="/accounting/journal-entries" label="Journal Entries" icon={FileText} indent isSubItem />
-            <NavItem href="/accounting/trial-balance" label="Trial Balance" icon={Scale} indent isSubItem />
-          </NavSubSection>
-
-          {/* Tax Group */}
-          <NavSubSection 
-            title="Tax" 
-            sectionKey="accounting-tax" 
-            icon={Calculator}
-          >
-            <NavItem href="/accounting/tax" label="Tax Dashboard" icon={Calculator} indent isSubItem />
-            <NavItem href="/accounting/tax/rates" label="Tax Rates" icon={Percent} indent isSubItem />
-            <NavItem href="/accounting/tax/reports" label="Tax Reports" icon={FileText} indent isSubItem />
-            <NavItem href="/accounting/tax/filing" label="Tax Filing" icon={CheckCircle} indent isSubItem />
-          </NavSubSection>
-
-          {/* Reports Group */}
-          <NavSubSection 
-            title="Financial Reports" 
-            sectionKey="accounting-reports" 
-            icon={BarChart3}
-          >
-            <NavItem href="/accounting/reports" label="Reports Dashboard" icon={BarChart3} indent isSubItem />
-            <NavItem href="/accounting/reports/profit-loss" label="Profit & Loss" icon={TrendingUp} indent isSubItem />
-            <NavItem href="/accounting/reports/balance-sheet" label="Balance Sheet" icon={Scale} indent isSubItem />
-            <NavItem href="/accounting/reports/cash-flow" label="Cash Flow" icon={DollarSign} indent isSubItem />
-            <NavItem href="/accounting/reports/aged-payables" label="Aged Payables" icon={Clock} indent isSubItem />
-            <NavItem href="/accounting/reports/aged-receivables" label="Aged Receivables" icon={Clock} indent isSubItem />
-            <NavItem href="/accounting/reports/general-ledger" label="General Ledger" icon={Book} indent isSubItem />
-            <NavItem href="/accounting/reports/transaction" label="Transaction Report" icon={FileText} indent isSubItem />
-          </NavSubSection>
-
-          {/* Budget Group */}
-          <NavSubSection 
-            title="Budgeting" 
-            sectionKey="accounting-budget" 
-            icon={Calculator}
-          >
-            <NavItem href="/accounting/budget" label="Budget Overview" icon={Calculator} indent isSubItem />
-            <NavItem href="/accounting/budget/setup" label="Budget Setup" icon={Settings} indent isSubItem />
-            <NavItem href="/accounting/budget/vs-actual" label="Budget vs Actual" icon={BarChart3} indent isSubItem />
-          </NavSubSection>
-
-          {/* Audit Group */}
-          <NavSubSection 
-            title="Audit & Compliance" 
-            sectionKey="accounting-audit" 
-            icon={History}
-          >
-            <NavItem href="/accounting/audit-trail" label="Audit Trail" icon={History} indent isSubItem />
-            <NavItem href="/accounting/audit/user-activity" label="User Activity" icon={User} indent isSubItem />
-            <NavItem href="/accounting/audit/document-history" label="Document History" icon={FileText} indent isSubItem />
-          </NavSubSection>
+          <NavItem
+            href="/productsecat"
+            label="Products Category"
+            icon={BadgeCheck}
+          />
+          <NavItem
+            href="/sales"
+            label="Internal Stock Transfer"
+            icon={ShoppingCart}
+          />
+          <NavItem href="/invoices" label="Manage Product Ai" icon={FileText} />
+          <NavItem
+            href="/addproductlocations"
+            label="Upload Branch Products"
+            icon={Users}
+          />
+          <NavItem href="/product-units" label="Products Units" icon={Users} />
         </NavSection>
 
-        {/* ============================================ */}
-        {/* END ACCOUNTING SECTION                        */}
-        {/* ============================================ */}
+        <NavSection title="Customer" sectionKey="customer">
+          <NavItem href="/customers" label="Manage Customers" icon={Users} />
+        </NavSection>
+
+        <NavSection title="Purchase" sectionKey="purchase">
+          <NavItem
+            href="/purchase"
+            label="Manage Purchases"
+            icon={ShoppingCart}
+          />
+        </NavSection>
+
+        <NavSection title="Vendor" sectionKey="vendor">
+          <NavItem href="/vendors" label="Manage Vendors" icon={Users} />
+        </NavSection>
+
+        <NavSection title="Debt" sectionKey="debt">
+          <NavItem href="/debt" label="Manage Debt" icon={User} />
+        </NavSection>
+
+        <NavSection title="Expenses" sectionKey="expenses">
+          <NavItem href="/expenses" label="Expenses" icon={CreditCard} />
+          <NavItem href="/vendors" label="Vendors" icon={Book} />
+          <NavItem href="/purchases" label="Purchases" icon={ShoppingCart} />
+        </NavSection>
 
         <NavSection title="Analytics" sectionKey="analytics">
           <NavItem
@@ -493,12 +342,43 @@ const Sidebar: React.FC<SidebarProps> = ({
             label="Advanced Analytics"
             icon={PieChart}
           />
+          <NavItem
+            href="/insights"
+            label="Business Insights"
+            icon={Sparkles}
+            disabled
+          />
+        </NavSection>
+
+        <NavSection title="Accounting" sectionKey="accounting">
+          <NavItem
+            href="/accounting/reports"
+            label="Financial Reports"
+            icon={BarChart3}
+          />
+          <NavItem
+            href="/accounting/ledger"
+            label="General Ledger"
+            icon={FileText}
+          />
+        </NavSection>
+
+        <NavSection title="Multi-Location" sectionKey="multi-location">
+          <NavItem
+            href="/locations/manage"
+            label="Manage Locations"
+            icon={Building2}
+          />
+          <NavItem
+            href="/locations/transfer"
+            label="Stock Transfer"
+            icon={ShoppingCart}
+          />
         </NavSection>
 
         <NavSection title="Administration" sectionKey="administration">
           <NavItem href="/users" label="User Management" icon={User} />
-          <NavItem href="/roles" label="Roles & Permissions" icon={BadgeCheck} isSubItem />
-          <NavItem href="/settings" label="System Settings" icon={Settings} isSubItem />
+          <NavItem href="/settings" label="System Settings" icon={Settings} />
         </NavSection>
       </>
     );
@@ -530,7 +410,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
       <aside
-        className={`fixed lg:sticky top-0 w-72 h-screen flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-all duration-300 ease-out z-40 ${
+        className={`fixed lg:sticky top-0 w-74 h-screen flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-all duration-300 ease-out z-40 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
         aria-label="Main navigation"
@@ -585,11 +465,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Main Navigation */}
+        {/* Main Navigation - Wrapped in a scroll container */}
         <div className="flex-1 overflow-hidden">
           <nav
             ref={navRef}
-            className="h-full overflow-y-auto p-3 space-y-3"
+            className="h-full overflow-y-auto p-3 space-y-4"
             onScroll={handleNavScroll}
           >
             {activeView === "app" ? renderAppSections() : renderMailSections()}
@@ -643,6 +523,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             background-color: rgba(156, 163, 175, 0.7);
           }
 
+          /* Hide scrollbar when not hovered */
           nav:not(:hover)::-webkit-scrollbar-thumb {
             background-color: transparent;
           }
