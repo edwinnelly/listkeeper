@@ -8,6 +8,7 @@ export function withAuth(Component: any) {
   return function Protected(props: any) {
     const { user, loading } = useAuth();
     const router = useRouter();
+   
 
     useEffect(() => {
       if (!loading && !user) {
@@ -41,6 +42,7 @@ export function withAuth(Component: any) {
     if (!user) return null;
 
     return <Component {...props} user={user} />;
+    
   };
 }
 

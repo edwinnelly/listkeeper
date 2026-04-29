@@ -52,19 +52,32 @@ import api from "@/lib/axios";
 import { withAuth } from "@/hoc/withAuth";
 import { Cart16Filled } from "@fluentui/react-icons";
 
-import { User as AppUser } from "../../hoc/user";
+// -------------------- Types --------------------
+interface Business {
+  id: number;
+  business_key: string;
+  business_name: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email?: string;
+  active_business_key: string | number;
+  businesses_one?: Business[];
+}
 
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
-  user: AppUser | null;
+  user: User | null;
 }
 
 // -------------------- Sidebar Component --------------------
 const Sidebar: React.FC<SidebarProps> = ({
   sidebarOpen,
   setSidebarOpen,
-  user
+  user,
 }) => {
   const pathname = usePathname();
   const [openSections, setOpenSections] = useState<Set<string>>(
@@ -73,8 +86,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [activeView, setActiveView] = useState<"app" | "mail">("app");
   const navRef = useRef<HTMLDivElement>(null);
   const isScrollingProgrammatically = useRef(false);
-
-  //  console.log("USER:", user);
 
   // -------------------- Logout --------------------
   const handleLogout = async () => {
@@ -317,29 +328,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       <>
         <NavSection title="Main" sectionKey="main">
           <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
-  <div>
-   
-  {user?.creator === "Host" && (
-  <NavItem
-    href="/business"
-    label="Business List"
-    icon={Building2}
-  />
-)}
-
-
-{/* {user?.user_roles?.purchase_create === "yes" && (
-  <NavItem
-    href="/business"
-    label="Business List qwwwqqq"
-    icon={Building2}
-  />
-)} */}
-
-  </div>
-          {user?.creator === "Host" && (
+          <NavItem href="/business" label="Business List" icon={Building2} />
           <NavItem href="/locations" label="Locations" icon={Clipboard} />
-          )}
           <NavItem href="/pos" label="POS" icon={Cart16Filled} />
         </NavSection>
 
@@ -356,28 +346,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           <NavItem href="/product-units" label="Units of Measure" icon={Scale} />
         </NavSection>
 
-
-        {/* <NavSection title="Purchasing" sectionKey="purchasing">
-
-          {user?.user_roles?.purchase_read === "no" && (
+        <NavSection title="Purchasing" sectionKey="purchasing">
           <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
-          )};
-          {user?.user_roles?.purchase_create === "no" && (
-          <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />  )};
+          <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />
           <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
           <NavItem href="/vendors" label="Suppliers" icon={Building2} />
-        </NavSection> */}
-
-        <NavSection title="Purchasing" sectionKey="purchasing">
-  {user?.user_roles?.purchase_read === "no" && (
-    <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
-  )}
-  {user?.user_roles?.purchase_create === "no" && (
-    <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />
-  )}
-  <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
-  <NavItem href="/vendors" label="Suppliers" icon={Building2} />
-</NavSection>
+        </NavSection>
 
         {/* ============================================ */}
         {/* ACCOUNTING SECTION - GROUPED INTO SUB-SECTIONS */}

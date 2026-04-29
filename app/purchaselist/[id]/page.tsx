@@ -81,6 +81,7 @@ interface PurchaseOrder {
   supplier_id: number;
   supplier?: Supplier;
   order_date: string;
+  posted_by_name: string;
   expected_delivery_date: string | null;
   delivered_date: string | null;
   status: "draft" | "pending" | "approved" | "received" | "cancelled";
@@ -716,6 +717,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
           tax_id: data.vendor?.tax_id || data.supplier?.tax_id,
         } : undefined,
         order_date: data.order_date,
+        posted_by_name: data.posted_by_name,
         expected_delivery_date: data.expected_delivery_date,
         delivered_date: data.delivered_date,
         status: data.status || "pending",
@@ -1108,7 +1110,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
                 />
                 <InfoRow 
                   label="Created By" 
-                  value={order.created_by?.name} 
+                  value={order.posted_by_name} 
                   icon={User} 
                 />
               </div>

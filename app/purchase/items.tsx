@@ -62,7 +62,9 @@ interface Supplier {
 
 interface Location {
   id: number;
+  location_id: string;
   name: string;
+  location_name: string;
 }
 
 interface PurchaseOrder {
@@ -71,8 +73,10 @@ interface PurchaseOrder {
   order_number: string;
   encrypted_id: string;
   supplier_id: number;
+  vendor_id?: number;
   supplier?: Supplier;
   location_id?: number;
+  location_uuid?: string;
   location?: Location;
   order_date: string;
   expected_delivery_date: string | null;
@@ -86,8 +90,9 @@ interface FilterState {
   search: string;
   status: "all" | "draft" | "pending" | "approved" | "received" | "cancelled";
   supplier: "all" | string;
-  dateRange: "all" | "today" | "week" | "month" | "custom";
   location: "all" | string;
+  dateFrom: string;
+  dateTo: string;
 }
 
 interface Statistics {
@@ -105,6 +110,12 @@ interface User {
   businesses_one?: Array<{
     currency?: string;
   }>;
+
+  user_roles?: {
+    purchase_create?: string;
+    [key: string]: string | undefined;
+  };
+  
 }
 
 // ==============================================
@@ -247,30 +258,47 @@ const FilterChip: React.FC<{
   onClick?: () => void;
   onRemove?: () => void;
 }> = ({ label, icon: Icon, active, onClick, onRemove }) => (
-  <motion.button
+  <motion.div
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer ${
       active 
         ? 'bg-gray-900 text-white shadow-md' 
         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
     }`}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick?.();
+      }
+    }}
   >
     {Icon && <Icon className="h-3.5 w-3.5" />}
     {label}
     {active && onRemove && (
-      <button
+      <span
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
         }}
-        className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors"
+        className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+            e.preventDefault();
+            onRemove();
+          }
+        }}
       >
         <X className="h-3 w-3" />
-      </button>
+      </span>
     )}
-  </motion.button>
+  </motion.div>
 );
 
 const EmptyState: React.FC<{
@@ -486,9 +514,7 @@ const Pagination: React.FC<{
             {page === "..." ? (
               <span className="px-2 text-gray-400">...</span>
             ) : (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={() => onPageChange(page as number)}
                 className={`min-w-[2.25rem] h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-all ${
                   currentPage === page
@@ -497,7 +523,7 @@ const Pagination: React.FC<{
                 }`}
               >
                 {page}
-              </motion.button>
+              </button>
             )}
           </React.Fragment>
         ))}
@@ -642,33 +668,38 @@ const FilterDrawer: React.FC<{
                   >
                     <option value="all">All Locations</option>
                     {locations.map((loc) => (
-                      <option key={loc.id} value={loc.id.toString()}>
-                        {loc.name}
+                      <option key={loc.id} value={loc.location_id}>
+                        {loc.location_name}
                       </option>
                     ))}
                   </select>
                 </div>
                 
-                {/* Date Range */}
+                {/* Date Range Filter - FROM and TO */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">
                     <Calendar className="h-3 w-3 inline mr-1" />
                     Date Range
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["all", "today", "week", "month"].map((range) => (
-                      <button
-                        key={range}
-                        onClick={() => onFilterChange("dateRange", range as FilterState["dateRange"])}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                          filters.dateRange === range
-                            ? 'bg-gray-900 text-white'
-                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {range.charAt(0).toUpperCase() + range.slice(1)}
-                      </button>
-                    ))}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">From Date</label>
+                      <input
+                        type="date"
+                        value={filters.dateFrom}
+                        onChange={(e) => onFilterChange("dateFrom", e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:ring-2 focus:ring-gray-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">To Date</label>
+                      <input
+                        type="date"
+                        value={filters.dateTo}
+                        onChange={(e) => onFilterChange("dateTo", e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:ring-2 focus:ring-gray-500 outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -736,7 +767,7 @@ const PurchaseOrderCard: React.FC<{
             {order.location && (
               <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                 <MapPin className="h-3 w-3" />
-                {order.location.name}
+                {order.location.location_name || order.location.name}
               </p>
             )}
           </div>
@@ -886,7 +917,9 @@ const PurchaseOrderTableRow: React.FC<{
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-700">{order.location?.name || "N/A"}</span>
+          <span className="text-sm text-gray-700">
+            {order.location?.location_name || order.location?.name || "N/A"}
+          </span>
         </div>
       </td>
       <td className="px-6 py-4">
@@ -976,8 +1009,9 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     search: "",
     status: "all",
     supplier: "all",
-    dateRange: "all",
     location: "all",
+    dateFrom: "",
+    dateTo: "",
   });
 
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -997,21 +1031,27 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
 
       const mappedOrders: PurchaseOrder[] = ordersArray.map((order: any) => ({
         id: order.id,
-        encrypted_id: order.encrypted_id,
+        encrypted_id: order.encrypted_id || order.id,
         po_number: order.order_number || `PO-${order.id}`,
         order_number: order.order_number,
-        supplier_id: order.vendors_id,
+        supplier_id: order.vendors_id || order.supplier_id,
+        vendor_id: order.vendors_id,
         supplier: order.vendor ? {
-          id: order.vendor.id,
-          name: order.vendor.vendor_name,
+          id: order.vendor.id || order.vendor.vid,
+          name: order.vendor.vendor_name || order.vendor.name,
           email: order.vendor.email,
           phone: order.vendor.phone,
           contact_person: order.vendor.contact_person,
         } : undefined,
+        // Integer ID from order
         location_id: order.location_id,
+        // UUID from nested location object
+        location_uuid: order.location?.location_id || null,
         location: order.location ? {
           id: order.location.id,
+          location_id: order.location.location_id,
           name: order.location.name || order.location.location_name,
+          location_name: order.location.location_name || order.location.name,
         } : undefined,
         order_date: order.order_date,
         expected_delivery_date: order.expected_delivery_date,
@@ -1033,10 +1073,12 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   const fetchSuppliers = async () => {
     try {
       const res = await apiGet("/vendors", {}, false);
-      const suppliersArray = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
+      const vendorsData = res.data?.data?.vendors || res.data?.data || res.data || [];
+      const suppliersArray = Array.isArray(vendorsData) ? vendorsData : [];
+      
       const mappedSuppliers: Supplier[] = suppliersArray.map((vendor: any) => ({
-        id: vendor.id,
-        name: vendor.vendor_name,
+        id: vendor.vid || vendor.id,
+        name: vendor.vendor_name || vendor.name,
         email: vendor.email,
         phone: vendor.phone,
         contact_person: vendor.contact_person,
@@ -1050,21 +1092,36 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   const fetchLocations = async () => {
     try {
       const res = await apiGet("/locations", {}, false);
-      console.log(res.data);
-      const locationsArray = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
+      
+      let locationsArray: any[] = [];
+      
+      if (res.data?.locations && Array.isArray(res.data.locations)) {
+        locationsArray = res.data.locations;
+      } else if (res.data?.data?.locations && Array.isArray(res.data.data.locations)) {
+        locationsArray = res.data.data.locations;
+      } else if (Array.isArray(res.data?.data)) {
+        locationsArray = res.data.data;
+      } else if (Array.isArray(res.data)) {
+        locationsArray = res.data;
+      }
+      
       const mappedLocations: Location[] = locationsArray.map((loc: any) => ({
         id: loc.id,
-        name: loc.name || loc.location_name,
+        location_id: loc.location_id, // UUID
+        name: loc.location_name || loc.name,
+        location_name: loc.location_name || loc.name,
       }));
+      
       setLocations(mappedLocations);
-    } catch {
+    } catch (error) {
+      console.error("Error fetching locations:", error);
       setLocations([]);
     }
   };
 
   const handleRefresh = () => {
     fetchPurchaseOrders();
-    toast.success("Data refreshed");
+    // toast.success("Data refreshed");
   };
 
   const handleDelete = async () => {
@@ -1111,7 +1168,14 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   };
 
   const clearFilters = () => {
-    setFilters({ search: "", status: "all", supplier: "all", dateRange: "all", location: "all" });
+    setFilters({ 
+      search: "", 
+      status: "all", 
+      supplier: "all", 
+      location: "all", 
+      dateFrom: "", 
+      dateTo: "" 
+    });
     setCurrentPage(1);
   };
 
@@ -1119,8 +1183,9 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
     let count = 0;
     if (filters.status !== "all") count++;
     if (filters.supplier !== "all") count++;
-    if (filters.dateRange !== "all") count++;
     if (filters.location !== "all") count++;
+    if (filters.dateFrom) count++;
+    if (filters.dateTo) count++;
     if (filters.search) count++;
     return count;
   }, [filters]);
@@ -1135,29 +1200,34 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
           order.supplier?.name?.toLowerCase().includes(debouncedSearch.toLowerCase());
 
         const matchesStatus = filters.status === "all" || order.status === filters.status;
+        
+        // Match by supplier ID
         const matchesSupplier =
-          filters.supplier === "all" || order.supplier_id.toString() === filters.supplier;
+          filters.supplier === "all" || 
+          order.supplier_id?.toString() === filters.supplier ||
+          order.vendor_id?.toString() === filters.supplier;
 
+        // Match by location UUID
         const matchesLocation =
-          filters.location === "all" || order.location_id?.toString() === filters.location;
+          filters.location === "all" || 
+          order.location_uuid === filters.location;
 
         // Date range filtering
         let matchesDateRange = true;
-        if (filters.dateRange !== "all") {
+        if (filters.dateFrom || filters.dateTo) {
           const orderDate = new Date(order.order_date);
-          const today = new Date();
-          const daysDiff = Math.floor((today.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+          orderDate.setHours(0, 0, 0, 0);
           
-          switch (filters.dateRange) {
-            case "today":
-              matchesDateRange = daysDiff === 0;
-              break;
-            case "week":
-              matchesDateRange = daysDiff <= 7;
-              break;
-            case "month":
-              matchesDateRange = daysDiff <= 30;
-              break;
+          if (filters.dateFrom) {
+            const fromDate = new Date(filters.dateFrom);
+            fromDate.setHours(0, 0, 0, 0);
+            if (orderDate < fromDate) matchesDateRange = false;
+          }
+          
+          if (filters.dateTo) {
+            const toDate = new Date(filters.dateTo);
+            toDate.setHours(23, 59, 59, 999);
+            if (orderDate > toDate) matchesDateRange = false;
           }
         }
 
@@ -1176,8 +1246,6 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   // Statistics
   const statistics = useMemo((): Statistics => {
     const totalValue = orders.reduce((sum, o) => sum + o.total_amount, 0);
-    
-    // Calculate monthly change (mock calculation - replace with actual logic)
     const monthlyChange = 0;
     
     return {
@@ -1242,7 +1310,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
               >
                 <RefreshCw className="h-4 w-4" />
               </button>
-              
+              {user?.user_roles?.purchase_create === "no" && (
               <Link href="/purchase-orders">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -1254,6 +1322,9 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
                   <span className="sm:hidden">Create</span>
                 </motion.button>
               </Link>
+)} 
+
+
             </div>
           </div>
         </div>
@@ -1340,7 +1411,7 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           <FilterChip
             label="All Orders"
-            active={filters.status === "all" && filters.supplier === "all" && filters.location === "all" && filters.dateRange === "all"}
+            active={filters.status === "all" && filters.supplier === "all" && filters.location === "all" && !filters.dateFrom && !filters.dateTo}
             onClick={clearFilters}
           />
           <FilterChip
@@ -1367,6 +1438,17 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
             active={filters.status === "received"}
             onClick={() => handleFilterChange("status", filters.status === "received" ? "all" : "received")}
           />
+          {(filters.dateFrom || filters.dateTo) && (
+            <FilterChip
+              label={`${filters.dateFrom || '...'} → ${filters.dateTo || '...'}`}
+              icon={Calendar}
+              active={true}
+              onRemove={() => {
+                handleFilterChange("dateFrom", "");
+                handleFilterChange("dateTo", "");
+              }}
+            />
+          )}
           {activeFilterCount > 0 && (
             <FilterChip
               label="Clear All"

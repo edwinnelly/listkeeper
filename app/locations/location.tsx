@@ -1201,7 +1201,7 @@ const ManageLocations = () => {
 
   const handleRefresh = () => {
     fetchLocations();
-    toast.success("Data refreshed");
+    // toast.success("Data refreshed");
   };
 
   const validateForm = (fd: LocationFormData): { isValid: boolean; errors: FormErrors } => {

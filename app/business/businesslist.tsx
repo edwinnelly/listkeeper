@@ -1,7 +1,8 @@
 "use client";
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet } from "@/lib/axios";
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo} from "react";
+// import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Building2,
@@ -113,6 +114,35 @@ const STATIC_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   }, [openDropdown]);
 
   // Fetch businesses
+  // React.useEffect(() => {
+  //   const fetchBusinesses = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const response = await apiGet("/businesses");
+        
+  //       // Extract businesses from response
+  //       let businessesData = response.data;
+  //       if (businessesData?.data?.businesses) {
+  //         businessesData = businessesData.data.businesses;
+  //       } else if (businessesData?.data) {
+  //         businessesData = businessesData.data;
+  //       } else if (businessesData?.businesses) {
+  //         businessesData = businessesData.businesses;
+  //       }
+        
+  //       const businessesArray = Array.isArray(businessesData) ? businessesData : [];
+  //       setBusinesses(businessesArray);
+  //     } catch (error) {
+  //       console.error("Failed to fetch businesses:", error);
+  //       setBusinesses([]);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchBusinesses();
+  // }, []);
+
   React.useEffect(() => {
     const fetchBusinesses = async () => {
       try {
@@ -133,6 +163,17 @@ const STATIC_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         setBusinesses(businessesArray);
       } catch (error) {
         console.error("Failed to fetch businesses:", error);
+        
+        // Check for 403 error and redirect to login
+        if (error.response?.status === 403) {
+          // If using React Router
+          window.location.href = '/login';
+          
+          // Or if you need to redirect with window.location
+          window.location.href = '/errors';
+          return; // Prevent further error handling
+        }
+        
         setBusinesses([]);
       } finally {
         setLoading(false);
