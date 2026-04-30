@@ -74,16 +74,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const navRef = useRef<HTMLDivElement>(null);
   const isScrollingProgrammatically = useRef(false);
 
-  const hasPermission = useCallback(
-  (key: keyof AppUser["user_roles"]) => {
-    // super admin override
-    if (user?.user_roles?.permission === "yes") return true;
-
-    return user?.user_roles?.[key] === "yes";
-  },
-  [user]
-);
-
   //  console.log("USER:", user);
 
   // -------------------- Logout --------------------
@@ -327,17 +317,28 @@ const Sidebar: React.FC<SidebarProps> = ({
       <>
         <NavSection title="Main" sectionKey="main">
           <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
-          <div>
-            {user?.creator === "Host" && (
-              <NavItem
-                href="/business"
-                label="Business List"
-                icon={Building2}
-              />
-            )}
-          </div>
+  <div>
+   
+  {user?.creator === "Host" && (
+  <NavItem
+    href="/business"
+    label="Business List"
+    icon={Building2}
+  />
+)}
+
+
+{/* {user?.user_roles?.purchase_create === "yes" && (
+  <NavItem
+    href="/business"
+    label="Business List qwwwqqq"
+    icon={Building2}
+  />
+)} */}
+
+  </div>
           {user?.creator === "Host" && (
-            <NavItem href="/locations" label="Locations" icon={Clipboard} />
+          <NavItem href="/locations" label="Locations" icon={Clipboard} />
           )}
           <NavItem href="/pos" label="POS" icon={Cart16Filled} />
         </NavSection>
@@ -355,27 +356,42 @@ const Sidebar: React.FC<SidebarProps> = ({
           <NavItem href="/product-units" label="Units of Measure" icon={Scale} />
         </NavSection>
 
-        <NavSection title="Purchasing" sectionKey="purchasing">
-          {user?.user_roles?.purchase_read == "yes" && (
-            <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
-          )}
-          {user?.user_roles?.purchase_create === "yes" && (
-            <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />
-          )}
-          <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
-          {user?.user_roles?.vendor_read === "yes" && (
-            <NavItem href="/vendors" label="Suppliers" icon={Building2} />
-          )}
-        </NavSection>
 
-        {/* ACCOUNTING SECTION */}
+        {/* <NavSection title="Purchasing" sectionKey="purchasing">
+
+          {user?.user_roles?.purchase_read === "no" && (
+          <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
+          )};
+          {user?.user_roles?.purchase_create === "no" && (
+          <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />  )};
+          <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
+          <NavItem href="/vendors" label="Suppliers" icon={Building2} />
+        </NavSection> */}
+
+        <NavSection title="Purchasing" sectionKey="purchasing">
+  {user?.user_roles?.purchase_read =="yes" && (
+    <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
+  )}
+  {user?.user_roles?.purchase_create === "yes" && (
+    <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />
+  )}
+  <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
+  <NavItem href="/vendors" label="Suppliers" icon={Building2} />
+</NavSection>
+
+        {/* ============================================ */}
+        {/* ACCOUNTING SECTION - GROUPED INTO SUB-SECTIONS */}
+        {/* ============================================ */}
+        
         <NavSection title="Accounting" sectionKey="accounting">
+          {/* Accounting Dashboard */}
           <NavItem 
             href="/accounting" 
             label="Accounting Dashboard" 
             icon={LayoutDashboard} 
           />
 
+          {/* Accounts Payable Group */}
           <NavSubSection 
             title="Accounts Payable" 
             sectionKey="accounting-payables" 
@@ -388,6 +404,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/payables/aging" label="Aged Payables" icon={Clock} indent isSubItem />
           </NavSubSection>
 
+          {/* Accounts Receivable Group */}
           <NavSubSection 
             title="Accounts Receivable" 
             sectionKey="accounting-receivables" 
@@ -399,6 +416,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/receivables/aging" label="Aged Receivables" icon={Clock} indent isSubItem />
           </NavSubSection>
 
+          {/* Banking Group */}
           <NavSubSection 
             title="Banking" 
             sectionKey="accounting-banking" 
@@ -410,6 +428,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/banking/reconciliation" label="Reconciliation" icon={CheckCircle} indent isSubItem />
           </NavSubSection>
 
+          {/* Expenses Group */}
           <NavSubSection 
             title="Expenses" 
             sectionKey="accounting-expenses" 
@@ -420,6 +439,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/expenses/recurring" label="Recurring" icon={History} indent isSubItem />
           </NavSubSection>
 
+          {/* General Ledger Group */}
           <NavSubSection 
             title="General Ledger" 
             sectionKey="accounting-ledger" 
@@ -431,6 +451,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/trial-balance" label="Trial Balance" icon={Scale} indent isSubItem />
           </NavSubSection>
 
+          {/* Tax Group */}
           <NavSubSection 
             title="Tax" 
             sectionKey="accounting-tax" 
@@ -442,6 +463,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/tax/filing" label="Tax Filing" icon={CheckCircle} indent isSubItem />
           </NavSubSection>
 
+          {/* Reports Group */}
           <NavSubSection 
             title="Financial Reports" 
             sectionKey="accounting-reports" 
@@ -457,6 +479,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/reports/transaction" label="Transaction Report" icon={FileText} indent isSubItem />
           </NavSubSection>
 
+          {/* Budget Group */}
           <NavSubSection 
             title="Budgeting" 
             sectionKey="accounting-budget" 
@@ -467,6 +490,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/budget/vs-actual" label="Budget vs Actual" icon={BarChart3} indent isSubItem />
           </NavSubSection>
 
+          {/* Audit Group */}
           <NavSubSection 
             title="Audit & Compliance" 
             sectionKey="accounting-audit" 
@@ -477,6 +501,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavItem href="/accounting/audit/document-history" label="Document History" icon={FileText} indent isSubItem />
           </NavSubSection>
         </NavSection>
+
+        {/* ============================================ */}
+        {/* END ACCOUNTING SECTION                        */}
+        {/* ============================================ */}
 
         <NavSection title="Analytics" sectionKey="analytics">
           <NavItem

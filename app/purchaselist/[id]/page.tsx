@@ -3,6 +3,7 @@
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet, apiPut } from "@/lib/axios";
 import React, { useState, useEffect, useMemo } from "react";
+import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   Loader2,
@@ -109,6 +110,10 @@ interface User {
     phone?: string;
     email?: string;
   }>;
+   user_roles?: {
+    purchase_update?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 // ==============================================
@@ -678,6 +683,10 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
   const params = useParams();
   const orderId = params?.id as string;
 
+   if (user?.user_roles?.purchase_read !== "yes") {
+      redirect("/errors");
+    }
+
   const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
   const businessInfo = user?.businesses_one?.[0];
   const formatCurr = (amount: number) => formatCurrency(amount, currencySymbol);
@@ -861,6 +870,7 @@ const ViewPurchaseOrderPage = ({ user }: { user: User }) => {
              <div className="flex items-center gap-2">
   {/* Edit - Available for draft and pending */}
   {canEdit && (
+    
     <Link href={`/purchaseedits/${orderId}`}>
       <motion.button
         whileHover={{ scale: 1.02 }}

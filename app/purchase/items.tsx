@@ -3,6 +3,8 @@
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet, apiPut, apiDelete } from "@/lib/axios";
 import React, { useState, useEffect, useMemo } from "react";
+import { redirect } from "next/navigation";
+
 import {
   Plus,
   Search,
@@ -991,6 +993,10 @@ const PurchaseOrdersPage = ({ user }: { user: User }) => {
   const router = useRouter();
   const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
   const formatCurr = (amount: number) => formatCurrency(amount, currencySymbol);
+
+  if (user?.user_roles?.purchase_read !== "yes") {
+    redirect("/errors");
+  }
 
   // State
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);

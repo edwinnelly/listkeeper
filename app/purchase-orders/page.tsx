@@ -33,6 +33,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { redirect } from "next/navigation";
 
 // ==============================================
 // Type Definitions
@@ -71,12 +72,27 @@ interface FormData {
   items: OrderItem[];
 }
 
+// interface User {
+//   businesses_one?: Array<{
+//     currency?: string;
+//     name?: string;
+//   }>;
+// }
+
+
 interface User {
   businesses_one?: Array<{
     currency?: string;
-    name?: string;
+     name?: string;
   }>;
+
+  user_roles?: {
+    purchase_create?: string;
+    [key: string]: string | undefined;
+  };
+  
 }
+
 
 interface Location {
   id: number;
@@ -498,6 +514,12 @@ const NewPurchaseOrderPage = ({ user }: { user: User }) => {
   const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
   const businessName = user?.businesses_one?.[0]?.name || "Business";
 
+
+if (user?.user_roles?.purchase_create !== "yes") {
+      redirect("/errors");
+    }
+
+
   const { formData, updateField, addItem, updateItem, removeItem } = useFormData();
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -507,6 +529,14 @@ const NewPurchaseOrderPage = ({ user }: { user: User }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+
+
+  
+
+
+
+
 
   const selectedSupplier = useMemo(
     () => suppliers.find((s) => s.vid === parseInt(formData.supplier_id)) || null,
@@ -655,7 +685,7 @@ const NewPurchaseOrderPage = ({ user }: { user: User }) => {
                 href="/purchase"
                 className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
               >
-                Cancel
+                Purchase List
               </Link>
               <motion.button
                 whileHover={{ scale: 1.02 }}
