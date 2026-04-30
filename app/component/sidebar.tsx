@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const navRef = useRef<HTMLDivElement>(null);
   const isScrollingProgrammatically = useRef(false);
 
-  //  console.log("USER:", user);
+   console.log("USER:", user);
 
   // -------------------- Logout --------------------
   const handleLogout = async () => {
@@ -369,10 +369,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </NavSection> */}
 
         <NavSection title="Purchasing" sectionKey="purchasing">
-  {user?.user_roles?.purchase_read === "no" && (
+  {user?.user_roles?.purchase_read =="yes" && (
     <NavItem href="/purchase" label="Purchase Orders" icon={ShoppingCart} />
   )}
-  {user?.user_roles?.purchase_create === "no" && (
+  {user?.user_roles?.purchase_create === "yes" && (
     <NavItem href="/purchase-orders" label="Create PO" icon={BadgePlus} isSubItem />
   )}
   <NavItem href="/purchase/receive" label="Receive Items" icon={CheckCircle} isSubItem />
