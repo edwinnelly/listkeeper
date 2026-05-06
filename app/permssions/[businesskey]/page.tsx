@@ -11,6 +11,8 @@ import {
   ArrowLeft,
   Loader2,
   ChevronRight,
+  ShieldBan,
+  CheckCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
@@ -18,6 +20,7 @@ import Cookies from "js-cookie";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 // -------------------------------
 // User Profile Interface
@@ -101,7 +104,6 @@ interface PermissionsState {
   pos_read: boolean;
   pos_update: boolean;
   pos_delete: boolean;
-
   can_edit_price: boolean;
   can_adjust_stock: boolean;
   can_transfer_stock: boolean;
@@ -115,79 +117,113 @@ type PermissionItem = {
 };
 
 // -------------------------------
-// ToggleRow Component
+// Utility
 // -------------------------------
-const ToggleRow = ({
-  title,
-  description,
-  value,
-  onToggle,
-}: {
-  title: string;
-  description: string;
-  value: boolean;
-  onToggle: () => void;
-}) => {
-  return (
-    <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-      <div className="flex-1 min-w-0">
-        <label className="block text-sm font-semibold text-gray-900 truncate">
-          {title}
-        </label>
-        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-          {description}
-        </p>
-      </div>
+const formatDate = (d: string | null) =>
+  !d
+    ? "—"
+    : new Date(d).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
 
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 flex-shrink-0 ${
-          value ? "bg-gray-600" : "bg-gray-300"
-        }`}
-      >
-        <span
-          className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-            value ? "translate-x-5" : "translate-x-0.5"
-          }`}
-        />
-      </button>
-    </div>
+// -------------------------------
+// Status & Role Badges
+// -------------------------------
+const StatusBadge: React.FC<{ isActive: boolean }> = ({ isActive }) => (
+  <span
+    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wide ${
+      isActive
+        ? "bg-emerald-50 text-emerald-700"
+        : "bg-slate-100 text-slate-500"
+    }`}
+  >
+    <span
+      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+        isActive ? "bg-emerald-500" : "bg-slate-400"
+      }`}
+    />
+    {isActive ? "ACTIVE" : "INACTIVE"}
+  </span>
+);
+
+const RoleBadge: React.FC<{ role: string }> = ({ role }) => {
+  const config: Record<string, { bg: string; text: string; dot: string }> = {
+    admin: { bg: "bg-violet-50", text: "text-violet-700", dot: "bg-violet-500" },
+    manager: { bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-500" },
+    staff: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+  };
+  const cfg = config[role?.toLowerCase()] || config.staff;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wide ${cfg.bg} ${cfg.text}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+      {role?.toUpperCase() || "USER"}
+    </span>
   );
 };
 
 // -------------------------------
+// ToggleRow Component
+// -------------------------------
+const ToggleRow: React.FC<{
+  title: string;
+  description: string;
+  value: boolean;
+  onToggle: () => void;
+}> = ({ title, description, value, onToggle }) => (
+  <div className="flex items-center justify-between p-4 bg-stone-50/50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
+    <div className="flex-1 min-w-0">
+      <label className="block text-sm font-semibold text-gray-900 truncate">
+        {title}
+      </label>
+      <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{description}</p>
+    </div>
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 flex-shrink-0 ${
+        value ? "bg-gray-900" : "bg-gray-200"
+      }`}
+    >
+      <motion.span
+        className="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm"
+        animate={{ x: value ? 22 : 2 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      />
+    </button>
+  </div>
+);
+
+// -------------------------------
 // PermissionSection Component
 // -------------------------------
-const PermissionSection = ({
-  title,
-  list,
-  permissions,
-  handleToggle,
-  handleCategoryToggle,
-}: {
+const PermissionSection: React.FC<{
   title: string;
   list: PermissionItem[];
   permissions: PermissionsState;
   handleToggle: (key: keyof PermissionsState) => void;
   handleCategoryToggle: (keys: (keyof PermissionsState)[]) => void;
-}) => {
+}> = ({ title, list, permissions, handleToggle, handleCategoryToggle }) => {
   const allEnabled = list.every((item) => permissions[item.key]);
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+          {title}
+        </h3>
         <button
           type="button"
           onClick={() => handleCategoryToggle(list.map((item) => item.key))}
-          className="text-sm text-gray-600 hover:text-gray-700 font-medium transition-colors duration-200"
+          className="text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors"
         >
           {allEnabled ? "Disable All" : "Enable All"}
         </button>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {list.map((item) => (
           <ToggleRow
             key={item.key}
@@ -201,6 +237,49 @@ const PermissionSection = ({
     </div>
   );
 };
+
+// -------------------------------
+// Loading State
+// -------------------------------
+const LoadingState: React.FC = () => (
+  <div className="min-h-screen bg-[#f5f5f4] flex items-center justify-center">
+    <div className="text-center">
+      <div className="relative w-14 h-14 mx-auto mb-5">
+        <div className="w-14 h-14 rounded-full border-[3px] border-gray-100" />
+        <div className="absolute inset-0 rounded-full border-[3px] border-gray-900 border-t-transparent animate-spin" />
+        <Shield className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+      </div>
+      <p className="text-sm font-semibold text-gray-700">Loading permissions</p>
+      <p className="text-xs text-gray-400 mt-1">Please wait a moment</p>
+    </div>
+  </div>
+);
+
+// -------------------------------
+// Error State
+// -------------------------------
+const ErrorState: React.FC<{ message: string }> = ({ message }) => (
+  <div className="min-h-screen bg-[#f5f5f4] flex items-center justify-center">
+    <div className="text-center max-w-md mx-auto px-4">
+      <div className="w-16 h-16 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center mx-auto mb-5">
+        <User className="h-8 w-8 text-gray-300" />
+      </div>
+      <h3 className="text-base font-bold text-gray-800 mb-1.5">{message}</h3>
+      <p className="text-sm text-gray-400 mb-6 leading-relaxed">
+        {message.includes("error")
+          ? "There was an error loading the user profile."
+          : "The user profile you're looking for doesn't exist."}
+      </p>
+      <Link
+        href="/users"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/15"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Users
+      </Link>
+    </div>
+  </div>
+);
 
 // -------------------------------
 // PermissionsForm Component
@@ -259,7 +338,6 @@ const PermissionsForm = () => {
     pos_read: false,
     pos_update: false,
     pos_delete: false,
-
     can_edit_price: false,
     can_adjust_stock: false,
     can_transfer_stock: false,
@@ -272,65 +350,22 @@ const PermissionsForm = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const params = useParams();
-  // The ID from the URL is already encrypted
   const encryptedId = params?.businesskey as string;
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role?.toLowerCase()) {
-      case "admin":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      case "manager":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      case "staff":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getStatusBadgeColor = (isActive: boolean) => {
-    return isActive
-      ? "bg-gray-100 text-gray-800 border-gray-200"
-      : "bg-gray-100 text-gray-800 border-gray-200";
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return "Invalid date";
-    }
-  };
-
-  // -------------------------------
-  // Fetch user information
-  // -------------------------------
   const fetchUserInfo = useCallback(async () => {
     if (!encryptedId) return;
-
     try {
       setLoading(true);
       setFetchError(null);
       await api.get("/sanctum/csrf-cookie");
-
-      // Use the encrypted ID directly - backend will decrypt it
       const response = await api.get(`/usersinfo/${encryptedId}`, {
         headers: {
           "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
           "Content-Type": "application/json",
         },
       });
-
       const data = response.data?.data || response.data;
-
-      if (!data) {
-        throw new Error("Failed to fetch user profile");
-      }
-
+      if (!data) throw new Error("Failed to fetch user profile");
       const userData = data.user || data;
       setUser(userData);
     } catch (error) {
@@ -341,31 +376,20 @@ const PermissionsForm = () => {
     }
   }, [encryptedId]);
 
-  // -------------------------------
-  // Fetch user permissions
-  // -------------------------------
   const fetchPermissions = useCallback(async () => {
     if (!encryptedId) return;
-
     try {
       await api.get("/sanctum/csrf-cookie");
-
-      // Use the encrypted ID directly - backend will decrypt it
       const res = await api.get(`/usersroles/${encryptedId}`, {
         headers: {
           "X-XSRF-TOKEN": Cookies.get("XSRF-TOKEN") || "",
         },
       });
-
-      // Handle the response structure from your Laravel backend
       const responseData = res.data?.data || {};
-      // Update permissions state based on the response
       if (responseData && typeof responseData === "object") {
         setPermissions((prevPermissions) => {
           const updatedState = Object.keys(prevPermissions).reduce(
             (acc, key) => {
-              // Check if the permission exists in response and has value "yes"
-              // Your backend might store permissions differently - adjust as needed
               acc[key as keyof PermissionsState] =
                 responseData[key] === "yes" || responseData[key] === true || false;
               return acc;
@@ -377,10 +401,6 @@ const PermissionsForm = () => {
       }
     } catch (error) {
       console.error("Error fetching permissions:", error);
-      // Handle specific error cases
-      // if (error.response?.status === 400) {
-      //   const errorDetails = error.response?.data?.details || "";
-      // }
     } finally {
       setLoading(false);
     }
@@ -388,12 +408,10 @@ const PermissionsForm = () => {
 
   useEffect(() => {
     if (encryptedId) {
-      // Fetch both user info and permissions
       const fetchData = async () => {
         await fetchUserInfo();
         await fetchPermissions();
       };
-
       fetchData();
     } else {
       setLoading(false);
@@ -401,9 +419,6 @@ const PermissionsForm = () => {
     }
   }, [encryptedId, fetchUserInfo, fetchPermissions]);
 
-  // -------------------------------
-  // Toggle functions
-  // -------------------------------
   const handleToggle = (permission: keyof PermissionsState) => {
     setPermissions((prev) => ({
       ...prev,
@@ -420,9 +435,6 @@ const PermissionsForm = () => {
     });
   };
 
-  // -------------------------------
-  // Submit handler
-  // -------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !encryptedId) return;
@@ -431,7 +443,7 @@ const PermissionsForm = () => {
 
     try {
       const selected = Object.entries(permissions)
-        .filter(([value]) => value)
+        .filter(([, value]) => value)
         .map(([key]) => key);
 
       const formData = new FormData();
@@ -441,8 +453,6 @@ const PermissionsForm = () => {
       formData.append("selected_permissions", JSON.stringify(selected));
 
       await api.get("/sanctum/csrf-cookie");
-
-      // Use the encrypted ID in the URL
       await api.post(`/permissions_update/${encryptedId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -464,510 +474,200 @@ const PermissionsForm = () => {
   // -------------------------------
   const permissionGroups = {
     general: [
-      {
-        key: "permission" as keyof PermissionsState,
-        label: "General Permission",
-        description: "Overall access permission",
-      },
+      { key: "permission" as keyof PermissionsState, label: "General Permission", description: "Overall access permission" },
     ],
     users: [
-      {
-        key: "users_create" as keyof PermissionsState,
-        label: "Create Users",
-        description: "Can create new user accounts",
-      },
-      {
-        key: "users_read" as keyof PermissionsState,
-        label: "View Users",
-        description: "Can view user accounts",
-      },
-      {
-        key: "users_update" as keyof PermissionsState,
-        label: "Edit Users",
-        description: "Can modify user information",
-      },
-      {
-        key: "users_delete" as keyof PermissionsState,
-        label: "Delete Users",
-        description: "Can remove user accounts",
-      },
+      { key: "users_create" as keyof PermissionsState, label: "Create Users", description: "Can create new user accounts" },
+      { key: "users_read" as keyof PermissionsState, label: "View Users", description: "Can view user accounts" },
+      { key: "users_update" as keyof PermissionsState, label: "Edit Users", description: "Can modify user information" },
+      { key: "users_delete" as keyof PermissionsState, label: "Delete Users", description: "Can remove user accounts" },
     ],
     subscriptions: [
-      {
-        key: "subscriptions_read" as keyof PermissionsState,
-        label: "View Subscriptions",
-        description: "Can view subscription data",
-      },
-      {
-        key: "subscriptions_update" as keyof PermissionsState,
-        label: "Manage Subscriptions",
-        description: "Can update subscription plans",
-      },
+      { key: "subscriptions_read" as keyof PermissionsState, label: "View Subscriptions", description: "Can view subscription data" },
+      { key: "subscriptions_update" as keyof PermissionsState, label: "Manage Subscriptions", description: "Can update subscription plans" },
     ],
     locations: [
-      {
-        key: "locations_create" as keyof PermissionsState,
-        label: "Create Locations",
-        description: "Can create new locations",
-      },
-      {
-        key: "locations_read" as keyof PermissionsState,
-        label: "View Locations",
-        description: "Can view location information",
-      },
-      {
-        key: "locations_update" as keyof PermissionsState,
-        label: "Edit Locations",
-        description: "Can update stored location info",
-      },
-      {
-        key: "locations_delete" as keyof PermissionsState,
-        label: "Delete Locations",
-        description: "Can remove locations",
-      },
-      {
-        key: "locations_analytics" as keyof PermissionsState,
-        label: "Location Analytics",
-        description: "Can view analytics for locations",
-      },
+      { key: "locations_create" as keyof PermissionsState, label: "Create Locations", description: "Can create new locations" },
+      { key: "locations_read" as keyof PermissionsState, label: "View Locations", description: "Can view location information" },
+      { key: "locations_update" as keyof PermissionsState, label: "Edit Locations", description: "Can update stored location info" },
+      { key: "locations_delete" as keyof PermissionsState, label: "Delete Locations", description: "Can remove locations" },
+      { key: "locations_analytics" as keyof PermissionsState, label: "Location Analytics", description: "Can view analytics for locations" },
     ],
     categories: [
-      {
-        key: "category_create" as keyof PermissionsState,
-        label: "Create Categories",
-        description: "Can create product categories",
-      },
-      {
-        key: "category_read" as keyof PermissionsState,
-        label: "View Categories",
-        description: "Can view product categories",
-      },
-      {
-        key: "category_update" as keyof PermissionsState,
-        label: "Edit Categories",
-        description: "Can modify product categories",
-      },
-      {
-        key: "category_delete" as keyof PermissionsState,
-        label: "Delete Categories",
-        description: "Can remove product categories",
-      },
+      { key: "category_create" as keyof PermissionsState, label: "Create Categories", description: "Can create product categories" },
+      { key: "category_read" as keyof PermissionsState, label: "View Categories", description: "Can view product categories" },
+      { key: "category_update" as keyof PermissionsState, label: "Edit Categories", description: "Can modify product categories" },
+      { key: "category_delete" as keyof PermissionsState, label: "Delete Categories", description: "Can remove product categories" },
     ],
     products: [
-      {
-        key: "product_create" as keyof PermissionsState,
-        label: "Create Products",
-        description: "Can create new products",
-      },
-      {
-        key: "product_read" as keyof PermissionsState,
-        label: "View Products",
-        description: "Can view product information",
-      },
-      {
-        key: "product_update" as keyof PermissionsState,
-        label: "Edit Products",
-        description: "Can modify product details",
-      },
-      {
-        key: "product_delete" as keyof PermissionsState,
-        label: "Delete Products",
-        description: "Can remove products",
-      },
+      { key: "product_create" as keyof PermissionsState, label: "Create Products", description: "Can create new products" },
+      { key: "product_read" as keyof PermissionsState, label: "View Products", description: "Can view product information" },
+      { key: "product_update" as keyof PermissionsState, label: "Edit Products", description: "Can modify product details" },
+      { key: "product_delete" as keyof PermissionsState, label: "Delete Products", description: "Can remove products" },
     ],
     units: [
-      {
-        key: "unit_create" as keyof PermissionsState,
-        label: "Create Units",
-        description: "Can create measurement units",
-      },
-      {
-        key: "unit_read" as keyof PermissionsState,
-        label: "View Units",
-        description: "Can view unit information",
-      },
-      {
-        key: "unit_update" as keyof PermissionsState,
-        label: "Edit Units",
-        description: "Can modify unit details",
-      },
-      {
-        key: "unit_delete" as keyof PermissionsState,
-        label: "Delete Units",
-        description: "Can remove units",
-      },
+      { key: "unit_create" as keyof PermissionsState, label: "Create Units", description: "Can create measurement units" },
+      { key: "unit_read" as keyof PermissionsState, label: "View Units", description: "Can view unit information" },
+      { key: "unit_update" as keyof PermissionsState, label: "Edit Units", description: "Can modify unit details" },
+      { key: "unit_delete" as keyof PermissionsState, label: "Delete Units", description: "Can remove units" },
     ],
     vendors: [
-      {
-        key: "vendor_create" as keyof PermissionsState,
-        label: "Create Vendors",
-        description: "Can create new vendors",
-      },
-      {
-        key: "vendor_read" as keyof PermissionsState,
-        label: "View Vendors",
-        description: "Can view vendor information",
-      },
-      {
-        key: "vendor_update" as keyof PermissionsState,
-        label: "Edit Vendors",
-        description: "Can modify vendor details",
-      },
-      {
-        key: "vendor_delete" as keyof PermissionsState,
-        label: "Delete Vendors",
-        description: "Can remove vendors",
-      },
+      { key: "vendor_create" as keyof PermissionsState, label: "Create Vendors", description: "Can create new vendors" },
+      { key: "vendor_read" as keyof PermissionsState, label: "View Vendors", description: "Can view vendor information" },
+      { key: "vendor_update" as keyof PermissionsState, label: "Edit Vendors", description: "Can modify vendor details" },
+      { key: "vendor_delete" as keyof PermissionsState, label: "Delete Vendors", description: "Can remove vendors" },
     ],
     purchases: [
-      {
-        key: "purchase_create" as keyof PermissionsState,
-        label: "Create Purchases",
-        description: "Can create purchase orders",
-      },
-      {
-        key: "purchase_read" as keyof PermissionsState,
-        label: "View Purchases",
-        description: "Can view purchase history",
-      },
-      {
-        key: "purchase_update" as keyof PermissionsState,
-        label: "Edit Purchases",
-        description: "Can modify purchase orders",
-      },
-      {
-        key: "purchase_delete" as keyof PermissionsState,
-        label: "Delete Purchases",
-        description: "Can remove purchase records",
-      },
+      { key: "purchase_create" as keyof PermissionsState, label: "Create Purchases", description: "Can create purchase orders" },
+      { key: "purchase_read" as keyof PermissionsState, label: "View Purchases", description: "Can view purchase history" },
+      { key: "purchase_update" as keyof PermissionsState, label: "Edit Purchases", description: "Can modify purchase orders" },
+      { key: "purchase_delete" as keyof PermissionsState, label: "Delete Purchases", description: "Can remove purchase records" },
     ],
     customers: [
-      {
-        key: "customer_create" as keyof PermissionsState,
-        label: "Create Customers",
-        description: "Can create new customers",
-      },
-      {
-        key: "customer_read" as keyof PermissionsState,
-        label: "View Customers",
-        description: "Can view customer information",
-      },
-      {
-        key: "customer_update" as keyof PermissionsState,
-        label: "Edit Customers",
-        description: "Can modify customer details",
-      },
-      {
-        key: "customer_delete" as keyof PermissionsState,
-        label: "Delete Customers",
-        description: "Can remove customers",
-      },
+      { key: "customer_create" as keyof PermissionsState, label: "Create Customers", description: "Can create new customers" },
+      { key: "customer_read" as keyof PermissionsState, label: "View Customers", description: "Can view customer information" },
+      { key: "customer_update" as keyof PermissionsState, label: "Edit Customers", description: "Can modify customer details" },
+      { key: "customer_delete" as keyof PermissionsState, label: "Delete Customers", description: "Can remove customers" },
     ],
     creditNotes: [
-      {
-        key: "credit_note_create" as keyof PermissionsState,
-        label: "Create Credit Notes",
-        description: "Can create credit notes",
-      },
-      {
-        key: "credit_note_read" as keyof PermissionsState,
-        label: "View Credit Notes",
-        description: "Can view credit note history",
-      },
-      {
-        key: "credit_note_update" as keyof PermissionsState,
-        label: "Edit Credit Notes",
-        description: "Can modify credit notes",
-      },
-      {
-        key: "credit_note_delete" as keyof PermissionsState,
-        label: "Delete Credit Notes",
-        description: "Can remove credit notes",
-      },
+      { key: "credit_note_create" as keyof PermissionsState, label: "Create Credit Notes", description: "Can create credit notes" },
+      { key: "credit_note_read" as keyof PermissionsState, label: "View Credit Notes", description: "Can view credit note history" },
+      { key: "credit_note_update" as keyof PermissionsState, label: "Edit Credit Notes", description: "Can modify credit notes" },
+      { key: "credit_note_delete" as keyof PermissionsState, label: "Delete Credit Notes", description: "Can remove credit notes" },
     ],
     expenses: [
-      {
-        key: "expense_create" as keyof PermissionsState,
-        label: "Create Expenses",
-        description: "Can create expense records",
-      },
-      {
-        key: "expense_read" as keyof PermissionsState,
-        label: "View Expenses",
-        description: "Can view expense history",
-      },
-      {
-        key: "expense_update" as keyof PermissionsState,
-        label: "Edit Expenses",
-        description: "Can modify expense records",
-      },
-      {
-        key: "expense_delete" as keyof PermissionsState,
-        label: "Delete Expenses",
-        description: "Can remove expense records",
-      },
+      { key: "expense_create" as keyof PermissionsState, label: "Create Expenses", description: "Can create expense records" },
+      { key: "expense_read" as keyof PermissionsState, label: "View Expenses", description: "Can view expense history" },
+      { key: "expense_update" as keyof PermissionsState, label: "Edit Expenses", description: "Can modify expense records" },
+      { key: "expense_delete" as keyof PermissionsState, label: "Delete Expenses", description: "Can remove expense records" },
     ],
     invoices: [
-      {
-        key: "invoice_create" as keyof PermissionsState,
-        label: "Create Invoices",
-        description: "Can create new invoices",
-      },
-      {
-        key: "invoice_read" as keyof PermissionsState,
-        label: "View Invoices",
-        description: "Can view invoice history",
-      },
-      {
-        key: "invoice_update" as keyof PermissionsState,
-        label: "Edit Invoices",
-        description: "Can modify invoice details",
-      },
-      {
-        key: "invoice_delete" as keyof PermissionsState,
-        label: "Delete Invoices",
-        description: "Can remove invoices",
-      },
+      { key: "invoice_create" as keyof PermissionsState, label: "Create Invoices", description: "Can create new invoices" },
+      { key: "invoice_read" as keyof PermissionsState, label: "View Invoices", description: "Can view invoice history" },
+      { key: "invoice_update" as keyof PermissionsState, label: "Edit Invoices", description: "Can modify invoice details" },
+      { key: "invoice_delete" as keyof PermissionsState, label: "Delete Invoices", description: "Can remove invoices" },
     ],
     pos: [
-      {
-        key: "pos_create" as keyof PermissionsState,
-        label: "Create POS",
-        description: "Can create point of sale transactions",
-      },
-      {
-        key: "pos_read" as keyof PermissionsState,
-        label: "View POS",
-        description: "Can view POS transactions",
-      },
-      {
-        key: "pos_update" as keyof PermissionsState,
-        label: "Edit POS",
-        description: "Can modify POS transactions",
-      },
-      {
-        key: "pos_delete" as keyof PermissionsState,
-        label: "Delete POS",
-        description: "Can remove POS transactions",
-      },
+      { key: "pos_create" as keyof PermissionsState, label: "Create POS", description: "Can create point of sale transactions" },
+      { key: "pos_read" as keyof PermissionsState, label: "View POS", description: "Can view POS transactions" },
+      { key: "pos_update" as keyof PermissionsState, label: "Edit POS", description: "Can modify POS transactions" },
+      { key: "pos_delete" as keyof PermissionsState, label: "Delete POS", description: "Can remove POS transactions" },
     ],
-
     productse: [
-      {
-        key: "can_edit_price" as keyof PermissionsState,
-        label: "Create Price",
-        description: "Can edit price of products",
-      },
-      {
-        key: "can_adjust_stock" as keyof PermissionsState,
-        label: "Adjust Stock",
-        description: "Can adjust stock quantity",
-      },
-      {
-        key: "can_transfer_stock" as keyof PermissionsState,
-        label: "Transfer stock",
-        description: "Can transfer stock",
-      },
-      {
-        key: "can_view_cost" as keyof PermissionsState,
-        label: "View Cost",
-        description: "Can view cost price",
-      },
+      { key: "can_edit_price" as keyof PermissionsState, label: "Edit Price", description: "Can edit price of products" },
+      { key: "can_adjust_stock" as keyof PermissionsState, label: "Adjust Stock", description: "Can adjust stock quantity" },
+      { key: "can_transfer_stock" as keyof PermissionsState, label: "Transfer Stock", description: "Can transfer stock" },
+      { key: "can_view_cost" as keyof PermissionsState, label: "View Cost", description: "Can view cost price" },
     ],
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 text-gray-600 animate-spin mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">Loading user profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (fetchError || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-900 font-semibold text-lg">
-            {fetchError || "User not found"}
-          </p>
-          <p className="text-gray-500 text-sm mt-1">
-            {fetchError
-              ? "There was an error loading the user profile."
-              : "The user profile you're looking for doesn't exist."}
-          </p>
-          <Link
-            href="/users"
-            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
-          >
-            <ArrowLeft size={16} />
-            Back to Users List
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingState />;
+  if (fetchError || !user) return <ErrorState message={fetchError || "User not found"} />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f5f5f4]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between py-6">
-            {/* Left Section */}
-            <div className="flex flex-col space-y-4 mb-4 sm:mb-0">
-              {/* Breadcrumb */}
-              <div className="flex items-center space-x-2">
-                <Link
-                  href="/users"
-                  className="inline-flex items-center text-sm font-normal text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-2 py-1 rounded transition-colors duration-200 group"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-0.5 transition-transform duration-200" />
-                  Users
-                </Link>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-900 font-semibold px-2 py-1">
-                  Permissions
-                </span>
-              </div>
-
-              {/* Title Section */}
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Shield className="h-6 w-6 text-gray-600" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-                      User permissions
-                    </h1>
-                    <div className="hidden sm:flex items-center space-x-2">
-                      <div className="px-2 py-1 bg-gray-100 rounded text-sm font-medium text-gray-700">
-                        {user.name}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-base max-w-2xl">
-                    Manage access controls and permissions for this user across
-                    the organization
-                  </p>
-                </div>
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-screen-2xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/users"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="flex items-center gap-3">
+              <ChevronRight className="h-4 w-4 text-gray-300" />
+              <div>
+                <h1 className="text-lg font-bold text-gray-900 tracking-tight">
+                  User Permissions
+                </h1>
+                <p className="text-xs text-gray-400">
+                  Manage access controls for {user.name}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Secondary Navigation */}
-          <div className="border-t border-gray-100 mt-2 pt-4">
-            <div className="flex space-x-6">
-              <button className="px-3 py-2 text-sm font-medium text-gray-600 border-b-2 border-gray-600">
-                Permissions
-              </button>
-              <button className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200">
-                Audit log
-              </button>
-              <Link href={`#`}>
-                <button className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200">
-                  Settings
-                </button>
-              </Link>
-            </div>
+          {/* Tabs */}
+          <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100">
+            <button className="text-sm font-bold text-gray-900 border-b-2 border-gray-900 pb-2">
+              Permissions
+            </button>
+            <button className="text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors pb-2">
+              Audit Log
+            </button>
+            <button className="text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors pb-2">
+              Settings
+            </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-screen-2xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sticky top-8">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-24">
               {/* Profile Photo */}
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200/50 overflow-hidden relative">
+                  <div className="w-24 h-24 rounded-2xl bg-gray-50 border-2 border-gray-100 overflow-hidden relative">
                     {user.profile_pic ? (
                       <Image
                         src={`http://localhost:8000/storage/${user.profile_pic}`}
                         alt={user.name}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 112px) 100vw, 112px"
+                        sizes="96px"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <User className="h-10 w-10 text-gray-600" />
+                        <User className="h-10 w-10 text-gray-300" />
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h2 className="text-lg font-bold text-gray-900">
-                    {user.name}
-                  </h2>
-                  <p className="text-gray-600 text-sm">{user.email}</p>
+                <div className="space-y-1">
+                  <h2 className="text-lg font-bold text-gray-900">{user.name}</h2>
+                  <p className="text-sm text-gray-400">{user.email}</p>
                 </div>
 
-                {/* Role and Status Badges */}
+                {/* Badges */}
                 <div className="flex flex-wrap gap-2 justify-center">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                      user.role
-                    )}`}
-                  >
-                    <Shield className="h-3 w-3 mr-1" />
-                    {user.role?.charAt(0).toUpperCase() + user.role?.slice(1) ||
-                      "User"}
-                  </span>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(
-                      user.is_active
-                    )}`}
-                  >
-                    {user.is_active ? "Active" : "Inactive"}
-                  </span>
+                  <RoleBadge role={user.role} />
+                  <StatusBadge isActive={user.is_active} />
                 </div>
 
                 {/* Member Since */}
-                <div className="pt-4 border-t border-gray-200 w-full">
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4" />
+                <div className="pt-4 border-t border-gray-100 w-full">
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+                    <Calendar className="h-3.5 w-3.5" />
                     <span>Member since {formatDate(user.created_at)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Contact Information */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
-                      <Mail className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-600">Email</p>
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {user.email}
-                      </p>
-                    </div>
+              <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-4 w-4 text-gray-400" />
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center">
-                      <Building className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-600">Role</p>
-                      <p className="text-sm font-medium text-gray-900 capitalize">
-                        {user.role || "User"}
-                      </p>
-                    </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center flex-shrink-0">
+                    <Building className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Role</p>
+                    <p className="text-sm font-medium text-gray-900 capitalize">{user.role || "User"}</p>
                   </div>
                 </div>
               </div>
@@ -976,154 +676,62 @@ const PermissionsForm = () => {
 
           {/* Right Column - Permissions Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-white/10 rounded-lg">
-                    <Shield className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">
-                      Access Control
-                    </h2>
-                    <p className="text-gray-200 text-sm">
-                      Toggle permissions on/off for {user.name}
-                    </p>
-                  </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              {/* Form Header */}
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center">
+                  <ShieldBan className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">Access Control</h2>
+                  <p className="text-xs text-gray-400">Toggle permissions for {user.name}</p>
                 </div>
               </div>
 
-              <form
-                onSubmit={handleSubmit}
-                className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto"
-              >
-                <div className="space-y-8">
-                  <PermissionSection
-                    title="General"
-                    list={permissionGroups.general}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Users Management"
-                    list={permissionGroups.users}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Subscriptions"
-                    list={permissionGroups.subscriptions}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Locations"
-                    list={permissionGroups.locations}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Product Categories"
-                    list={permissionGroups.categories}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Products"
-                    list={permissionGroups.products}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Units"
-                    list={permissionGroups.units}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Vendors"
-                    list={permissionGroups.vendors}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Purchases"
-                    list={permissionGroups.purchases}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Customers"
-                    list={permissionGroups.customers}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Credit Notes"
-                    list={permissionGroups.creditNotes}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Expenses"
-                    list={permissionGroups.expenses}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Invoices"
-                    list={permissionGroups.invoices}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Point of Sale (POS)"
-                    list={permissionGroups.pos}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
-                  <PermissionSection
-                    title="Manage Products"
-                    list={permissionGroups.productse}
-                    permissions={permissions}
-                    handleToggle={handleToggle}
-                    handleCategoryToggle={handleCategoryToggle}
-                  />
+              <form onSubmit={handleSubmit} className="p-6 max-h-[calc(100vh-250px)] overflow-y-auto">
+                <div className="space-y-2">
+                  <PermissionSection title="General" list={permissionGroups.general} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Users Management" list={permissionGroups.users} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Subscriptions" list={permissionGroups.subscriptions} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Locations" list={permissionGroups.locations} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Product Categories" list={permissionGroups.categories} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Products" list={permissionGroups.products} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Units" list={permissionGroups.units} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Vendors" list={permissionGroups.vendors} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Purchases" list={permissionGroups.purchases} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Customers" list={permissionGroups.customers} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Credit Notes" list={permissionGroups.creditNotes} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Expenses" list={permissionGroups.expenses} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Invoices" list={permissionGroups.invoices} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Point of Sale (POS)" list={permissionGroups.pos} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
+                  <PermissionSection title="Product Actions" list={permissionGroups.productse} permissions={permissions} handleToggle={handleToggle} handleCategoryToggle={handleCategoryToggle} />
                 </div>
 
-                <div className="flex justify-end pt-6 border-t mt-8">
+                {/* Save Button */}
+                <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center gap-2 bg-gray-600 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition-all shadow-md shadow-gray-900/15 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
                     ) : (
-                      <Save className="h-4 w-4" />
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save Permissions
+                      </>
                     )}
-                    {isSubmitting ? "Saving..." : "Save Permissions"}
                   </button>
                 </div>
               </form>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
