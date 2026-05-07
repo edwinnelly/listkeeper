@@ -3,24 +3,22 @@
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import Image from "next/image";
-import { Building2, Plus, ArrowLeft } from "lucide-react";
+import { Building2, Plus, ArrowLeft, Loader2, Upload, X, CheckCircle } from "lucide-react";
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { toast } from 'react-hot-toast';
+import { motion } from "framer-motion";
 
-// Define proper types for props if they're being injected
 interface AddBusinessPageProps {
   user?: {
     id?: number;
     name?: string;
     email?: string;
-    // Add other user properties as needed
   };
   loading?: boolean;
 }
 
-// Define proper types
 interface FormState {
   business_name: string;
   slug: string;
@@ -40,7 +38,6 @@ interface FormState {
   about_business: string;
 }
 
-// Define error response type
 interface ErrorResponse {
   response?: {
     data?: {
@@ -55,7 +52,7 @@ const industryTypes = [
   "Real Estate", "Transportation & Logistics", "Hospitality & Tourism", "Energy & Utilities",
   "Telecommunications", "Media & Entertainment", "Construction", "Agriculture",
   "Food & Beverage", "Legal Services", "Nonprofit & NGOs", "Government", "Consulting",
-  "Pharmaceuticals & Biotechnologys"
+  "Pharmaceuticals & Biotechnology"
 ];
 
 const countries = [
@@ -68,19 +65,9 @@ const countries = [
   "Poland", "Czech Republic", "Hungary", "Romania", "Greece", "Ukraine", "Russia"
 ];
 
-const subscriptionTypes = [
-  "Free",
-  "Basic",
-  "Standard",
-  "Premium",
-  "Enterprise",
-  "Custom"
-];
-
+const subscriptionTypes = ["Free", "Basic", "Standard", "Premium", "Enterprise", "Custom"];
 const subscriptionPlans = ["monthly", "yearly"];
 
-// Accept props but don't use them if not needed, or use underscore prefix to indicate they're intentionally unused
-// export default function AddBusinessPage({ user: _user, loading }: AddBusinessPageProps) {
 export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>({
@@ -106,15 +93,16 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400 text-sm";
-  const labelClass = "block text-sm font-medium text-gray-700 mb-2";
+  const inputClass = "w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 outline-none transition text-gray-700 placeholder-gray-300";
+  const labelClass = "text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block";
+  const sectionClass = "space-y-5";
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    const maxSize = 2 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       toast.error('Please upload a JPEG, PNG, or WEBP image.');
@@ -139,15 +127,6 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
 
   const handleInputChange = (field: keyof FormState, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const showSuccessAlert = () => {
-    toast.success('Your business has been created successfully.');
-    router.push('/business');
-  };
-
-  const showErrorAlert = (message: string) => {
-    toast.error(message || 'Failed to create business. Please try again.');
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -177,33 +156,13 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
       });
 
       if (response.data) {
-        showSuccessAlert();
-
-        setForm({
-          business_name: "",
-          slug: "",
-          industry_type: "",
-          logo: "",
-          email: "",
-          phone: "",
-          website: "",
-          address: "",
-          country: "",
-          state: "",
-          city: "",
-          subscription_type: "Free",
-          subscription_plan: "monthly",
-          currency: "NGN",
-          language: "en",
-          about_business: ""
-        });
-        setLogoFile(null);
-        setLogoPreview(null);
+        toast.success('Your business has been created successfully.');
+        router.push('/business');
       }
     } catch (err: unknown) {
       const error = err as ErrorResponse;
       const errorMessage = error.response?.data?.message || "Failed to create business.";
-      showErrorAlert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -211,64 +170,76 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
 
   const isFormValid = form.business_name.trim().length > 0;
 
-  // If you want to show a loading state while the wrapper is loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#f5f5f4] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="relative w-14 h-14 mx-auto mb-5">
+            <div className="w-14 h-14 rounded-full border-[3px] border-gray-100" />
+            <div className="absolute inset-0 rounded-full border-[3px] border-gray-900 border-t-transparent animate-spin" />
+            <Building2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          </div>
+          <p className="text-sm font-semibold text-gray-700">Loading</p>
+          <p className="text-xs text-gray-400 mt-1">Please wait a moment</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/business" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Business
-          </Link>
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Create Business</h1>
-              <p className="text-gray-600 mt-1">Set up your business profile</p>
-            </div>
+    <div className="min-h-screen bg-[#f5f5f4]">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 top-0 z-40">
+        <div className="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <Link
               href="/business"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Manage Businesses
+              <ArrowLeft className="h-4 w-4" />
             </Link>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 tracking-tight">Create Business</h1>
+              <p className="text-xs text-gray-400">Set up your business profile</p>
+            </div>
           </div>
+          <Link
+            href="/business"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            <Building2 className="h-4 w-4" />
+            Manage Businesses
+          </Link>
         </div>
+      </header>
 
-        {/* Rest of your component remains the same */}
-        <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl">
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <Building2 className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white">Business Profile</h2>
-                <p className="text-gray-300 text-sm">Complete your business information</p>
-              </div>
+      {/* Main Content */}
+      <main className="max-w-screen-2xl mx-auto px-6 py-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+        >
+          {/* Form Header */}
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-900">Business Profile</h2>
+              <p className="text-xs text-gray-400">Complete your business information</p>
             </div>
           </div>
 
           <form onSubmit={onSubmit} className="p-6 space-y-8">
             {/* Basic Information */}
-            <section>
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Basic Information</h3>
+            <section className={sectionClass}>
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className={labelClass}>
-                    Business Name <span className="text-red-500">*</span>
+                    Business Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -305,34 +276,55 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
                   </select>
                 </div>
 
+                {/* Logo Upload */}
                 <div className="md:col-span-2">
                   <label className={labelClass}>Business Logo</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50/50">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                      id="logo-upload"
-                    />
-                    <label htmlFor="logo-upload" className="cursor-pointer">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <Building2 className="h-8 w-8 text-gray-400" />
-                        <p className="text-sm font-medium text-gray-600">Click to upload logo</p>
-                        <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 2MB</p>
+                  {logoPreview ? (
+                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                        <Image
+                          src={logoPreview}
+                          alt="Logo preview"
+                          fill
+                          className="object-cover"
+                          sizes="56px"
+                        />
                       </div>
-                    </label>
-                  </div>
-                  {logoPreview && (
-                    <div className="mt-3 flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <Image
-                        src={logoPreview}
-                        alt="Logo preview"
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded object-cover border border-gray-300"
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">Logo uploaded</p>
+                        <p className="text-xs text-gray-400">Ready to use</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoFile(null);
+                          setLogoPreview(null);
+                          setForm(prev => ({ ...prev, logo: "" }));
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                        id="logo-upload"
                       />
-                      <span className="text-sm text-gray-700">Logo ready</span>
+                      <label
+                        htmlFor="logo-upload"
+                        className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-colors bg-gray-50/50"
+                      >
+                        <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                          <Upload className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-600">Click to upload logo</p>
+                        <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 2MB</p>
+                      </label>
                     </div>
                   )}
                 </div>
@@ -340,69 +332,88 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
             </section>
 
             {/* Contact Information */}
-            <section>
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Contact Information</h3>
+            <section className={sectionClass}>
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  value={form.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={inputClass}
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone number"
-                  value={form.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className={inputClass}
-                />
-                <input
-                  type="url"
-                  placeholder="Website URL"
-                  value={form.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  className={inputClass}
-                />
-                <select
-                  value={form.country}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">Select country</option>
-                  {countries.map((country) => (
-                    <option key={country} value={country}>{country}</option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  placeholder="State/Province"
-                  value={form.state}
-                  onChange={(e) => handleInputChange('state', e.target.value)}
-                  className={inputClass}
-                />
-                <input
-                  type="text"
-                  placeholder="City"
-                  value={form.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  className={inputClass}
-                />
+                <div>
+                  <label className={labelClass}>Email Address</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className={inputClass}
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Phone Number</label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className={inputClass}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Website</label>
+                  <input
+                    type="url"
+                    value={form.website}
+                    onChange={(e) => handleInputChange('website', e.target.value)}
+                    className={inputClass}
+                    placeholder="https://example.com"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Country</label>
+                  <select
+                    value={form.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">Select country</option>
+                    {countries.map((country) => (
+                      <option key={country} value={country}>{country}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>State/Province</label>
+                  <input
+                    type="text"
+                    value={form.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    className={inputClass}
+                    placeholder="Enter state"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>City</label>
+                  <input
+                    type="text"
+                    value={form.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    className={inputClass}
+                    placeholder="Enter city"
+                  />
+                </div>
                 <div className="md:col-span-2">
+                  <label className={labelClass}>Full Address</label>
                   <textarea
                     rows={2}
-                    placeholder="Full address"
                     value={form.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    className={inputClass}
+                    className={`${inputClass} resize-none`}
+                    placeholder="Enter full address"
                   />
                 </div>
               </div>
             </section>
 
             {/* Business Settings */}
-            <section>
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Business Settings</h3>
+            <section className={sectionClass}>
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Business Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className={labelClass}>Subscription</label>
@@ -412,9 +423,7 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
                     className={inputClass}
                   >
                     {subscriptionTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
+                      <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
                 </div>
@@ -475,37 +484,59 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
               </div>
             </section>
 
-            {/* Additional Information */}
-            <section>
-              <h3 className="text-base font-semibold text-gray-900 mb-4">About</h3>
-              <textarea
-                rows={3}
-                placeholder="Brief description of your business..."
-                value={form.about_business}
-                onChange={(e) => handleInputChange('about_business', e.target.value)}
-                className={inputClass}
-                maxLength={300}
-              />
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-gray-500">{form.about_business.length}/300 characters</span>
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">Optional</span>
+            {/* About */}
+            <section className={sectionClass}>
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">About</h3>
+              <div>
+                <textarea
+                  rows={4}
+                  value={form.about_business}
+                  onChange={(e) => handleInputChange('about_business', e.target.value)}
+                  className={`${inputClass} resize-none`}
+                  placeholder="Brief description of your business..."
+                  maxLength={500}
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-400">{form.about_business.length}/500 characters</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500">Optional</span>
+                </div>
               </div>
             </section>
 
-            {/* Submit Button */}
-            <div className="flex justify-end pt-6 border-t border-gray-200">
-              <button
-                type="submit"
-                disabled={!isFormValid || isSubmitting}
-                className="px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Creating..." : "Create Business"}
-              </button>
+            {/* Submit */}
+            <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+              <p className="text-xs text-gray-400">
+                <span className="text-rose-500">*</span> Required fields
+              </p>
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/business"
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={!isFormValid || isSubmitting}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition-all shadow-md shadow-gray-900/15 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Create Business
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
-        </div>
-      </div>
+        </motion.div>
+      </main>
     </div>
   );
 }

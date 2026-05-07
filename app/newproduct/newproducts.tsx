@@ -102,6 +102,7 @@ interface ApiError {
     };
   };
 }
+
 interface VendorApiResponse {
   id: string | number;
   vid: number;
@@ -139,18 +140,18 @@ const staticUnits: Unit[] = [
 // SECTION WRAPPER COMPONENT
 // ============================================================================
 
-const SectionCard = ({
-  icon: Icon,
-  title,
-  subtitle,
-  children,
-  accentColor = "bg-gray-900",
-}: {
+const SectionCard: React.FC<{
   icon: React.ElementType;
   title: string;
   subtitle: string;
   children: React.ReactNode;
   accentColor?: string;
+}> = ({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+  accentColor = "bg-gray-900",
 }) => (
   <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
     <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-100">
@@ -170,21 +171,14 @@ const SectionCard = ({
 // FIELD WRAPPER
 // ============================================================================
 
-const Field = ({
-  label,
-  required,
-  optional,
-  error,
-  hint,
-  children,
-}: {
+const Field: React.FC<{
   label: string;
   required?: boolean;
   optional?: boolean;
   error?: string;
   hint?: string;
   children: React.ReactNode;
-}) => (
+}> = ({ label, required, optional, error, hint, children }) => (
   <div className="space-y-1.5">
     <div className="flex items-center justify-between">
       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -214,19 +208,13 @@ const Field = ({
 // TOGGLE COMPONENT
 // ============================================================================
 
-const Toggle = ({
-  checked,
-  onChange,
-  activeColor,
-  label,
-  description,
-}: {
+const Toggle: React.FC<{
   checked: boolean;
   onChange: (val: boolean) => void;
   activeColor: string;
   label: string;
   description: string;
-}) => (
+}> = ({ checked, onChange, activeColor, label, description }) => (
   <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer group hover:border-gray-200 transition-colors">
     <div>
       <p className="text-sm font-semibold text-gray-800">{label}</p>
@@ -258,7 +246,7 @@ const Toggle = ({
 // MAIN COMPONENT
 // ============================================================================
 
-const AddProductPage = () => {
+const AddProductPage: React.FC = () => {
   const [form, setForm] = useState<ProductFormData>({
     name: "",
     sku: "",
@@ -290,8 +278,8 @@ const AddProductPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [units] = useState<Unit[]>(staticUnits);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -314,7 +302,7 @@ const AddProductPage = () => {
     };
   }, [imagePreview]);
 
-  const fetchData = async () => {
+  const fetchData = async (): Promise<void> => {
     setIsLoadingData(true);
     try {
       await Promise.all([fetchCategories(), fetchSuppliers()]);
@@ -325,7 +313,7 @@ const AddProductPage = () => {
     }
   };
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (): Promise<void> => {
     try {
       const res = await apiGet("/product-categories");
       const categoriesArray =
@@ -336,13 +324,13 @@ const AddProductPage = () => {
     }
   };
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = async (): Promise<void> => {
     try {
       const res = await apiGet("/vendors");
       const suppliersArray = res.data?.data?.vendors ?? res.data?.data ?? [];
-      const transformedSuppliers = Array.isArray(suppliersArray)
+      const transformedSuppliers: Supplier[] = Array.isArray(suppliersArray)
         ? suppliersArray.map((vendor: VendorApiResponse) => ({
-            id: vendor.id,
+            id: String(vendor.id),
             vid: vendor.vid,
             vendor_name: vendor.vendor_name || vendor.name || "",
             contact_person: vendor.contact_person,
@@ -357,7 +345,7 @@ const AddProductPage = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
@@ -379,25 +367,26 @@ const AddProductPage = () => {
   const handleInputChange = (
     field: keyof ProductFormData,
     value: string | boolean | number,
-  ) => {
+  ): void => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
     if (field === "discount_percentage" || field === "price") calculateSalePrice();
   };
 
-  const handleBlur = (field: string) => {
+  const handleBlur = (field: string): void => {
     validateField(field, form[field as keyof ProductFormData]);
   };
 
   const validateField = (field: string, value: string | number | boolean | null): string | undefined => {
+    const strValue = value?.toString() ?? "";
     switch (field) {
       case "name":
-        if (!value || value.toString().trim().length === 0) return "Product name is required";
-        if (value.toString().trim().length < 2) return "Must be at least 2 characters";
+        if (!strValue.trim()) return "Product name is required";
+        if (strValue.trim().length < 2) return "Must be at least 2 characters";
         return undefined;
       case "sku":
-        if (!value || value.toString().trim().length === 0) return "SKU is required";
-        if (value.toString().trim().length < 3) return "Must be at least 3 characters";
+        if (!strValue.trim()) return "SKU is required";
+        if (strValue.trim().length < 3) return "Must be at least 3 characters";
         return undefined;
       case "category_id":
         if (!value || value === "" || value === 0) return "Category is required";
@@ -406,32 +395,32 @@ const AddProductPage = () => {
         if (!value || value === "") return "Unit is required";
         return undefined;
       case "price":
-        if (!value || value.toString().trim().length === 0) return "Price is required";
-        if (isNaN(parseFloat(value.toString()))) return "Must be a valid number";
-        if (parseFloat(value.toString()) < 0) return "Cannot be negative";
+        if (!strValue.trim()) return "Price is required";
+        if (isNaN(parseFloat(strValue))) return "Must be a valid number";
+        if (parseFloat(strValue) < 0) return "Cannot be negative";
         return undefined;
       case "stock_quantity":
-        if (!value || value.toString().trim().length === 0) return "Stock quantity is required";
-        if (isNaN(parseInt(value.toString()))) return "Must be a valid number";
-        if (parseInt(value.toString()) < 0) return "Cannot be negative";
+        if (!strValue.trim()) return "Stock quantity is required";
+        if (isNaN(parseInt(strValue))) return "Must be a valid number";
+        if (parseInt(strValue) < 0) return "Cannot be negative";
         return undefined;
       case "low_stock_threshold":
-        if (value && value.toString().trim().length > 0) {
-          if (isNaN(parseInt(value.toString()))) return "Must be a valid number";
-          if (parseInt(value.toString()) < 0) return "Cannot be negative";
+        if (strValue.trim()) {
+          if (isNaN(parseInt(strValue))) return "Must be a valid number";
+          if (parseInt(strValue) < 0) return "Cannot be negative";
         }
         return undefined;
       case "discount_percentage":
-        if (value && value.toString().trim().length > 0) {
-          if (isNaN(parseFloat(value.toString()))) return "Must be a valid number";
-          const discount = parseFloat(value.toString());
+        if (strValue.trim()) {
+          if (isNaN(parseFloat(strValue))) return "Must be a valid number";
+          const discount = parseFloat(strValue);
           if (discount < 0 || discount > 100) return "Must be between 0 and 100";
         }
         return undefined;
       case "cost_price":
-        if (value && value.toString().trim().length > 0) {
-          if (isNaN(parseFloat(value.toString()))) return "Must be a valid number";
-          if (parseFloat(value.toString()) < 0) return "Cannot be negative";
+        if (strValue.trim()) {
+          if (isNaN(parseFloat(strValue))) return "Must be a valid number";
+          if (parseFloat(strValue) < 0) return "Cannot be negative";
         }
         return undefined;
       default:
@@ -451,9 +440,9 @@ const AddProductPage = () => {
   };
 
   const generateSKU = (): string => `PROD${Math.floor(100000 + Math.random() * 900000)}`;
-  const handleGenerateSKU = () => setForm((prev) => ({ ...prev, sku: generateSKU() }));
+  const handleGenerateSKU = (): void => setForm((prev) => ({ ...prev, sku: generateSKU() }));
 
-  const calculateSalePrice = () => {
+  const calculateSalePrice = (): void => {
     if (form.price && form.discount_percentage) {
       const price = parseFloat(form.price);
       const discount = parseFloat(form.discount_percentage);
@@ -466,7 +455,7 @@ const AddProductPage = () => {
     }
   };
 
-  const prepareFormData = () => {
+  const prepareFormData = (): FormData => {
     const formData = new FormData();
     formData.append("name", form.name.trim());
     formData.append("sku", form.sku.trim());
@@ -495,7 +484,7 @@ const AddProductPage = () => {
     return formData;
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (isSubmitting) return;
     if (!validateAllFields()) {
@@ -551,7 +540,7 @@ const AddProductPage = () => {
     }
   };
 
-  const isFormValid =
+  const isFormValid: boolean =
     form.name.trim().length > 0 &&
     form.sku.trim().length > 0 &&
     form.category_id !== "" && form.category_id !== 0 &&
@@ -560,14 +549,10 @@ const AddProductPage = () => {
     !errors.name && !errors.sku && !errors.category_id &&
     !errors.products_measurements && !errors.price && !errors.stock_quantity;
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
-
   return (
     <div className="min-h-screen bg-[#f8f8f7]">
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-100  top-0 z-10">
+      <div className="bg-white border-b border-gray-100 top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -942,17 +927,17 @@ const AddProductPage = () => {
                   <div>
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Dimensions</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {[
+                      {([
                         { label: "Weight", field: "weight", unit: "kg" },
                         { label: "Length", field: "length", unit: "cm" },
                         { label: "Width", field: "width", unit: "cm" },
                         { label: "Height", field: "height", unit: "cm" },
-                      ].map(({ label, field, unit }) => (
+                      ] as const).map(({ label, field, unit }) => (
                         <Field key={field} label={`${label} (${unit})`} optional>
                           <input
                             type="number" step="0.01" min="0"
-                            value={form[field as keyof ProductFormData] as string}
-                            onChange={(e) => handleInputChange(field as keyof ProductFormData, e.target.value)}
+                            value={form[field] as string}
+                            onChange={(e) => handleInputChange(field, e.target.value)}
                             className={inputClass}
                             placeholder="0.00"
                           />

@@ -485,6 +485,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </span>
             </div>
+            
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">
                 {user?.name || "User"}

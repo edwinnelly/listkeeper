@@ -70,11 +70,12 @@ const STATS = [
   { label: 'Net profit',    value: '₦1.1M',  trend: '+8.3%',       up: true,  icon: TrendingUp, color: 'purple' },
 ];
 
+// All stat icon backgrounds are now white/light-gray, all icons black
 const STAT_COLORS: Record<string, { bg: string; icon: string }> = {
-  blue:   { bg: 'bg-blue-50',   icon: 'text-blue-700'   },
-  green:  { bg: 'bg-green-50',  icon: 'text-green-700'  },
-  amber:  { bg: 'bg-amber-50',  icon: 'text-amber-700'  },
-  purple: { bg: 'bg-purple-50', icon: 'text-purple-700' },
+  blue:   { bg: 'bg-gray-100', icon: 'text-gray-900' },
+  green:  { bg: 'bg-gray-100', icon: 'text-gray-900' },
+  amber:  { bg: 'bg-gray-100', icon: 'text-gray-900' },
+  purple: { bg: 'bg-gray-100', icon: 'text-gray-900' },
 };
 
 const TRANSACTIONS = [
@@ -85,16 +86,18 @@ const TRANSACTIONS = [
   { icon: ArrowUpRight,  type: 'out',  name: 'Internet & utilities', date: 'May 1 · Recurring',     amount: '−₦42K'   },
 ];
 
+// All transaction icon backgrounds white/gray, icons and amounts black
 const TX_STYLES: Record<string, { wrap: string; icon: string; amt: string }> = {
-  in:   { wrap: 'bg-green-50', icon: 'text-green-700', amt: 'text-green-700' },
-  out:  { wrap: 'bg-red-50',   icon: 'text-red-600',   amt: 'text-red-600'   },
-  pend: { wrap: 'bg-amber-50', icon: 'text-amber-700', amt: 'text-amber-700' },
+  in:   { wrap: 'bg-gray-100', icon: 'text-gray-900', amt: 'text-gray-900' },
+  out:  { wrap: 'bg-gray-100', icon: 'text-gray-900', amt: 'text-gray-900' },
+  pend: { wrap: 'bg-gray-100', icon: 'text-gray-900', amt: 'text-gray-900' },
 };
 
+// All quick action icon backgrounds white/gray, icons black
 const QUICK_ACTIONS = [
-  { icon: Plus,      label: 'New invoice',    sub: 'Create & send instantly', bg: 'bg-blue-50',   ic: 'text-blue-700'   },
-  { icon: Receipt,   label: 'Record expense', sub: 'Log a new payment',       bg: 'bg-green-50',  ic: 'text-green-700'  },
-  { icon: LineChart, label: 'P&L report',     sub: 'Profit & loss summary',   bg: 'bg-purple-50', ic: 'text-purple-700' },
+  { icon: Plus,      label: 'New invoice',    sub: 'Create & send instantly', bg: 'bg-gray-100', ic: 'text-gray-900' },
+  { icon: Receipt,   label: 'Record expense', sub: 'Log a new payment',       bg: 'bg-gray-100', ic: 'text-gray-900' },
+  { icon: LineChart, label: 'P&L report',     sub: 'Profit & loss summary',   bg: 'bg-gray-100', ic: 'text-gray-900' },
 ];
 
 const WEEKS   = ['W1', 'W2', 'W3', 'W4', 'W5'];
@@ -199,8 +202,8 @@ const ModernLoadingScreen: React.FC = () => {
 const ErrorState: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
   <div className="min-h-screen bg-[#f5f5f4] flex items-center justify-center">
     <div className="text-center max-w-md mx-auto px-6">
-      <div className="w-20 h-20 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-        <Store className="h-8 w-8 text-red-400" />
+      <div className="w-20 h-20 bg-gray-100 border border-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <Store className="h-8 w-8 text-gray-400" />
       </div>
       <h2 className="text-xl font-bold text-gray-900 mb-2">Failed to load dashboard</h2>
       <p className="text-sm text-gray-400 mb-8 leading-relaxed">
@@ -219,6 +222,8 @@ const ErrorState: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
 
 // ─── Active Business Card ─────────────────────────────────────────────────────
 
+// ─── Active Business Card ─────────────────────────────────────────────────────
+
 const ActiveBusinessCard: React.FC<{
   business: Business;
   createdAt: string;
@@ -228,62 +233,62 @@ const ActiveBusinessCard: React.FC<{
   <motion.div
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-[#111827] rounded-2xl overflow-hidden"
+    className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
   >
-    <div className="px-5 py-4 flex items-center justify-between">
+    <div className="px-6 py-5 flex items-center justify-between">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/[0.08] flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-14 h-14 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {business.logo ? (
             <img
-             src={`http://localhost:8000/storage/${business.logo}`}
+              src={`http://localhost:8000/storage/${business.logo}`}
               alt={business.business_name}
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-white font-bold text-lg leading-none select-none">
+            <span className="text-gray-900 font-bold text-xl leading-none select-none">
               {business.business_name.slice(0, 2).toUpperCase()}
             </span>
           )}
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <p className="text-white font-semibold text-base leading-tight">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-gray-900 font-semibold text-lg leading-tight">
               {business.business_name}
             </p>
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 text-[10px] font-medium">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
               <CircleCheck size={10} /> Active
             </span>
           </div>
-          <p className="text-white/40 text-xs">
-            Welcome back, {user.name} · {business.subscription_type} plan
+          <p className="text-gray-500 text-sm">
+            Welcome back, {user.name} · <span className="capitalize">{business.subscription_type}</span> plan
           </p>
         </div>
       </div>
 
-      <div className="hidden md:flex items-center gap-6">
+      <div className="hidden md:flex items-center gap-8">
         {business.address && (
-          <div className="flex items-center gap-1.5 text-white/40 text-xs">
-            <MapPin size={12} className="text-white/25 flex-shrink-0" />
-            <span className="truncate max-w-[140px]">{business.address}</span>
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
+            <MapPin size={14} className="text-gray-400 flex-shrink-0" />
+            <span className="truncate max-w-[160px]">{business.address}</span>
           </div>
         )}
         {business.phone && (
-          <div className="flex items-center gap-1.5 text-white/40 text-xs">
-            <Phone size={12} className="text-white/25 flex-shrink-0" />
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
+            <Phone size={14} className="text-gray-400 flex-shrink-0" />
             {business.phone}
           </div>
         )}
         <div className="text-right">
-          <p className="text-white/25 text-[10px] uppercase tracking-wider">Member since</p>
-          <p className="text-white/50 text-xs font-medium">{createdAt}</p>
+          <p className="text-gray-400 text-[11px] uppercase tracking-wider">Member since</p>
+          <p className="text-gray-700 text-sm font-medium">{createdAt}</p>
         </div>
       </div>
     </div>
 
-    <div className="border-t border-white/[0.06] px-5 py-2.5 flex items-center gap-2">
-      <Building2 size={12} className="text-white/25" />
-      <p className="text-white/35 text-xs">
+    <div className="border-t border-gray-100 px-6 py-3 flex items-center gap-2 bg-gray-50/50">
+      <Building2 size={14} className="text-gray-400" />
+      <p className="text-gray-500 text-sm">
         {locationCount} {locationCount === 1 ? 'location' : 'locations'} under this business
       </p>
     </div>
@@ -291,6 +296,7 @@ const ActiveBusinessCard: React.FC<{
 );
 
 // ─── Location Card ────────────────────────────────────────────────────────────
+// UPDATED: All location cards now have white background and black text only
 
 const LocationCard: React.FC<{
   location: Location;
@@ -307,45 +313,39 @@ const LocationCard: React.FC<{
     disabled={isSwitching}
     className={`w-full text-left rounded-2xl border p-4 transition-all duration-150 group relative
       ${isActive
-        ? 'bg-gray-900 border-gray-700 cursor-default'
-        : 'bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm cursor-pointer'
+        ? 'bg-white border-gray-300 shadow-sm cursor-default'  // White background for active, black text
+        : 'bg-white border-gray-200 hover:border-gray-400 hover:shadow-sm cursor-pointer'
       }
       ${isSwitching && !isActive ? 'opacity-60 pointer-events-none' : ''}`}
   >
     <div className="flex items-start justify-between mb-3">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0
-        ${isActive ? 'bg-white/10' : 'bg-gray-50 group-hover:bg-gray-100'}`}
-      >
-        <MapPin size={16} className={isActive ? 'text-white' : 'text-gray-400'} />
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gray-100`}>
+        <MapPin size={16} className="text-gray-900" />
       </div>
 
       {isActive ? (
-        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 text-[10px] font-medium">
-          <CheckCircle2 size={10} /> Current
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-medium">
+          <CheckCircle2 size={10} className="text-gray-700" /> Current
         </span>
       ) : (
         <ArrowRight
           size={14}
-          className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all mt-0.5"
+          className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-all mt-0.5"
         />
       )}
     </div>
 
-    <p className={`text-sm font-semibold mb-1 leading-tight ${isActive ? 'text-white' : 'text-gray-900'}`}>
+    <p className="text-sm font-semibold mb-1 leading-tight text-gray-900">
       {location.location_name}
     </p>
 
-    <p className={`text-[11px] leading-snug line-clamp-2 flex items-start gap-0.5
-      ${isActive ? 'text-white/40' : 'text-gray-400'}`}
-    >
-      <MapPin size={10} className="mt-0.5 flex-shrink-0" />
+    <p className="text-[11px] leading-snug line-clamp-2 flex items-start gap-0.5 text-gray-500">
+      <MapPin size={10} className="mt-0.5 flex-shrink-0 text-gray-400" />
       {location.address}
     </p>
 
     {location.phone && (
-      <p className={`text-[11px] mt-1 flex items-center gap-0.5
-        ${isActive ? 'text-white/30' : 'text-gray-400'}`}
-      >
+      <p className="text-[11px] mt-1 flex items-center gap-0.5 text-gray-400">
         <Phone size={10} className="flex-shrink-0" />
         {location.phone}
       </p>
@@ -383,8 +383,8 @@ const LocationsSection: React.FC<{
   if (!locations.length) {
     return (
       <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center">
-        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-3">
-          <Building2 size={18} className="text-gray-300" />
+        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+          <Building2 size={18} className="text-gray-400" />
         </div>
         <p className="text-sm font-medium text-gray-500">No locations yet</p>
         <p className="text-xs text-gray-400 mt-1">Add a location to start managing it here</p>
@@ -409,7 +409,6 @@ const LocationsSection: React.FC<{
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {locations.map((loc, i) => (
-          // ✅ key uses loc.id — always a unique number from DB
           <div key={loc.id}>
             <LocationCard
               location={loc}
@@ -431,7 +430,7 @@ const RevenueChart: React.FC = () => (
   <div className="bg-white rounded-2xl border border-gray-100 p-5">
     <div className="flex items-center justify-between mb-4">
       <p className="text-sm font-semibold text-gray-900">Revenue overview — May 2026</p>
-      <button className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+      <button className="flex items-center gap-1 text-xs text-gray-700 hover:underline">
         View report <ChevronRight size={13} />
       </button>
     </div>
@@ -508,6 +507,7 @@ const DashboardContent: React.FC<{
       onSwitch={onSwitchLocation}
     />
 
+    {/* Stat Cards */}
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {STATS.map((s, i) => {
         const { bg, icon } = STAT_COLORS[s.color];
@@ -523,9 +523,8 @@ const DashboardContent: React.FC<{
               <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center`}>
                 <s.icon size={17} className={icon} />
               </div>
-              <span className={`text-[11px] font-medium px-2 py-1 rounded-md ${
-                s.up ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
-              }`}>
+              {/* trend badge: white bg, black text */}
+              <span className="text-[11px] font-medium px-2 py-1 rounded-md bg-gray-100 text-gray-700">
                 {s.trend}
               </span>
             </div>
@@ -546,19 +545,20 @@ const DashboardContent: React.FC<{
             { label: 'Address',  value: business.address || '—' },
             { label: 'Phone',    value: business.phone   || '—' },
           ].map(({ label, value }) => (
-            <div key={label} className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+            <div key={label} className="bg-white rounded-xl px-4 py-3 border border-gray-100">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-              <p className="text-xs font-medium text-gray-800 truncate">{value}</p>
+              <p className="text-xs font-medium text-gray-900 truncate">{value}</p>
             </div>
           ))}
         </div>
       </div>
 
       <div className="space-y-3">
+        {/* Recent Transactions */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-900">Recent transactions</p>
-            <button className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+            <button className="flex items-center gap-1 text-xs text-gray-700 hover:underline">
               All <ChevronRight size={13} />
             </button>
           </div>
@@ -579,6 +579,7 @@ const DashboardContent: React.FC<{
           })}
         </div>
 
+        {/* Quick Actions */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-sm font-semibold text-gray-900 mb-3">Quick actions</p>
           <div className="space-y-2">

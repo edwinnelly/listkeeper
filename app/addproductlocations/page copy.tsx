@@ -677,7 +677,7 @@ const AddToLocations = ({ user }: { user: User }) => {
 
   const buildProductQueryString = useCallback(() => {
     const params = new URLSearchParams();
-    params.append("per_page", "100");
+    params.append("per_page", "200");
     if (debouncedSearch) params.append("search", debouncedSearch);
     if (selectedCategory !== "all" && selectedCategory) params.append("category", selectedCategory);
     params.append("sort_by", sortBy === "price" ? "price" : sortBy === "stock" ? "stock_quantity" : "name");

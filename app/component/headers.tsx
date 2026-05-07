@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useEffect, memo } from "react";
-import { ChevronDown, Menu, Search, Bell, User, Settings, LogOut } from "lucide-react";
+import { ChevronDown, Menu, Search, Bell, User, Settings, LogOut, HelpCircle } from "lucide-react";
 import { withAuth } from "@/hoc/withAuth";
 import { api, withCsrf } from "@/lib/axios";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
-// Define User interface
+// ============================================================================
+// TYPES
+// ============================================================================
 interface User {
   id?: number;
   name?: string;
@@ -14,20 +18,22 @@ interface User {
   [key: string]: string | number | undefined;
 }
 
-// Define Header props interface
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
   user: User;
 }
 
-const Header = ({ setSidebarOpen, user }: HeaderProps) => {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+const Header: React.FC<HeaderProps> = ({ setSidebarOpen, user }) => {
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
@@ -38,7 +44,7 @@ const Header = ({ setSidebarOpen, user }: HeaderProps) => {
   }, []);
 
   // CSRF-safe logout
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       await withCsrf(() => api.post("/logout"));
       window.location.href = "/auth";
@@ -48,27 +54,27 @@ const Header = ({ setSidebarOpen, user }: HeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#f3f2f1] border-b border-[#e1dfdd] px-4 md:px-6 py-2 flex items-center justify-between gap-3 h-[48px]">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 md:px-6 py-2 flex items-center justify-between gap-3">
       {/* Left side - Menu button and Search */}
-      <div className="flex items-center gap-4 flex-1">
+      <div className="flex items-center gap-3 flex-1">
         {/* Menu button */}
         <button
-          className="p-2 rounded hover:bg-[#e1dfdd] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
           onClick={() => setSidebarOpen(true)}
           aria-label="Open menu"
         >
-          <Menu size={20} className="text-[#323130]" />
+          <Menu size={18} />
         </button>
 
-        {/* Microsoft-style Search */}
-        <div className={`hidden sm:flex relative transition-all duration-200 ${searchFocused ? 'w-80' : 'w-60'}`}>
-          <div className="absolute left-3 top-1/2 -translate-y-1/2">
-            <Search size={16} className="text-[#605e5c]" />
+        {/* Search */}
+        <div className={`hidden sm:flex relative transition-all duration-200 ${searchFocused ? 'w-72' : 'w-56'}`}>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+            <Search size={14} className="text-gray-400" />
           </div>
           <input
             type="text"
-            placeholder="Search"
-            className="w-full py-1.5 pl-9 pr-3 bg-white border border-[#c8c6c4] rounded-sm focus:outline-none focus:border-[#0078d4] focus:ring-1 focus:ring-[#0078d4] text-sm"
+            placeholder="Search..."
+            className="w-full py-2 pl-10 pr-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 outline-none transition text-sm placeholder-gray-300 font-medium"
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
           />
@@ -77,96 +83,110 @@ const Header = ({ setSidebarOpen, user }: HeaderProps) => {
 
       {/* Right side - Icons and User menu */}
       <div className="flex items-center gap-1">
-        {/* Icons container */}
-        <div className="flex items-center">
-          {/* Search icon for mobile */}
-          <button className="sm:hidden p-2 rounded hover:bg-[#e1dfdd]">
-            <Search size={20} className="text-[#323130]" />
-          </button>
+        {/* Search icon for mobile */}
+        <button className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+          <Search size={18} />
+        </button>
 
-          {/* Notifications */}
-          <button className="relative p-2 rounded hover:bg-[#e1dfdd] transition-colors group">
-            <Bell size={20} className="text-[#323130]" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d13438] rounded-full border border-white"></span>
-            <div className="absolute -bottom-8 right-0 bg-[#323130] text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              Notifications
-            </div>
-          </button>
+        {/* Notifications */}
+        <button className="relative w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+          <Bell size={18} />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
+        </button>
 
-          {/* Settings */}
-          <button className="p-2 rounded hover:bg-[#e1dfdd] transition-colors group">
-            <Settings size={20} className="text-[#323130]" />
-            <div className="absolute -bottom-8 right-0 bg-[#323130] text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              Settings
-            </div>
-          </button>
-        </div>
+        {/* Help */}
+        <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors hidden md:flex">
+          <HelpCircle size={18} />
+        </button>
 
         {/* Separator */}
-        <div className="h-6 w-px bg-[#e1dfdd] mx-1"></div>
+        <div className="h-6 w-px bg-gray-200 mx-1" />
 
-        {/* User profile - Microsoft style */}
+        {/* User profile */}
         <div className="relative" ref={dropdownRef}>
           <button
-            className="flex items-center gap-2 p-1 rounded hover:bg-[#e1dfdd] transition-colors group"
+            className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-gray-50 transition-colors"
             onClick={() => setShowDropdown(!showDropdown)}
           >
             {/* Avatar with initials */}
-            <div className="w-7 h-7 rounded-full bg-[#0078d4] flex items-center justify-center text-white font-semibold text-sm">
+            <div className="w-8 h-8 rounded-xl bg-gray-900 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
               {user?.name?.[0]?.toUpperCase() || "U"}
             </div>
 
-            {/* User info - Hidden on mobile, shown on desktop */}
-            <div className="hidden md:flex flex-col items-start">
-              <span className="text-sm font-normal text-[#323130]">{user?.name}</span>
-              <span className="text-xs text-[#605e5c]">{user?.role}</span>
+            {/* User info - Hidden on mobile */}
+            <div className="hidden md:flex flex-col items-start min-w-0">
+              <span className="text-sm font-semibold text-gray-900 truncate max-w-[120px]">
+                {user?.name || "User"}
+              </span>
+              <span className="text-xs text-gray-400 truncate max-w-[120px]">
+                {user?.role || "Member"}
+              </span>
             </div>
 
             <ChevronDown
-              size={16}
-              className={`text-[#605e5c] transition-transform ${showDropdown ? "rotate-180" : ""}`}
+              size={14}
+              className={`text-gray-400 transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`}
             />
           </button>
 
-          {/* Microsoft-style Dropdown */}
-          {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-white shadow-lg border border-[#e1dfdd] rounded-sm py-1 min-w-[264px] z-50">
-              {/* User info section */}
-              <div className="px-3 py-2 border-b border-[#e1dfdd]">
-                <p className="text-sm font-semibold text-[#323130]">{user?.name}</p>
-                <p className="text-xs text-[#605e5c] truncate">{user?.email}</p>
-              </div>
-
-              {/* Menu items */}
-              <div className="py-1">
-                <button className="w-full text-left px-3 py-2 text-sm text-[#323130] hover:bg-[#f3f2f1] flex items-center gap-2">
-                  <User size={16} className="text-[#605e5c]" />
-                  My account
-                </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-[#323130] hover:bg-[#f3f2f1] flex items-center gap-2">
-                  <Settings size={16} className="text-[#605e5c]" />
-                  Settings
-                </button>
-              </div>
-
-              {/* Separator */}
-              <div className="border-t border-[#e1dfdd] my-1"></div>
-
-              {/* Sign out */}
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-sm text-[#323130] hover:bg-[#f3f2f1] flex items-center gap-2"
+          {/* Dropdown */}
+          <AnimatePresence>
+            {showDropdown && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                transition={{ duration: 0.1 }}
+                className="absolute right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl shadow-gray-900/10 py-1.5 min-w-[240px] z-50 overflow-hidden"
               >
-                <LogOut size={16} className="text-[#605e5c]" />
-                Sign out
-              </button>
+                {/* User info section */}
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gray-900 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {user?.name?.[0]?.toUpperCase() || "U"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
+                      <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Footer with app info */}
-              <div className="px-3 py-2 border-t border-[#e1dfdd]">
-                <p className="text-xs text-[#605e5c]">© 2026 Listkeeper</p>
-              </div>
-            </div>
-          )}
+                {/* Menu items */}
+                <div className="py-1">
+                  <Link href="/profile">
+                    <button className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition flex items-center gap-2.5">
+                      <User size={15} className="text-gray-400" />
+                      My Account
+                    </button>
+                  </Link>
+                  <Link href="/settings">
+                    <button className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition flex items-center gap-2.5">
+                      <Settings size={15} className="text-gray-400" />
+                      Settings
+                    </button>
+                  </Link>
+                </div>
+
+                {/* Separator */}
+                <div className="border-t border-gray-100 my-1" />
+
+                {/* Sign out */}
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 transition flex items-center gap-2.5"
+                >
+                  <LogOut size={15} />
+                  Sign Out
+                </button>
+
+                {/* Footer */}
+                <div className="px-4 py-2 border-t border-gray-100 bg-gray-50/50">
+                  <p className="text-[10px] text-gray-400 font-medium">© 2026 Listkeeper</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

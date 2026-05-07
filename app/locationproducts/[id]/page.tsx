@@ -1752,7 +1752,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
 
               <Link
                 href="/addproductlocations"
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1e3a5f] text-white text-sm font-medium rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#1e3a5f]/20"
               >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add Product</span>

@@ -21,33 +21,30 @@ import {
   RefreshCw,
   AlertCircle,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
-const SuspendBusinessPage = () => {
+const SuspendBusinessPage: React.FC = () => {
   const params = useParams();
   const router = useRouter();
   const id = params.businesskey as string;
 
-  const [isSuspending, setIsSuspending] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
-  const [suspensionReason, setSuspensionReason] = useState("");
-  const [showHelp, setShowHelp] = useState(false);
+  const [isSuspending, setIsSuspending] = useState<boolean>(false);
+  const [confirmText, setConfirmText] = useState<string>("");
+  const [suspensionReason, setSuspensionReason] = useState<string>("");
+  const [showHelp, setShowHelp] = useState<boolean>(false);
 
-  // Input classes
   const inputClass =
-    "w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-all duration-200 placeholder-gray-400 text-sm shadow-sm";
-  const labelClass = "block text-sm font-medium text-gray-700 mb-2";
+    "w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 outline-none transition text-gray-700 placeholder-gray-300";
+  const labelClass = "text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block";
 
-  // ===========================================================================
-  // HANDLERS
-  // ===========================================================================
-
-  const handleSuspendBusiness = useCallback(async () => {
+  const handleSuspendBusiness = useCallback(async (): Promise<void> => {
     if (confirmText !== "SUSPEND") {
       toast.error('Please type "SUSPEND" to confirm temporary suspension');
       return;
@@ -55,16 +52,12 @@ const SuspendBusinessPage = () => {
 
     try {
       setIsSuspending(true);
-
-      // Get CSRF token for secure request
       await api.get("/sanctum/csrf-cookie");
-
       const res = await api.put(
         `/suspendBusiness/${id}`,
         {
           status: "inactive",
-          suspension_reason:
-            suspensionReason || "Temporary suspension by owner",
+          suspension_reason: suspensionReason || "Temporary suspension by owner",
         },
         {
           headers: {
@@ -74,9 +67,7 @@ const SuspendBusinessPage = () => {
       );
 
       if (res.status === 200) {
-        toast.success(
-          "Your business has been temporarily suspended. You can reactivate it anytime",
-        );
+        toast.success("Your business has been temporarily suspended. You can reactivate it anytime");
         router.push("/business");
       } else {
         throw new Error("Suspend failed");
@@ -88,241 +79,179 @@ const SuspendBusinessPage = () => {
     }
   }, [id, confirmText, suspensionReason, router]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent, action: () => void) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        action();
-      }
-    },
-    [],
-  );
+  const handleConfirmChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
+    setConfirmText(e.target.value);
+  }, []);
 
-  const handleConfirmChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setConfirmText(e.target.value);
-    },
-    [],
-  );
+  const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    setSuspensionReason(e.target.value);
+  }, []);
 
-  const handleReasonChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setSuspensionReason(e.target.value);
-    },
-    [],
-  );
-
-  const toggleHelp = useCallback(() => {
+  const toggleHelp = useCallback((): void => {
     setShowHelp((prev) => !prev);
   }, []);
 
-  // ===========================================================================
-  // RENDER
-  // ===========================================================================
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-50/30 to-gray-50/20 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        {/* Header Section */}
-        <div className="mb-8">
-          <Link
-            href="/business"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6 transition-all duration-300 group font-medium focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-lg px-3 py-2"
-            aria-label="Back to business list"
-          >
-            <ArrowLeft
-              className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform"
-              aria-hidden="true"
-            />
-            Back to Business
-          </Link>
-        </div>
-
-        {/* Main Content Card */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-2xl shadow-gray-100/20 overflow-hidden">
-          {/* Warning Header */}
-          <div className="bg-gradient-to-r from-gray-600 to-gray-700 px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <AlertTriangle
-                    className="h-6 w-6 text-white"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">
-                    Suspend Business
-                  </h1>
-                  <p className="text-gray-100 text-sm mt-1">
-                    Temporary suspension - your data remains safe
-                  </p>
-                </div>
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl">
-                <span className="text-white font-medium text-sm flex items-center gap-2">
-                  <Zap className="h-4 w-4" aria-hidden="true" />
-                  Temporary Action
-                </span>
-              </div>
+    <div className="min-h-screen bg-[#f5f5f4]">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 top-0 z-40">
+        <div className="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/business"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 tracking-tight">Suspend Business</h1>
+              <p className="text-xs text-gray-400">Temporary suspension - your data remains safe</p>
             </div>
           </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-wide bg-amber-50 text-amber-700">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            TEMPORARY ACTION
+          </div>
+        </div>
+      </header>
 
-          {/* Content */}
-          <div className="p-8">
-            {/* What will happen */}
-            <section className="mb-8" aria-label="Suspension effects">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                <Building2
-                  className="h-6 w-6 text-gray-600"
-                  aria-hidden="true"
-                />
-                What will happen during suspension
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  {
-                    icon: Pause,
-                    title: "Operations Paused",
-                    description:
-                      "All business operations will be temporarily disabled",
-                    color: "gray",
-                  },
-                  {
-                    icon: Shield,
-                    title: "Data Protected",
-                    description:
-                      "All your business data remains secure and intact",
-                    color: "gray",
-                  },
-                  {
-                    icon: Users,
-                    title: "Access Limited",
-                    description: "Team members will have limited access",
-                    color: "gray",
-                  },
-                  {
-                    icon: Play,
-                    title: "Easy Reactivation",
-                    description: "Reactivate anytime with a single click",
-                    color: "gray",
-                  },
-                ].map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-4 p-5 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300 group hover:scale-[1.02] hover:border-gray-200"
-                    >
-                      <div
-                        className={`p-3 bg-${item.color}-50 rounded-xl border border-${item.color}-200 group-hover:border-${item.color}-300 transition-colors`}
-                      >
-                        <Icon
-                          className={`h-5 w-5 text-${item.color}-600`}
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {item.title}
-                        </p>
-                        <p className="text-gray-600 text-sm mt-1">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* Benefits of Suspension */}
-            <div className="bg-gradient-to-br from-gray-50 to-indigo-50 border border-gray-200 rounded-xl p-6 mb-8">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-white rounded-xl border border-gray-200 flex-shrink-0 shadow-sm">
-                  <Calendar
-                    className="h-5 w-5 text-gray-600"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-3 text-lg">
-                    When to Use Suspension
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {[
-                      "Seasonal breaks or temporary closures",
-                      "Staff vacations or reduced capacity periods",
-                      "System maintenance or platform updates",
-                      "Rebranding phases or business restructuring",
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
-                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-gray-600 text-xs font-bold">
-                            {idx + 1}
-                          </span>
-                        </div>
-                        <span className="text-gray-700 text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+      <main className="max-w-3xl mx-auto px-6 py-8">
+        {/* Warning Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-6"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
             </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-900 mb-1">Important Notice</h3>
+              <p className="text-sm text-amber-700 leading-relaxed">
+                Suspending your business will temporarily disable all operations. Your data remains secure and can be restored at any time.
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
-            {/* Help Toggle */}
-            <button
-              onClick={toggleHelp}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-700 mb-4 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-lg px-3 py-2"
-              type="button"
+        {/* What Happens */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-5">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="w-9 h-9 bg-gray-900 rounded-xl flex items-center justify-center">
+              <Building2 className="h-4.5 w-4.5 text-white" />
+            </div>
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">What Happens During Suspension</h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                { icon: Pause, title: "Operations Paused", description: "All business operations will be temporarily disabled" },
+                { icon: Shield, title: "Data Protected", description: "All your business data remains secure and intact" },
+                { icon: Users, title: "Access Limited", description: "Team members will have limited access" },
+                { icon: Play, title: "Easy Reactivation", description: "Reactivate anytime with a single click" },
+              ].map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <div key={idx} className="flex items-start gap-3 p-4 bg-stone-50 rounded-xl border border-gray-100">
+                    <div className="w-9 h-9 bg-white rounded-xl border border-gray-100 flex items-center justify-center flex-shrink-0">
+                      <Icon className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{item.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* When to Use */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-5">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="w-9 h-9 bg-gray-900 rounded-xl flex items-center justify-center">
+              <Calendar className="h-4.5 w-4.5 text-white" />
+            </div>
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">When to Use Suspension</h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                "Seasonal breaks or temporary closures",
+                "Staff vacations or reduced capacity periods",
+                "System maintenance or platform updates",
+                "Rebranding phases or business restructuring",
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-gray-100">
+                  <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-bold text-white">{idx + 1}</span>
+                  </div>
+                  <span className="text-sm text-gray-600">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Help Toggle */}
+        <button
+          onClick={toggleHelp}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 mb-5 transition-colors"
+          type="button"
+        >
+          <HelpCircle className="h-4 w-4" />
+          {showHelp ? "Hide guidance" : "Need help? Click for guidance"}
+          <ChevronDown className={`h-4 w-4 transition-transform ${showHelp ? "rotate-180" : ""}`} />
+        </button>
+
+        {/* Help Section */}
+        <AnimatePresence>
+          {showHelp && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden mb-5"
             >
-              <HelpCircle className="h-4 w-4" aria-hidden="true" />
-              {showHelp ? "Hide help" : "Need help? Click for guidance"}
-            </button>
-
-            {/* Help Section */}
-            {showHelp && (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 animate-slideDown">
-                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <Info className="h-4 w-4" aria-hidden="true" />
-                  Suspension Guidance
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-800">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                    <span>
-                      Business will be marked as inactive but all data is
-                      preserved
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                    <span>
-                      Team members won&apos;t be able to access business
-                      operations
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                    <span>
-                      You can reactivate at any time from the business dashboard
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                    <span>Billing will be paused during suspension period</span>
-                  </li>
-                </ul>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 bg-gray-900 rounded-xl flex items-center justify-center">
+                    <Info className="h-4.5 w-4.5 text-white" />
+                  </div>
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Suspension Guidance</h3>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { icon: CheckCircle, text: "Business will be marked as inactive but all data is preserved", color: "text-emerald-500" },
+                    { icon: CheckCircle, text: "Team members won't be able to access business operations", color: "text-emerald-500" },
+                    { icon: CheckCircle, text: "You can reactivate at any time from the business dashboard", color: "text-emerald-500" },
+                    { icon: AlertCircle, text: "Billing will be paused during suspension period", color: "text-amber-500" },
+                  ].map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={idx} className="flex items-start gap-3 p-3 bg-stone-50 rounded-xl border border-gray-100">
+                        <Icon className={`h-4 w-4 flex-shrink-0 mt-0.5 ${item.color}`} />
+                        <span className="text-sm text-gray-600">{item.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* Reason Input */}
-            <div className="mb-6">
+        {/* Reason Input */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-5">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Suspension Details</h2>
+          </div>
+          <div className="p-6 space-y-5">
+            <div>
               <label htmlFor="suspension-reason" className={labelClass}>
-                Reason for Suspension{" "}
-                <span className="text-gray-400 text-sm font-normal">
-                  (Optional)
-                </span>
+                Reason for Suspension <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <textarea
                 id="suspension-reason"
@@ -330,23 +259,17 @@ const SuspendBusinessPage = () => {
                 onChange={handleReasonChange}
                 placeholder="Briefly describe why you're suspending the business..."
                 rows={3}
-                className={inputClass}
-                aria-label="Reason for suspension"
+                className={`${inputClass} resize-none`}
               />
-              <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
-                <Info className="h-4 w-4" aria-hidden="true" />
+              <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+                <Info className="h-3 w-3" />
                 This helps us understand your needs and provide better support
               </p>
             </div>
 
-            {/* Confirmation Input */}
-            <div className="mb-8">
+            <div>
               <label htmlFor="confirm-text" className={labelClass}>
-                Type{" "}
-                <span className="font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
-                  SUSPEND
-                </span>{" "}
-                to confirm this action
+                Type <span className="font-mono text-gray-800 bg-gray-100 px-2 py-0.5 rounded-md">SUSPEND</span> to confirm
               </label>
               <div className="relative">
                 <input
@@ -356,87 +279,55 @@ const SuspendBusinessPage = () => {
                   onChange={handleConfirmChange}
                   placeholder="Enter SUSPEND to confirm"
                   className={`${inputClass} font-mono pr-10`}
-                  aria-label="Confirmation text"
                 />
                 {confirmText === "SUSPEND" && (
-                  <CheckCircle
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500"
-                    aria-hidden="true"
-                  />
+                  <CheckCircle className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
                 )}
               </div>
-              <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
-                <Shield className="h-4 w-4" aria-hidden="true" />
-                This verification ensures you understand this is a temporary
-                suspension
+              <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                This verification ensures you understand this is a temporary suspension
               </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t border-gray-200">
-              <Link
-                href="/business"
-                className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-center focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                aria-label="Cancel suspension"
-              >
-                Cancel
-              </Link>
-
-              <button
-                onClick={handleSuspendBusiness}
-                onKeyDown={(e) => handleKeyDown(e, handleSuspendBusiness)}
-                disabled={isSuspending || confirmText !== "SUSPEND"}
-                className="px-8 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-medium rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center min-w-[180px] shadow-lg shadow-gray-500/25"
-                aria-label="Suspend business"
-                type="button"
-              >
-                {isSuspending ? (
-                  <>
-                    <Loader2
-                      className="h-4 w-4 mr-2 animate-spin"
-                      aria-hidden="true"
-                    />
-                    <span>Suspending...</span>
-                  </>
-                ) : (
-                  <>
-                    <Pause className="h-4 w-4 mr-2" aria-hidden="true" />
-                    <span>Suspend Business</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Additional Information */}
-        <div className="text-center mt-8">
-          <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-2xl p-8 max-w-2xl mx-auto shadow-lg">
-            <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-4 border border-gray-200">
-              <Play className="h-6 w-6 text-gray-600" aria-hidden="true" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2 text-lg flex items-center justify-center gap-2">
-              Quick Reactivation Available
-            </h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              You can reactivate your business anytime from the business
-              dashboard. All your data and settings will be preserved exactly as
-              you left them.
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
-              <RefreshCw className="h-3 w-3" aria-hidden="true" />
-              <span>Zero data loss • Instant reactivation</span>
-            </div>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-end">
+          <Link
+            href="/business"
+            className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition text-center"
+          >
+            Cancel
+          </Link>
+          <button
+            onClick={handleSuspendBusiness}
+            disabled={isSuspending || confirmText !== "SUSPEND"}
+            className="px-6 py-2.5 bg-amber-600 text-white text-sm font-bold rounded-xl hover:bg-amber-700 transition-all shadow-md shadow-amber-600/15 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 min-w-[180px]"
+            type="button"
+          >
+            {isSuspending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Suspending...
+              </>
+            ) : (
+              <>
+                <Pause className="h-4 w-4" />
+                Suspend Business
+              </>
+            )}
+          </button>
         </div>
 
         {/* Footer Note */}
-        <footer className="text-center mt-8 pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-500">
-            Need help? Contact our support team for assistance
-          </p>
-        </footer>
-      </div>
+        <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <RefreshCw className="h-3.5 w-3.5 text-gray-400" />
+            <span className="text-xs text-gray-500">Zero data loss • Instant reactivation</span>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
