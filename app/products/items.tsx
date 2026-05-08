@@ -910,7 +910,7 @@ const ManageProducts = ({ user }: { user: User }) => {
   return (
     <div className="min-h-screen bg-[#f5f5f4]">
       {/* Header */}
-      <header className="bg-white border-b border-stone-100 top-0 z-10">
+      <header className="bg-white border-b border-stone-100 top-0 z-10 mt-[-13px] w-full">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

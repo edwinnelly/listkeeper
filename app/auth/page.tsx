@@ -1,109 +1,92 @@
 "use client";
-import React, { useState, FormEvent, useEffect, useRef } from "react";
+import React, { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image"; // Added for image optimization
 import { useRouter } from "next/navigation";
-import { 
+import {
   MailRegular,
   LockClosedRegular,
   EyeRegular,
   EyeOffRegular,
-  ChevronRightRegular,
-  InfoRegular,
   ShieldRegular,
   ErrorCircleRegular,
-  WindowRegular
+  ArrowRightRegular,
+  CheckmarkRegular,
 } from "@fluentui/react-icons";
 import { api, withCsrf } from "@/lib/axios";
 
-// Define proper types
+// ── Types ──────────────────────────────────────────────────────────────────
+
 interface User {
   id: number;
   name: string;
   email: string;
 }
 
-// Define error response type
-interface ErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
+interface ApiError {
+  response?: { data?: { message?: string } };
   message?: string;
 }
 
+// ── Design tokens: Dark Blue & Black Theme ─────────────────────────────────
+
+const T = {
+  black:      "#000000",
+  surface:    "#0a0e17",      // Deep navy-black
+  surface2:   "#111827",      // Dark blue-gray
+  border:     "rgba(255,255,255,0.06)",
+  borderHover:"rgba(96,165,250,0.35)",
+  blue:       "#3b82f6",      // Electric blue primary
+  blueHover:  "#60a5fa",      // Lighter blue for hover
+  blueGlow:   "rgba(59,130,246,0.18)",
+  blueDeep:   "#1d4ed8",      // Darker blue for depth
+  white:      "#ffffff",
+  muted:      "rgba(255,255,255,0.42)",
+  faint:      "rgba(255,255,255,0.18)",
+  error:      "#f87171",
+  errorBg:    "rgba(248,113,113,0.10)",
+  errorBdr:   "rgba(248,113,113,0.25)",
+};
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const STATS = [
+  { value: "15K+", label: "Products" },
+  { value: "500+", label: "Warehouses" },
+  { value: "99.8%", label: "Accuracy" },
+];
+
+const FEATURES = [
+  "Real-time stock visibility across all branches",
+  "Automated low-stock alerts & reorder triggers",
+  "Role-based access with full audit logs",
+];
+
+// Dark industrial warehouse image with blue-toned overlay
+const PHOTO = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=85&auto=format&fit=crop";
+
+// ── Stagger variants ───────────────────────────────────────────────────────
+
+const stagger = {
+  container: { animate: { transition: { staggerChildren: 0.08 } } },
+  item: {
+    initial: { opacity: 0, y: 18 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
+  },
+};
+
+// ── Component ──────────────────────────────────────────────────────────────
+
 const LoginPage: React.FC = () => {
   const router = useRouter();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [rememberMe, setRememberMe] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  // Handle scroll events for the page
-  useEffect(() => {
-    const handleScroll = () => {
-      if (containerRef.current) {
-        const scrollTop = containerRef.current.scrollTop;
-        setIsScrolled(scrollTop > 20);
-      }
-    };
-
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener("scroll", handleScroll);
-      return () => container.removeEventListener("scroll", handleScroll);
-    }
-  }, []);
-
-  // Handle hash changes for in-page navigation
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash) {
-        const element = document.getElementById(window.location.hash.substring(1));
-        if (element && containerRef.current) {
-          const container = containerRef.current;
-          // Get element position
-          element.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          
-          container.scrollTo({
-            top: element.offsetTop - containerRect.top + container.scrollTop,
-            behavior: 'smooth'
-          });
-        }
-      }
-    };
-
-    // Initial check
-    handleHashChange();
-    
-    // Listen for hash changes
-    window.addEventListener("hashchange", handleHashChange);
-    
-    return () => {
-      window.removeEventListener("hashchange", handleHashChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const [email, setEmail]           = useState("");
+  const [password, setPassword]     = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPwd, setShowPwd]       = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState("");
+  const [focused, setFocused]       = useState<"email" | "password" | null>(null);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -111,386 +94,542 @@ const LoginPage: React.FC = () => {
     setError("");
     try {
       await withCsrf(() =>
-        api.post("/login", { email, password }, { withCredentials: true })
+        api.post("/login", { email, password, remember: rememberMe }, { withCredentials: true })
       );
-
-      // Option 1: Remove the unused variable (recommended)
-      // Just verify the session is established without storing the user
-      await withCsrf(() =>
-        api.get<User>("/user", { withCredentials: true })
-      );
-
-      // Option 2: If you need the user data later, uncomment this:
-      // const { data: user } = await withCsrf(() =>
-      //   api.get<User>("/user", { withCredentials: true })
-      // );
-      // You can store user in context or state here
-      
+      await api.get<User>("/user", { withCredentials: true });
       router.push("/dashboard");
     } catch (err: unknown) {
-      // Properly type the error
-      const error = err as ErrorResponse;
-      setError(error.response?.data?.message || "Login failed. Please try again.");
+      const e = err as ApiError;
+      setError(e.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !loading) {
-      const form = e.currentTarget.closest("form");
-      form?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
-    }
-  };
+  const inputStyle = (f: "email" | "password") => ({
+    display: "flex" as const,
+    alignItems: "center" as const,
+    gap: 12,
+    padding: "13px 16px",
+    borderRadius: 10,
+    background: T.surface2,
+    border: `1px solid ${focused === f ? T.blue : T.border}`,
+    boxShadow: focused === f ? `0 0 0 3px ${T.blueGlow}` : "none",
+    transition: "border 0.15s ease, box-shadow 0.15s ease",
+  });
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-gray-50 z-50">
-        <div className="flex flex-col items-center">
-          <div className="relative">
-            <div className="h-14 w-14 rounded-full border-2 border-slate-200"></div>
-            <div className="absolute top-0 left-0 h-14 w-14 rounded-full border-2 border-gray-600 border-t-transparent animate-spin"></div>
-          </div>
-          <p className="mt-4 text-slate-600 text-sm font-medium text-center">Accessing inventory system...</p>
-        </div>
-      </div>
-    );
-  }
+  const canSubmit = !loading && email.trim() && password.trim();
 
   return (
-    <div className="relative" style={{ height: '100vh' }}>
-      {/* Fixed Background */}
-      <div className="fixed inset-0 -z-10">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url("/asset/similar-10073860.webp")' }}
+    <>
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; }
+
+        html, body { background: #000; }
+
+        .lk-root {
+          font-family: 'Barlow', sans-serif;
+          min-height: 100dvh;
+          display: flex;
+          flex-direction: column;
+          background: ${T.black};
+        }
+        @media (min-width: 1024px) { .lk-root { flex-direction: row; } }
+
+        .lk-display { font-family: 'Unbounded', sans-serif; }
+        .lk-mono    { font-family: 'Space Mono', monospace; }
+
+        /* ── Input ── */
+        .lk-input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          font-family: 'Barlow', sans-serif;
+          font-size: 15px;
+          font-weight: 500;
+          color: ${T.white};
+          min-width: 0;
+        }
+        .lk-input::placeholder { color: ${T.faint}; }
+        .lk-input:disabled     { opacity: 0.4; }
+
+        /* ── Icon button ── */
+        .lk-icon-btn {
+          background: none; border: none; cursor: pointer;
+          padding: 3px; display: flex; flex-shrink: 0;
+          color: ${T.muted}; transition: color 0.15s ease;
+        }
+        .lk-icon-btn:hover { color: ${T.white}; }
+        .lk-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── Submit button ── */
+        .lk-btn {
+          width: 100%; padding: 15px 20px; border-radius: 10px; border: none;
+          font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 600;
+          letter-spacing: 0.03em; display: flex; align-items: center;
+          justify-content: center; gap: 8px; cursor: pointer;
+          transition: opacity 0.2s ease, transform 0.1s ease, background 0.2s ease;
+        }
+        .lk-btn-active {
+          background: ${T.blue}; color: ${T.white};
+        }
+        .lk-btn-active:hover { 
+          background: ${T.blueHover}; 
+          box-shadow: 0 4px 20px ${T.blueGlow};
+        }
+        .lk-btn-disabled {
+          background: ${T.surface2}; color: ${T.faint}; cursor: not-allowed;
+          border: 1px solid ${T.border};
+        }
+
+        /* ── Checkbox ── */
+        .lk-checkbox {
+          width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; background: none; border: none;
+          transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        /* ── Spinner ── */
+        @keyframes lk-spin { to { transform: rotate(360deg); } }
+        .lk-spinner {
+          width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+          border: 2px solid rgba(255,255,255,0.15); border-top-color: ${T.blue};
+          animation: lk-spin 0.75s linear infinite;
+        }
+
+        /* ── Photo grain ── */
+        .lk-photo-wrap::after {
+          content: '';
+          position: absolute; inset: 0; z-index: 3;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          opacity: 0.025; pointer-events: none; mix-blend-mode: screen;
+        }
+
+        /* ── Scan lines (subtle) ── */
+        .lk-scanlines::before {
+          content: '';
+          position: absolute; inset: 0; z-index: 10; pointer-events: none;
+          background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.04) 2px,
+            rgba(0,0,0,0.04) 4px
+          );
+        }
+
+        /* ── Scrollbar ── */
+        .lk-form-panel::-webkit-scrollbar { width: 4px; }
+        .lk-form-panel::-webkit-scrollbar-track { background: transparent; }
+        .lk-form-panel::-webkit-scrollbar-thumb { background: ${T.surface2}; border-radius: 4px; }
+        .lk-form-panel::-webkit-scrollbar-thumb:hover { background: ${T.blueDeep}; }
+
+        /* ── Divider ── */
+        .lk-divider {
+          height: 1px; background: ${T.border}; margin: 24px 0;
+        }
+
+        /* ── Link ── */
+        .lk-link { color: ${T.blue}; font-weight: 500; text-decoration: none; transition: opacity 0.15s ease; }
+        .lk-link:hover { opacity: 0.8; color: ${T.blueHover}; }
+        .lk-link-white { color: ${T.white}; font-weight: 600; text-decoration: none; transition: opacity 0.15s ease; }
+        .lk-link-white:hover { opacity: 0.75; }
+        .lk-link-muted { color: ${T.muted}; text-decoration: none; transition: opacity 0.15s ease; }
+        .lk-link-muted:hover { opacity: 0.8; color: ${T.white}; }
+
+        /* ── Focus ring for accessibility ── */
+        .lk-input:focus-visible,
+        .lk-checkbox:focus-visible,
+        .lk-icon-btn:focus-visible,
+        .lk-btn:focus-visible {
+          outline: 2px solid ${T.blue};
+          outline-offset: 2px;
+        }
+      `}</style>
+
+      <div className="lk-root">
+
+        {/* ════════════════════════════════════════════════════════════
+            LEFT PANEL — Photo + Brand (desktop)
+        ════════════════════════════════════════════════════════════ */}
+        <motion.div
+          className="lk-photo-wrap hidden lg:flex flex-col relative overflow-hidden"
+          style={{ width: "46%", minHeight: "100dvh", background: T.black }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-gray-800/80 to-gray-700/70" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-        </div>
-      </div>
-      
-      {/* Scrollable Container */}
-      <div 
-        ref={containerRef}
-        className="h-full overflow-y-auto"
-        style={{
-          scrollBehavior: 'smooth',
-          WebkitOverflowScrolling: 'touch'
-        }}
-      >
-        {/* Content */}
-        <div className="min-h-full flex flex-col">
-          {/* Optional Sticky Navbar */}
-          <motion.nav
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            className={`sticky top-0 z-30 transition-all duration-300 ${
-              isScrolled ? 'bg-white/10 backdrop-blur-md border-b border-white/20' : 'bg-transparent'
-            }`}
+          {/* Photo — dark overlay with blue tint */}
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 0,
+            backgroundImage: `url('${PHOTO}')`,
+            backgroundSize: "cover", backgroundPosition: "center",
+          }} />
+          {/* Blue-tinted dark overlay */}
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 1,
+            background: "linear-gradient(135deg, rgba(10,14,23,0.95) 0%, rgba(17,24,39,0.85) 50%, rgba(29,78,216,0.15) 100%)",
+          }} />
+          {/* Bottom black fade */}
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 2, height: "55%",
+            background: "linear-gradient(to top, rgba(0,0,0,1) 0%, transparent 100%)",
+          }} />
+          {/* Right edge separator with blue glow */}
+          <div style={{
+            position: "absolute", top: "10%", right: 0, bottom: "10%", width: 1, zIndex: 5,
+            background: `linear-gradient(to bottom, transparent, ${T.blue}66, transparent)`,
+            boxShadow: `0 0 20px ${T.blueGlow}`,
+          }} />
+
+          {/* ── Left content ── */}
+          <motion.div
+            className="relative flex flex-col h-full px-12 py-11"
+            style={{ zIndex: 6 }}
+            variants={stagger.container}
+            initial="initial"
+            animate="animate"
           >
-            <div className="container mx-auto px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  {/* Fixed: Replaced img with Next.js Image */}
-                  <Image 
-                    src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
-                    alt="ListKeeping Logo" 
-                    width={32}
-                    height={32}
-                    className="h-8 w-8"
-                    priority
-                  />
-                  <span className="text-white font-bold text-lg">ListKeeping</span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Link
-                    href="/register"
-                    className="text-white hover:text-gray-200 text-sm transition-colors font-medium"
-                  >
-                    Register
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </motion.nav>
-
-          {/* Main Content */}
-          <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-            <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8 lg:gap-12">
-              {/* Left Side - Inventory System Info */}
-              {!isMobile && (
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className="lg:w-2/5 flex flex-col justify-center text-white"
-                >
-                  <div className="space-y-6 md:space-y-8 p-4 md:p-6 lg:p-8">
-                    <div className="flex items-center space-x-3">
-                      {/* Fixed: Replaced img with Next.js Image */}
-                      <Image 
-                        src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/44_Bitbucket_logo_logos-256.png" 
-                        alt="ListKeeping Logo" 
-                        width={isTablet ? 40 : 56}
-                        height={isTablet ? 40 : 56}
-                        className={`${isTablet ? 'h-10' : 'h-12 lg:h-14'} w-auto`}
-                        priority
-                      />
-                      <span className={`${isTablet ? 'text-2xl' : 'text-3xl lg:text-4xl'} font-bold`}>ListKeeping</span>
-                    </div>
-                    
-                    <div className="space-y-4 md:space-y-6">
-                      <h1 className={`${isTablet ? 'text-3xl' : 'text-4xl lg:text-3xl'} font-bold leading-tight`}>
-                        Streamline Your Stock Control
-                      </h1>
-                      <p className={`${isTablet ? 'text-base' : 'text-lg lg:text-xl'} opacity-90`}>
-                        Access real-time inventory tracking, automated stock alerts, and comprehensive warehouse management tools.
-                      </p>
-                    </div>
-
-                    <div className="space-y-4 md:space-y-6 pt-4 md:pt-8">
-                      <div className="flex items-start space-x-3">
-                        <div className="p-2 bg-white/10 rounded-lg flex-shrink-0">
-                          <ShieldRegular className={`${isTablet ? 'w-5 h-5' : 'w-6 h-6'}`} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className={`${isTablet ? 'text-base' : 'text-lg'} font-semibold`}>Inventory Security</h3>
-                          <p className={`${isTablet ? 'text-sm' : 'text-base'} text-white/80`}>Role-based access control to protect your stock data</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <div className="p-2 bg-white/10 rounded-lg flex-shrink-0">
-                          <InfoRegular className={`${isTablet ? 'w-5 h-5' : 'w-6 h-6'}`} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className={`${isTablet ? 'text-base' : 'text-lg'} font-semibold`}>Real-Time Analytics</h3>
-                          <p className={`${isTablet ? 'text-sm' : 'text-base'} text-white/80`}>Monitor stock levels and turnover rates across all locations</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 md:pt-8">
-                      <div className={`flex ${isTablet ? 'flex-wrap gap-4' : 'items-center space-x-4'} text-sm text-white/70`}>
-                        <div className={`${isTablet ? 'w-1/3 min-w-[100px]' : 'text-center'}`}>
-                          <div className="text-lg font-bold">15K+</div>
-                          <div>Products Tracked</div>
-                        </div>
-                        {!isTablet && <div className="h-8 w-px bg-white/30"></div>}
-                        <div className={`${isTablet ? 'w-1/3 min-w-[100px]' : 'text-center'}`}>
-                          <div className="text-lg font-bold">500+</div>
-                          <div>Warehouses</div>
-                        </div>
-                        {!isTablet && <div className="h-8 w-px bg-white/30"></div>}
-                        <div className={`${isTablet ? 'w-1/3 min-w-[100px]' : 'text-center'}`}>
-                          <div className="text-lg font-bold">99.8%</div>
-                          <div>Accuracy Rate</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Right Side - Login Form */}
-              <motion.div
-                initial={{ opacity: 0, x: isMobile ? 0 : 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: isMobile ? 0 : 0.2 }}
-                className={`${isMobile ? 'w-full' : 'lg:w-3/5'} ${isTablet ? 'w-full' : ''}`}
+            {/* Brand */}
+            <motion.div variants={stagger.item} className="flex items-center gap-3">
+              <div
+                className="lk-display flex items-center justify-center"
+                style={{
+                  width: 40, height: 40, borderRadius: 8,
+                  background: T.blue, color: T.white,
+                  fontSize: "0.78rem", letterSpacing: "0.04em",
+                  boxShadow: `0 4px 14px ${T.blueGlow}`,
+                }}
               >
-                <div className="bg-white/95 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 lg:p-10 border border-white/20">
-                  <div className="mb-6 md:mb-8">
-                    <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-slate-900 text-center`}>
-                      ListKeeping
-                    </h2>
-                    <p className="text-slate-600 mt-2 text-center text-sm sm:text-base">
-                      Sign in to control and track your inventory
-                    </p>
+                LK
+              </div>
+              <span className="lk-mono" style={{ color: T.white, fontSize: "1rem", letterSpacing: "0.06em" }}>
+                LISTKEEPING
+              </span>
+            </motion.div>
+
+            <div style={{ flex: 1 }} />
+
+            {/* Tag */}
+            <motion.p
+              variants={stagger.item}
+              className="lk-mono"
+              style={{ fontSize: 9, letterSpacing: "0.25em", color: T.blue, textTransform: "uppercase", marginBottom: 18 }}
+            >
+              // inventory management system
+            </motion.p>
+
+            {/* Hero heading */}
+            <motion.h1
+              variants={stagger.item}
+              className="lk-display"
+              style={{
+                fontSize: "clamp(3.2rem, 4.8vw, 5rem)",
+                color: T.white,
+                lineHeight: "0.95",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              FULL<br />STOCK<br />
+              <span style={{ color: T.blue, textShadow: `0 0 30px ${T.blueGlow}` }}>CONTROL.</span>
+            </motion.h1>
+
+            {/* Subtext */}
+            <motion.p
+              variants={stagger.item}
+              style={{
+                fontSize: 13, color: T.muted, lineHeight: 1.7,
+                maxWidth: 265, marginTop: 20,
+                fontWeight: 400,
+              }}
+            >
+              Real-time inventory tracking across all your branches,
+              warehouses, and distribution points.
+            </motion.p>
+
+            {/* Features */}
+            <motion.ul
+              variants={stagger.item}
+              style={{ listStyle: "none", padding: 0, marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}
+            >
+              {FEATURES.map((f) => (
+                <li key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: T.muted }}>
+                  <span style={{ width: 4, height: 4, borderRadius: "50%", background: T.blue, flexShrink: 0, boxShadow: `0 0 8px ${T.blueGlow}` }} />
+                  {f}
+                </li>
+              ))}
+            </motion.ul>
+
+            {/* Divider */}
+            <motion.div
+              variants={stagger.item}
+              style={{ height: 1, background: T.border, margin: "28px 0 24px" }}
+            />
+
+            {/* Stats */}
+            <motion.div
+              variants={stagger.item}
+              style={{ display: "flex", gap: 32 }}
+            >
+              {STATS.map((s) => (
+                <div key={s.value}>
+                  <div className="lk-display" style={{ fontSize: "1.9rem", color: T.blue, lineHeight: 1, textShadow: `0 0 20px ${T.blueGlow}` }}>
+                    {s.value}
                   </div>
-
-                  <form className="space-y-4 sm:space-y-6" onSubmit={handleLogin}>
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="flex items-start p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg"
-                        >
-                          <ErrorCircleRegular className="text-red-600 w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-red-600">{error}</span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        Email Address
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="inventory@company.com"
-                          className="w-full px-4 py-3 pl-11 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
-                          required
-                          disabled={loading}
-                        />
-                        <MailRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-slate-700">
-                          Password
-                        </label>
-                        <Link
-                          href="/forgetpwd"
-                          className="text-sm text-gray-600 hover:text-gray-800 transition-colors font-medium"
-                        >
-                          Forgot password?
-                        </Link>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="Enter your inventory system password"
-                          className="w-full px-4 py-3 pl-11 pr-10 rounded-lg border border-slate-300 focus:border-gray-600 focus:ring-2 focus:ring-gray-600/20 outline-none transition-all bg-white text-sm sm:text-base"
-                          required
-                          disabled={loading}
-                        />
-                        <LockClosedRegular className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
-                          disabled={loading}
-                          aria-label={showPassword ? "Hide password" : "Show password"}
-                        >
-                          {showPassword ? (
-                            <EyeOffRegular className="w-5 h-5" />
-                          ) : (
-                            <EyeRegular className="w-5 h-5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="rounded border-slate-300 text-gray-600 focus:ring-gray-600 w-4 h-4"
-                          disabled={loading}
-                        />
-                        <span className="text-sm text-slate-600">Remember this warehouse terminal</span>
-                      </label>
-                      <div className="text-xs text-slate-500">
-                        <ShieldRegular className="w-3 h-3 inline mr-1" />
-                        Secure inventory access
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-gradient-to-r from-gray-600 to-gray-800 text-white py-3 sm:py-4 rounded-lg font-semibold hover:from-gray-700 hover:to-gray-900 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 sm:space-x-3 shadow-lg text-sm sm:text-base"
-                    >
-                      {loading ? (
-                        <>
-                          <div className="h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Accessing Inventory...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Login</span>
-                          <ChevronRightRegular className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </>
-                      )}
-                    </button>
-
-                    <div className="relative my-4 sm:my-6">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-300"></div>
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-3 bg-white text-slate-500 text-xs sm:text-sm">Alternative access methods</span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="w-full py-2 sm:py-3 rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center space-x-2 sm:space-x-3 shadow-sm text-sm sm:text-base"
-                      disabled={loading}
-                    >
-                      <WindowRegular className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                      <span className="text-slate-700 font-medium">Warehouse Terminal Login</span>
-                    </button>
-
-                    <div className="text-center space-y-1">
-                      <p className="text-xs text-slate-500">
-                        <InfoRegular className="w-3 h-3 inline mr-1" />
-                        By accessing the inventory system, you agree to our{" "}
-                        <Link href="/terms" className="text-gray-600 hover:underline font-medium inline">
-                          Inventory Management Policy
-                        </Link>{" "}
-                        and{" "}
-                        <Link href="/privacy" className="text-gray-600 hover:underline font-medium inline">
-                          Data Security Agreement
-                        </Link>
-                      </p>
-                    </div>
-                  </form>
-
-                  <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-200">
-                    <p className="text-center text-slate-600 text-sm sm:text-base">
-                      Need inventory system access?{" "}
-                      <Link
-                        href="/register"
-                        className="text-gray-600 hover:text-gray-800 font-semibold transition-colors inline"
-                      >
-                        Register New Account
-                      </Link>
-                    </p>
-                    <p className="text-center text-xs text-slate-500 mt-2 break-words px-2">
-                      Contact Inventory Support: inventory-support@company.com
-                    </p>
+                  <div className="lk-mono" style={{ fontSize: 9, color: T.faint, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4 }}>
+                    {s.label}
                   </div>
                 </div>
-              </motion.div>
+              ))}
+            </motion.div>
+
+            <motion.p
+              variants={stagger.item}
+              className="lk-mono"
+              style={{ fontSize: 10, color: T.faint, marginTop: 24 }}
+            >
+              © {new Date().getFullYear()} ListKeeping
+            </motion.p>
+          </motion.div>
+        </motion.div>
+
+        {/* ════════════════════════════════════════════════════════════
+            MOBILE — Top photo strip
+        ════════════════════════════════════════════════════════════ */}
+        <div
+          className="lk-photo-wrap lg:hidden relative overflow-hidden"
+          style={{ height: 180, flexShrink: 0, background: T.black }}
+        >
+          <div style={{
+            position: "absolute", inset: 0,
+            backgroundImage: `url('${PHOTO}')`,
+            backgroundSize: "cover", backgroundPosition: "center 30%",
+          }} />
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 1,
+            background: "linear-gradient(to bottom, rgba(10,14,23,0.7), rgba(0,0,0,0.95))",
+          }} />
+          <div className="relative flex items-end h-full px-6 pb-5" style={{ zIndex: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                className="lk-display flex items-center justify-center"
+                style={{ width: 34, height: 34, borderRadius: 7, background: T.blue, color: T.white, fontSize: "0.72rem", boxShadow: `0 3px 10px ${T.blueGlow}` }}
+              >
+                LK
+              </div>
+              <span className="lk-mono" style={{ color: T.white, fontSize: "0.9rem", letterSpacing: "0.06em" }}>
+                LISTKEEPING
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Footer */}
-          <footer className="py-4 px-4 border-t border-white/10 mt-8">
-            <div className="container mx-auto">
-              <p className="text-center text-white/60 text-sm">
-                &copy; {new Date().getFullYear()} ListKeeping. All rights reserved.
+        {/* ════════════════════════════════════════════════════════════
+            RIGHT PANEL — Form
+        ════════════════════════════════════════════════════════════ */}
+        <div
+          className="lk-form-panel flex-1 flex flex-col items-center justify-center overflow-y-auto"
+          style={{
+            background: T.black,
+            padding: "clamp(32px, 5vw, 80px) clamp(20px, 5vw, 72px)",
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.18 }}
+            style={{ width: "100%", maxWidth: 400 }}
+          >
+            {/* Heading */}
+            <div style={{ marginBottom: 36 }}>
+              <p
+                className="lk-mono"
+                style={{ fontSize: 9, letterSpacing: "0.2em", color: T.blue, marginBottom: 12, textTransform: "uppercase" }}
+              >
+                // welcome back
+              </p>
+              <h2
+                className="lk-display"
+                style={{ fontSize: "3rem", color: T.white, letterSpacing: "-0.01em", lineHeight: 1 }}
+              >
+                SIGN IN
+              </h2>
+              <p style={{ fontSize: 14, color: T.muted, marginTop: 10, fontWeight: 400 }}>
+                Access your inventory dashboard.
               </p>
             </div>
-          </footer>
+
+            {/* Error */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, height: "auto", marginBottom: 20 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: 9,
+                    padding: "12px 14px", borderRadius: 10,
+                    background: T.errorBg, border: `1px solid ${T.errorBdr}`,
+                    color: T.error, fontSize: 13,
+                  }}
+                >
+                  <ErrorCircleRegular style={{ width: 15, height: 15, flexShrink: 0, marginTop: 1 }} />
+                  <span style={{ fontWeight: 500 }}>{error}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Form ── */}
+            <form onSubmit={handleLogin} noValidate style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="lk-email"
+                  className="lk-mono"
+                  style={{ display: "block", fontSize: 10, letterSpacing: "0.14em", color: T.muted, marginBottom: 8, textTransform: "uppercase" }}
+                >
+                  Email Address
+                </label>
+                <div style={inputStyle("email")}>
+                  <MailRegular style={{ width: 15, height: 15, flexShrink: 0, color: focused === "email" ? T.blue : T.faint, transition: "color 0.15s ease" }} />
+                  <input
+                    id="lk-email"
+                    type="email"
+                    className="lk-input"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocused("email")}
+                    onBlur={() => setFocused(null)}
+                    placeholder="you@company.com"
+                    autoComplete="email"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <label
+                    htmlFor="lk-password"
+                    className="lk-mono"
+                    style={{ fontSize: 10, letterSpacing: "0.14em", color: T.muted, textTransform: "uppercase" }}
+                  >
+                    Password
+                  </label>
+                  <Link href="/forgetpwd" className="lk-link" style={{ fontSize: 12 }}>
+                    Forgot password?
+                  </Link>
+                </div>
+                <div style={inputStyle("password")}>
+                  <LockClosedRegular style={{ width: 15, height: 15, flexShrink: 0, color: focused === "password" ? T.blue : T.faint, transition: "color 0.15s ease" }} />
+                  <input
+                    id="lk-password"
+                    type={showPwd ? "text" : "password"}
+                    className="lk-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setFocused("password")}
+                    onBlur={() => setFocused(null)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    required
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    className="lk-icon-btn"
+                    onClick={() => setShowPwd((v) => !v)}
+                    disabled={loading}
+                    aria-label={showPwd ? "Hide password" : "Show password"}
+                  >
+                    {showPwd
+                      ? <EyeOffRegular style={{ width: 15, height: 15 }} />
+                      : <EyeRegular style={{ width: 15, height: 15 }} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember me */}
+              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={rememberMe}
+                  onClick={() => setRememberMe((v) => !v)}
+                  disabled={loading}
+                  className="lk-checkbox"
+                  style={{
+                    border: rememberMe ? "none" : `1.5px solid ${T.border}`,
+                    background: rememberMe ? T.blue : T.surface2,
+                  }}
+                >
+                  {rememberMe && <CheckmarkRegular style={{ width: 11, height: 11, color: T.white }} />}
+                </button>
+                <span style={{ fontSize: 13, color: T.muted, fontWeight: 400 }}>
+                  Keep me signed in for 30 days
+                </span>
+              </label>
+
+              {/* Submit */}
+              <motion.button
+                type="submit"
+                disabled={!canSubmit}
+                whileTap={canSubmit ? { scale: 0.975 } : {}}
+                className={`lk-btn ${canSubmit ? "lk-btn-active" : "lk-btn-disabled"}`}
+                style={{ marginTop: 4 }}
+              >
+                {loading ? (
+                  <>
+                    <span className="lk-spinner" />
+                    Signing in…
+                  </>
+                ) : (
+                  <>
+                    Sign in to Dashboard
+                    <ArrowRightRegular style={{ width: 16, height: 16 }} />
+                  </>
+                )}
+              </motion.button>
+            </form>
+
+            {/* Divider */}
+            <div className="lk-divider" />
+
+            {/* Register */}
+            <p style={{ textAlign: "center", fontSize: 14, color: T.muted }}>
+              New to ListKeeping?{" "}
+              <Link href="/register" className="lk-link-white">
+                Create an account
+              </Link>
+            </p>
+
+            {/* Security */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 18 }}>
+              <ShieldRegular style={{ width: 12, height: 12, flexShrink: 0, color: T.faint }} />
+              <span className="lk-mono" style={{ fontSize: 9, color: T.faint, letterSpacing: "0.08em" }}>
+                CSRF-PROTECTED · ENCRYPTED · ROLE-BASED ACCESS
+              </span>
+            </div>
+
+            {/* Legal */}
+            <p style={{ textAlign: "center", fontSize: 11, color: T.faint, marginTop: 14, lineHeight: 1.6 }}>
+              By signing in you agree to our{" "}
+              <Link href="/terms" className="lk-link-muted">Terms</Link>
+              {" & "}
+              <Link href="/privacy" className="lk-link-muted">Privacy Policy</Link>
+            </p>
+          </motion.div>
         </div>
       </div>
-
-      {/* Mobile-specific optimizations */}
-      {isMobile && (
-        <div className="fixed bottom-4 left-4 right-4 z-20">
-          <div className="bg-black/60 backdrop-blur-sm rounded-lg p-4 text-white text-center">
-            <p className="text-sm">ListKeeping • Professional Inventory Management</p>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 

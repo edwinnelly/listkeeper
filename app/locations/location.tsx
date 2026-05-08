@@ -860,7 +860,7 @@ const ManageLocations: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f5f5f4]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 top-0 z-40">
+      <header className="bg-white border-b border-gray-100 top-0 z-40 mt-[-13px] w-full">
         <div className="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors">

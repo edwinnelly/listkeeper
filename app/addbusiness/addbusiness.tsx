@@ -189,7 +189,7 @@ export default function AddBusinessPage({ loading }: AddBusinessPageProps) {
   return (
     <div className="min-h-screen bg-[#f5f5f4]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 top-0 z-40">
+      <header className="bg-white border-b border-gray-100 top-0 z-40 mt-[-13px] w-full">
         <div className="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link

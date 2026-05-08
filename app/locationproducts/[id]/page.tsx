@@ -1,7 +1,6 @@
 "use client";
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet } from "@/lib/axios";
-// import React, { useState, useEffect, useMemo } from "react";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Edit,
@@ -283,6 +282,7 @@ interface User {
 // Utility Functions
 // ==============================================
 
+/** Safely convert a potentially null/string/number value to a number. */
 const toNumber = (value: string | number | null | undefined): number => {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return value;
@@ -290,6 +290,7 @@ const toNumber = (value: string | number | null | undefined): number => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
+/** Format a date string (or null) to a human-readable date, returns "N/A" if empty. */
 const formatDate = (dateString: string | null): string => {
   if (!dateString) return "N/A";
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -299,36 +300,33 @@ const formatDate = (dateString: string | null): string => {
   });
 };
 
+/** Format a number using locale separators. */
 const formatNumber = (value: string | number | null | undefined): string => {
   const num = toNumber(value);
   return new Intl.NumberFormat("en-US").format(num);
 };
 
+/** Build full image URL from storage path. */
 const getImageUrl = (src: string | null): string => {
   if (!src) return "";
   return `http://localhost:8000/storage/${src}`;
 };
 
-// ==============================================
-// Custom Hooks
-// ==============================================
-
+/** Debounce a value by a given delay in milliseconds. */
 const useDebounce = <T,>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState(value);
-
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay);
     return () => clearTimeout(timer);
   }, [value, delay]);
-
   return debouncedValue;
 };
 
 // ==============================================
-// Sub-components
+// Sub‑components
 // ==============================================
 
-// Stat Card Component
+/** Small card for showing a statistic. */
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => {
   const colorClasses: Record<string, string> = {
     primary: "bg-[#1e3a5f]/10 text-[#1e3a5f]",
@@ -346,20 +344,14 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, tr
           <p className="text-normal font-bold text-stone-900 mt-0.5">{value}</p>
           {trend && (
             <p className="text-xs text-stone-500 mt-0.5">
-              <span
-                className={
-                  trend.value > 0 ? "text-emerald-600" : "text-rose-600"
-                }
-              >
+              <span className={trend.value > 0 ? "text-emerald-600" : "text-rose-600"}>
                 {trend.value > 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
               </span>{" "}
               {trend.label}
             </p>
           )}
         </div>
-        <div
-          className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}
-        >
+        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -367,21 +359,19 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, tr
   );
 };
 
-// Filter Chip Component
+/** Active/inactive chip filter button. */
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
     className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-      active
-        ? "bg-[#1e3a5f] text-white"
-        : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+      active ? "bg-[#1e3a5f] text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"
     }`}
   >
     {label}
   </button>
 );
 
-// Empty State Component
+/** Empty state placeholder. */
 const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon: Icon, action }) => (
   <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
     <div className="flex flex-col items-center text-center max-w-md mx-auto">
@@ -412,7 +402,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon: Icon,
   </div>
 );
 
-// Loading State Component
+/** Loading spinner with product icon. */
 const LoadingState: React.FC = () => (
   <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
     <div className="flex flex-col items-center justify-center">
@@ -426,16 +416,9 @@ const LoadingState: React.FC = () => (
   </div>
 );
 
-// Delete Modal Component
-const DeleteModal: React.FC<DeleteModalProps> = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  productName,
-  isSubmitting,
-}) => {
+/** Confirmation modal for deleting a product. */
+const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, onConfirm, productName, isSubmitting }) => {
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
@@ -445,15 +428,10 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
               <AlertTriangle className="w-7 h-7 text-rose-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-stone-900 mb-2">
-                Delete Product
-              </h2>
+              <h2 className="text-xl font-bold text-stone-900 mb-2">Delete Product</h2>
               <p className="text-stone-600 text-sm leading-relaxed">
                 Are you sure you want to delete{" "}
-                <span className="font-semibold text-stone-900">
-                  {productName}
-                </span>
-                ? This action cannot be undone.
+                <span className="font-semibold text-stone-900">{productName}</span>? This action cannot be undone.
               </p>
             </div>
             <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3 w-full">
@@ -491,24 +469,16 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
   );
 };
 
-// Product Image Component
+/** Product image component with fallback. */
 const ProductImage: React.FC<ProductImageProps> = ({ src, alt, className = "w-10 h-10" }) => {
   const [error, setError] = useState(false);
   const imageUrl = getImageUrl(src);
-
   return (
     <div
       className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden relative`}
     >
       {src && !error && imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={alt}
-          fill
-          className="object-cover"
-          sizes="40px"
-          onError={() => setError(true)}
-        />
+        <Image src={imageUrl} alt={alt} fill className="object-cover" sizes="40px" onError={() => setError(true)} />
       ) : (
         <Package className="h-5 w-5 text-[#1e3a5f]" />
       )}
@@ -516,24 +486,21 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, alt, className = "w-10
   );
 };
 
-// Stock Badge Component
+/** Shows stock status with colour and icon. */
 const StockBadge: React.FC<StockBadgeProps> = ({ product }) => {
   const stockQuantity = toNumber(product.stock_quantity);
   const lowStockThreshold = toNumber(product.low_stock_threshold) || 5;
 
   const getStatus = (): StockStatus => {
-    if (product.is_out_of_stock || stockQuantity <= 0) {
+    if (product.is_out_of_stock || stockQuantity <= 0)
       return { label: "Out of Stock", color: "error", icon: XCircle };
-    }
-    if (stockQuantity <= lowStockThreshold) {
+    if (stockQuantity <= lowStockThreshold)
       return { label: "Low Stock", color: "warning", icon: AlertCircle };
-    }
     return { label: "In Stock", color: "success", icon: CheckCircle };
   };
 
   const status = getStatus();
   const Icon = status.icon;
-
   const colorClasses = {
     success: "text-emerald-700 bg-emerald-50 border-emerald-200",
     warning: "text-amber-700 bg-amber-50 border-amber-200",
@@ -541,34 +508,25 @@ const StockBadge: React.FC<StockBadgeProps> = ({ product }) => {
   };
 
   return (
-    <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClasses[status.color]}`}
-    >
+    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClasses[status.color]}`}>
       <Icon className="h-3.5 w-3.5" />
       {status.label} ({formatNumber(stockQuantity)})
     </div>
   );
 };
 
-// Profit Trend Component
+/** Profit margin indicator with trend icon. */
 const ProfitTrend: React.FC<ProfitTrendProps> = ({ product }) => {
   const price = toNumber(product.price);
   const costPrice = toNumber(product.cost_price);
-
   if (!price || !costPrice) return null;
 
   const margin = ((price - costPrice) / costPrice) * 100;
-
   let Icon = Minus;
   let color = "text-amber-600";
 
-  if (margin > 20) {
-    Icon = TrendingUp;
-    color = "text-emerald-600";
-  } else if (margin < 10) {
-    Icon = TrendingDown;
-    color = "text-rose-600";
-  }
+  if (margin > 20) { Icon = TrendingUp; color = "text-emerald-600"; }
+  else if (margin < 10) { Icon = TrendingDown; color = "text-rose-600"; }
 
   return (
     <span className={`ml-2 inline-flex items-center gap-0.5 text-xs ${color}`}>
@@ -578,39 +536,27 @@ const ProfitTrend: React.FC<ProfitTrendProps> = ({ product }) => {
   );
 };
 
-// Pagination Component
+/** Pagination controls with page size selector. */
 const Pagination: React.FC<PaginationProps> = ({
-  currentPage,
-  totalPages,
-  totalItems,
-  startIndex,
-  endIndex,
-  itemsPerPage,
-  onPageChange,
-  onItemsPerPageChange,
+  currentPage, totalPages, totalItems, startIndex, endIndex,
+  itemsPerPage, onPageChange, onItemsPerPageChange,
 }) => {
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
-
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1);
-
       let start = Math.max(2, currentPage - 1);
       let end = Math.min(totalPages - 1, currentPage + 1);
-
       if (currentPage <= 3) end = Math.min(4, totalPages - 1);
       if (currentPage >= totalPages - 2) start = Math.max(totalPages - 3, 2);
-
       if (start > 2) pages.push("...");
       for (let i = start; i <= end; i++) pages.push(i);
       if (end < totalPages - 1) pages.push("...");
-
       if (totalPages > 1) pages.push(totalPages);
     }
-
     return pages;
   };
 
@@ -630,9 +576,7 @@ const Pagination: React.FC<PaginationProps> = ({
             className="px-2 py-1.5 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
           >
             {[10, 25, 50, 100].map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
+              <option key={value} value={value}>{value}</option>
             ))}
           </select>
           <span className="text-sm text-stone-600">per page</span>
@@ -643,18 +587,10 @@ const Pagination: React.FC<PaginationProps> = ({
       </div>
 
       <div className="flex items-center justify-center sm:justify-end gap-2">
-        <button
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button onClick={() => onPageChange(1)} disabled={currentPage === 1} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <ChevronsLeft className="h-4 w-4" />
         </button>
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <ChevronLeft className="h-4 w-4" />
         </button>
 
@@ -679,18 +615,10 @@ const Pagination: React.FC<PaginationProps> = ({
           ))}
         </div>
 
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <ChevronRight className="h-4 w-4" />
         </button>
-        <button
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <ChevronsRight className="h-4 w-4" />
         </button>
       </div>
@@ -698,75 +626,49 @@ const Pagination: React.FC<PaginationProps> = ({
   );
 };
 
-// Product Table Row Component
+/** Single row in the table view. */
 const ProductTableRow: React.FC<ProductTableRowProps> = ({
-  product,
-  index,
-  startIndex,
-  onView,
-  onEdit,
-  onDelete,
-  onHistory,
-  isOpen,
-  onToggleOpen,
-  formatCurrency,
+  product, index, startIndex, onView, onEdit, onDelete, onHistory,
+  isOpen, onToggleOpen, formatCurrency,
 }) => {
-  // Get product name from either product.name or product.product?.name
   const productName = product.product?.name || product.name || "";
   const productSku = product.product?.sku || product.sku || "";
   const productImage = product.product?.image || product.image || null;
 
   return (
     <tr className="hover:bg-stone-50/50 transition-colors group">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
-        {startIndex + index + 1}
-       </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">{startIndex + index + 1}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <ProductImage src={productImage} alt={productName} />
           <div>
-            <div className="font-medium text-stone-900">
-              <ShortTextWithTooltip text={productName} max={30} />
-            </div>
-            <div className="text-xs text-stone-500 flex items-center gap-1 mt-0.5">
-              <Hash className="h-3 w-3" />
-              {productSku}
-            </div>
+            <div className="font-medium text-stone-900"><ShortTextWithTooltip text={productName} max={30} /></div>
+            <div className="text-xs text-stone-500 flex items-center gap-1 mt-0.5"><Hash className="h-3 w-3" />{productSku}</div>
           </div>
         </div>
-       </td>
+      </td>
       <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-        <code className="text-xs bg-stone-100 px-2 py-1 rounded font-mono">
-          {productSku}
-        </code>
-       </td>
+        <code className="text-xs bg-stone-100 px-2 py-1 rounded font-mono">{productSku}</code>
+      </td>
       <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-        <span className="text-stone-600">
-          {product.category?.name || "Uncategorized"}
-        </span>
-       </td>
+        <span className="text-stone-600">{product.category?.name || "Uncategorized"}</span>
+      </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex flex-col">
-          <span className="font-semibold text-stone-900">
-            {formatCurrency(toNumber(product.price))}
-          </span>
+          <span className="font-semibold text-stone-900">{formatCurrency(toNumber(product.price))}</span>
           <ProfitTrend product={product} />
         </div>
-       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <StockBadge product={product} />
-       </td>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap"><StockBadge product={product} /></td>
       <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-        <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-            product.is_active
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-stone-100 text-stone-600 border border-stone-200"
-          }`}
-        >
+        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+          product.is_active
+            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+            : "bg-stone-100 text-stone-600 border border-stone-200"
+        }`}>
           {product.is_active ? "Active" : "Inactive"}
         </span>
-       </td>
+      </td>
       <td className="px-6 py-4 text-center relative">
         <button
           onClick={() => onToggleOpen(isOpen ? null : product.id)}
@@ -774,71 +676,34 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         >
           <MoreVertical className="h-4 w-4" />
         </button>
-
         {isOpen && (
           <>
-            <div
-              className="fixed inset-0 z-10"
-              onClick={() => onToggleOpen(null)}
-            />
+            <div className="fixed inset-0 z-10" onClick={() => onToggleOpen(null)} />
             <div className="absolute right-6 z-40 w-48 bg-white border border-stone-200 rounded-xl shadow-lg shadow-stone-200/50 animate-fadeIn">
-              <button
-                onClick={() => {
-                  onView(product);
-                  onToggleOpen(null);
-                }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition first:rounded-t-xl border-b border-stone-100"
-              >
-                <Eye className="h-4 w-4 text-[#1e3a5f]" />
-                View Details
+              <button onClick={() => { onView(product); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition first:rounded-t-xl border-b border-stone-100">
+                <Eye className="h-4 w-4 text-[#1e3a5f]" /> View Details
               </button>
-              <button
-                onClick={() => {
-                  onEdit(product.encrypted_id);
-                  onToggleOpen(null);
-                }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100"
-              >
-                <Edit className="h-4 w-4 text-[#1e3a5f]" />
-                Update Stock
+              <button onClick={() => { onEdit(product.encrypted_id); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100">
+                <Edit className="h-4 w-4 text-[#1e3a5f]" /> Update Stock
               </button>
-              <button
-                onClick={() => {
-                  onHistory(product.encrypted_pid);
-                  onToggleOpen(null);
-                }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100"
-              >
-                <History className="h-4 w-4 text-stone-600" />
-                History
+              <button onClick={() => { onHistory(product.encrypted_pid); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100">
+                <History className="h-4 w-4 text-stone-600" /> History
               </button>
-              <button
-                onClick={() => {
-                  onDelete(product);
-                  onToggleOpen(null);
-                }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition last:rounded-b-xl"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Product
+              <button onClick={() => { onDelete(product); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition last:rounded-b-xl">
+                <Trash2 className="h-4 w-4" /> Delete Product
               </button>
             </div>
           </>
         )}
-       </td>
+      </td>
     </tr>
   );
 };
 
-// Product Grid Card Component
+/** Grid card for product. */
 const ProductGridCard: React.FC<ProductGridCardProps> = ({
-  product,
-  onView,
-  onEdit,
-  onDelete,
-  formatCurrency,
+  product, onView, onEdit, onDelete, formatCurrency,
 }) => {
-  // Get product name from either product.name or product.product?.name
   const productName = product.product?.name || product.name || "";
   const productSku = product.product?.sku || product.sku || "";
   const productImage = product.product?.image || product.image || null;
@@ -862,66 +727,30 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
             )}
           </div>
           <div className="absolute top-2 right-2 flex gap-1">
-            {product.is_featured && (
-              <span className="bg-amber-500 text-white p-1.5 rounded-lg">
-                <Star className="h-3 w-3" />
-              </span>
-            )}
-            {product.is_on_sale && (
-              <span className="bg-rose-500 text-white p-1.5 rounded-lg">
-                <Tag className="h-3 w-3" />
-              </span>
-            )}
+            {product.is_featured && <span className="bg-amber-500 text-white p-1.5 rounded-lg"><Star className="h-3 w-3" /></span>}
+            {product.is_on_sale && <span className="bg-rose-500 text-white p-1.5 rounded-lg"><Tag className="h-3 w-3" /></span>}
           </div>
         </div>
-
         <div className="space-y-3">
           <div>
-            <h3 className="font-semibold text-stone-900">
-              <ShortTextWithTooltip text={productName} max={25} />
-            </h3>
+            <h3 className="font-semibold text-stone-900"><ShortTextWithTooltip text={productName} max={25} /></h3>
             <p className="text-xs text-stone-500 mt-0.5">SKU: {productSku}</p>
           </div>
-
           <div className="flex items-center gap-1 text-xs text-stone-600">
             <Layers className="h-3 w-3" />
-            <span>
-              <ShortTextWithTooltip text={categoryName} max={11} />
-            </span>
+            <span><ShortTextWithTooltip text={categoryName} max={11} /></span>
           </div>
-
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-lg font-bold text-[#1e3a5f]">
-                {formatCurrency(toNumber(product.price))}
-              </span>
+              <span className="text-lg font-bold text-[#1e3a5f]">{formatCurrency(toNumber(product.price))}</span>
               <ProfitTrend product={product} />
             </div>
             <StockBadge product={product} />
           </div>
-
           <div className="grid grid-cols-3 gap-2 pt-2">
-            <button
-              onClick={() => onView(product)}
-              className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center"
-              title="View Details"
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onEdit(product.id)}
-              className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center"
-              title="Adjust Stock"
-            >
-              <Edit className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onDelete(product)}
-              className="p-2 text-stone-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center"
-              title="Delete Product"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <button onClick={() => onView(product)} className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="View Details"><Eye className="h-4 w-4" /></button>
+            <button onClick={() => onEdit(product.id)} className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="Adjust Stock"><Edit className="h-4 w-4" /></button>
+            <button onClick={() => onDelete(product)} className="p-2 text-stone-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center" title="Delete Product"><Trash2 className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
@@ -929,58 +758,35 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
   );
 };
 
-// Filter Drawer Component
+/** Slide‑in filter drawer for all filter options. */
 const FilterDrawer: React.FC<FilterDrawerProps> = ({
-  isOpen,
-  onClose,
-  filters,
-  categories,
-  totalItems,
-  onFilterChange,
-  onClearFilters,
-  activeFilterCount,
+  isOpen, onClose, filters, categories, totalItems,
+  onFilterChange, onClearFilters, activeFilterCount,
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50">
-      <div
-        className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute right-0 top-0 h-full w-96 bg-white shadow-2xl animate-slideIn">
         <div className="p-4 border-b border-stone-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Filter size={20} className="text-[#1e3a5f]" />
             <h3 className="font-semibold text-stone-900">Filters</h3>
             {activeFilterCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-[#1e3a5f] text-white rounded-full">
-                {activeFilterCount}
-              </span>
+              <span className="ml-2 px-2 py-0.5 text-xs bg-[#1e3a5f] text-white rounded-full">{activeFilterCount}</span>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-stone-100 rounded-lg transition"
-          >
-            <X size={20} />
-          </button>
+          <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-lg transition"><X size={20} /></button>
         </div>
 
         <div className="overflow-y-auto h-[calc(100vh-140px)] p-4 space-y-4">
           {/* Status Filter */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">
-              Status
-            </label>
+            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Status</label>
             <select
               value={filters.status}
-              onChange={(e) =>
-                onFilterChange(
-                  "status",
-                  e.target.value as FilterState["status"],
-                )
-              }
+              onChange={(e) => onFilterChange("status", e.target.value as FilterState["status"])}
               className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
             >
               <option value="all">All Status</option>
@@ -991,33 +797,29 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
           {/* Category Filter */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">
-              Category
-            </label>
+            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Category</label>
             <select
               value={filters.category}
               onChange={(e) => onFilterChange("category", e.target.value)}
               className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
             >
               <option value="all">All Categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </option>
-              ))}
+              {categories.length === 0 ? (
+                <option disabled>Loading categories…</option>
+              ) : (
+                categories.map((category) => (
+                  <option key={category.id} value={category.id.toString()}>{category.name}</option>
+                ))
+              )}
             </select>
           </div>
 
           {/* Stock Filter */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">
-              Stock Level
-            </label>
+            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Stock Level</label>
             <select
               value={filters.stock}
-              onChange={(e) =>
-                onFilterChange("stock", e.target.value as FilterState["stock"])
-              }
+              onChange={(e) => onFilterChange("stock", e.target.value as FilterState["stock"])}
               className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
             >
               <option value="all">All Stock</option>
@@ -1027,19 +829,12 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
             </select>
           </div>
 
-          {/* Sort Options */}
+          {/* Sort By */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">
-              Sort By
-            </label>
+            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Sort By</label>
             <select
               value={filters.sortBy}
-              onChange={(e) =>
-                onFilterChange(
-                  "sortBy",
-                  e.target.value as FilterState["sortBy"],
-                )
-              }
+              onChange={(e) => onFilterChange("sortBy", e.target.value as FilterState["sortBy"])}
               className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
             >
               <option value="name">Name</option>
@@ -1051,9 +846,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
           {/* Sort Order */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">
-              Order
-            </label>
+            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Order</label>
             <div className="flex gap-2">
               <button
                 onClick={() => onFilterChange("sortOrder", "asc")}
@@ -1106,25 +899,17 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
   );
 };
 
-// View Product Modal Component
+/** Detailed product view modal. */
 const ViewProductModal: React.FC<ViewProductModalProps> = ({
-  isOpen,
-  onClose,
-  product,
-  // onEdit,
-  // onHistory,
-  formatCurrency,
+  isOpen, onClose, product, onEdit, onHistory, formatCurrency,
 }) => {
   if (!isOpen || !product) return null;
 
-  // Get product details safely
   const productName = product.product?.name || product.name || "";
   const productSku = product.product?.sku || product.sku || "";
   const productImage = product.product?.image || product.image || null;
-  const productDescription =
-    product.product?.description || product.description || "No description";
-  const productDimensions =
-    product.product?.dimensions || product.dimensions || null;
+  const productDescription = product.product?.description || product.description || "No description";
+  const productDimensions = product.product?.dimensions || product.dimensions || null;
   const productWeight = product.product?.weight || product.weight || null;
   const productLength = product.product?.length || product.length || null;
   const productWidth = product.product?.width || product.width || null;
@@ -1135,268 +920,82 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-scaleIn">
         <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <ProductImage
-              src={productImage}
-              alt={productName}
-              className="w-12 h-12"
-            />
+            <ProductImage src={productImage} alt={productName} className="w-12 h-12" />
             <div>
-              <h2 className="text-xl font-bold text-stone-900">
-                {productName}
-              </h2>
+              <h2 className="text-xl font-bold text-stone-900">{productName}</h2>
               <p className="text-sm text-stone-500">SKU: {productSku}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition"
-          >
+          <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2">
-                  <Box className="h-4 w-4" />
-                  Basic Information
-                </h3>
+                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Box className="h-4 w-4" /> Basic Information</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">Description</span>
-                    <span className="text-sm text-stone-900 text-right max-w-[200px]">
-                      {productDescription}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">Category</span>
-                    <span className="text-sm text-stone-900">
-                      {product.category?.name || "Uncategorized"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">Unit</span>
-                    <span className="text-sm text-stone-900">
-                      {product.unit?.name || "N/A"}
-                      {product.unit?.symbol && ` (${product.unit.symbol})`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">Status</span>
-                    <span
-                      className={`text-sm font-medium ${
-                        product.is_active
-                          ? "text-emerald-700"
-                          : "text-stone-600"
-                      }`}
-                    >
-                      {product.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  {product.supplier && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-stone-600">Supplier</span>
-                      <span className="text-sm text-stone-900">
-                        {product.supplier.name}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Description</span><span className="text-sm text-stone-900 text-right max-w-[200px]">{productDescription}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Category</span><span className="text-sm text-stone-900">{product.category?.name || "Uncategorized"}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Unit</span><span className="text-sm text-stone-900">{product.unit?.name || "N/A"}{product.unit?.symbol && ` (${product.unit.symbol})`}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Status</span><span className={`text-sm font-medium ${product.is_active ? "text-emerald-700" : "text-stone-600"}`}>{product.is_active ? "Active" : "Inactive"}</span></div>
+                  {product.supplier && <div className="flex justify-between"><span className="text-sm text-stone-600">Supplier</span><span className="text-sm text-stone-900">{product.supplier.name}</span></div>}
                 </div>
               </div>
-
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
-                  Pricing
-                </h3>
+                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><DollarSign className="h-4 w-4" /> Pricing</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">
-                      Regular Price
-                    </span>
-                    <span className="text-lg font-bold text-[#1e3a5f]">
-                      {formatCurrency(toNumber(product.price))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">Cost Price</span>
-                    <span className="text-sm text-stone-900">
-                      {formatCurrency(toNumber(product.cost_price))}
-                    </span>
-                  </div>
-                  {product.is_on_sale && product.sale_price && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-stone-600">Sale Price</span>
-                      <span className="text-sm font-semibold text-rose-600">
-                        {formatCurrency(toNumber(product.sale_price))}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Regular Price</span><span className="text-lg font-bold text-[#1e3a5f]">{formatCurrency(toNumber(product.price))}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Cost Price</span><span className="text-sm text-stone-900">{formatCurrency(toNumber(product.cost_price))}</span></div>
+                  {product.is_on_sale && product.sale_price && <div className="flex justify-between"><span className="text-sm text-stone-600">Sale Price</span><span className="text-sm font-semibold text-rose-600">{formatCurrency(toNumber(product.sale_price))}</span></div>}
                 </div>
               </div>
             </div>
-
-            {/* Right Column */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  Stock Information
-                </h3>
+                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Package className="h-4 w-4" /> Stock Information</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-stone-600">Stock Status</span>
-                    <StockBadge product={product} />
-                  </div>
-                  {product.low_stock_threshold && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-stone-600">
-                        Low Stock Threshold
-                      </span>
-                      <span className="text-sm text-stone-900">
-                        {formatNumber(product.low_stock_threshold)} units
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center"><span className="text-sm text-stone-600">Stock Status</span><StockBadge product={product} /></div>
+                  {product.low_stock_threshold && <div className="flex justify-between"><span className="text-sm text-stone-600">Low Stock Threshold</span><span className="text-sm text-stone-900">{formatNumber(product.low_stock_threshold)} units</span></div>}
                 </div>
               </div>
-
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Important Dates
-                </h3>
+                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Calendar className="h-4 w-4" /> Important Dates</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  {product.manufactured_at && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-stone-600">
-                        Manufactured
-                      </span>
-                      <span className="text-sm text-stone-900">
-                        {formatDate(product.manufactured_at)}
-                      </span>
-                    </div>
-                  )}
-                  {product.expires_at && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-stone-600">Expires</span>
-                      <span className="text-sm text-rose-600 font-medium">
-                        {formatDate(product.expires_at)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">Created</span>
-                    <span className="text-sm text-stone-900">
-                      {formatDate(product.created_at)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-stone-600">Last Updated</span>
-                    <span className="text-sm text-stone-900">
-                      {formatDate(product.updated_at)}
-                    </span>
-                  </div>
+                  {product.manufactured_at && <div className="flex justify-between"><span className="text-sm text-stone-600">Manufactured</span><span className="text-sm text-stone-900">{formatDate(product.manufactured_at)}</span></div>}
+                  {product.expires_at && <div className="flex justify-between"><span className="text-sm text-stone-600">Expires</span><span className="text-sm text-rose-600 font-medium">{formatDate(product.expires_at)}</span></div>}
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Created</span><span className="text-sm text-stone-900">{formatDate(product.created_at)}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Last Updated</span><span className="text-sm text-stone-900">{formatDate(product.updated_at)}</span></div>
                 </div>
               </div>
-
-              {(productDimensions ||
-                productWeight ||
-                productLength ||
-                productWidth ||
-                productHeight) && (
+              {(productDimensions || productWeight || productLength || productWidth || productHeight) && (
                 <div>
-                  <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2">
-                    <Scale className="h-4 w-4" />
-                    Dimensions & Weight
-                  </h3>
+                  <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Scale className="h-4 w-4" /> Dimensions & Weight</h3>
                   <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                    {productDimensions && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-stone-600">
-                          Dimensions
-                        </span>
-                        <span className="text-sm text-stone-900">
-                          {productDimensions}
-                        </span>
-                      </div>
-                    )}
-                    {productWeight && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-stone-600">Weight</span>
-                        <span className="text-sm text-stone-900">
-                          {formatNumber(productWeight)}{" "}
-                          {product.unit?.symbol || "kg"}
-                        </span>
-                      </div>
-                    )}
-                    {(productLength || productWidth || productHeight) && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-stone-600">
-                          Size (L×W×H)
-                        </span>
-                        <span className="text-sm text-stone-900">
-                          {productLength || "0"} × {productWidth || "0"} ×{" "}
-                          {productHeight || "0"}
-                        </span>
-                      </div>
-                    )}
+                    {productDimensions && <div className="flex justify-between"><span className="text-sm text-stone-600">Dimensions</span><span className="text-sm text-stone-900">{productDimensions}</span></div>}
+                    {productWeight && <div className="flex justify-between"><span className="text-sm text-stone-600">Weight</span><span className="text-sm text-stone-900">{formatNumber(productWeight)} {product.unit?.symbol || "kg"}</span></div>}
+                    {(productLength || productWidth || productHeight) && <div className="flex justify-between"><span className="text-sm text-stone-600">Size (L×W×H)</span><span className="text-sm text-stone-900">{productLength || "0"} × {productWidth || "0"} × {productHeight || "0"}</span></div>}
                   </div>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Profit Analysis */}
           {toNumber(product.price) > 0 && toNumber(product.cost_price) > 0 && (
             <div className="mt-8 bg-gradient-to-r from-[#1e3a5f]/5 to-transparent border border-[#1e3a5f]/20 rounded-xl p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#1e3a5f]/10 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="h-5 w-5 text-[#1e3a5f]" />
-                  </div>
+                  <div className="w-10 h-10 bg-[#1e3a5f]/10 rounded-lg flex items-center justify-center"><BarChart3 className="h-5 w-5 text-[#1e3a5f]" /></div>
                   <div>
-                    <h4 className="font-semibold text-stone-900">
-                      Profit Analysis
-                    </h4>
-                    <p className="text-sm text-stone-600">
-                      Based on current pricing and cost
-                    </p>
+                    <h4 className="font-semibold text-stone-900">Profit Analysis</h4>
+                    <p className="text-sm text-stone-600">Based on current pricing and cost</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-xs text-stone-500">Profit per Unit</p>
-                    <p className="text-lg font-bold text-emerald-700">
-                      {formatCurrency(
-                        toNumber(product.price) - toNumber(product.cost_price),
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-stone-500">Profit Margin</p>
-                    <p className="text-lg font-bold text-[#1e3a5f]">
-                      {(
-                        ((toNumber(product.price) -
-                          toNumber(product.cost_price)) /
-                          toNumber(product.cost_price)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </p>
-                  </div>
-                  <div className="col-span-2 sm:col-span-1">
-                    <p className="text-xs text-stone-500">Total Stock Value</p>
-                    <p className="text-lg font-bold text-stone-900">
-                      {formatCurrency(
-                        toNumber(product.price) *
-                          toNumber(product.stock_quantity),
-                      )}
-                    </p>
-                  </div>
+                  <div><p className="text-xs text-stone-500">Profit per Unit</p><p className="text-lg font-bold text-emerald-700">{formatCurrency(toNumber(product.price) - toNumber(product.cost_price))}</p></div>
+                  <div><p className="text-xs text-stone-500">Profit Margin</p><p className="text-lg font-bold text-[#1e3a5f]">{(((toNumber(product.price) - toNumber(product.cost_price)) / toNumber(product.cost_price)) * 100).toFixed(1)}%</p></div>
+                  <div className="col-span-2 sm:col-span-1"><p className="text-xs text-stone-500">Total Stock Value</p><p className="text-lg font-bold text-stone-900">{formatCurrency(toNumber(product.price) * toNumber(product.stock_quantity))}</p></div>
                 </div>
               </div>
             </div>
@@ -1414,12 +1013,12 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
 const ManageProducts = ({ user }: { user?: User }) => {
   const router = useRouter();
   const params = useParams();
+  // Location id from route parameter
   const id = params.id as string;
 
-  // Format currency with user's preferred currency symbol
+  // Format money according to user's business currency
   const formatCurrency = (amount: number): string => {
     const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
-
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -1430,16 +1029,18 @@ const ManageProducts = ({ user }: { user?: User }) => {
       .replace(/^\$/, currencySymbol);
   };
 
-  // State
+  // Filters state
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     status: "all",
     category: "all",
     stock: "all",
-    priceRange: [0, 1000000], // INCREASED MAX PRICE TO 1,000,000
+    priceRange: [0, 1000000],
     sortBy: "name",
     sortOrder: "asc",
   });
+
+  // UI state
   const [openRow, setOpenRow] = useState<number | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -1447,56 +1048,82 @@ const ManageProducts = ({ user }: { user?: User }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Data state
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [locationName, setLocationName] = useState<string>("");
-  const [maxPrice, setMaxPrice] = useState<number>(1000000);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Debounce search input to avoid excessive API calls
   const debouncedSearch = useDebounce(filters.search, 300);
 
-  // Update price range when products load
-  useEffect(() => {
-    if (products.length > 0) {
-      const prices = products
-        .map(p => toNumber(p.price))
-        .filter(p => p > 0);
-      if (prices.length > 0) {
-        const max = Math.max(...prices);
-        setMaxPrice(max);
-        setFilters(prev => ({ ...prev, priceRange: [0, max] }));
-        console.log("Max price detected:", max);
-      }
-    }
-  }, [products]);
+  /**
+   * Build query parameters for the API based on current filters and pagination.
+   * Only includes non-default values to keep URL clean.
+   */
+  const buildQueryParams = useCallback(() => {
+    const params: Record<string, string | number> = {
+      page: currentPage,
+      per_page: itemsPerPage,
+    };
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (filters.status !== "all") params.status = filters.status;
+    if (filters.category !== "all") params.category = filters.category;
+    if (filters.stock !== "all") params.stock = filters.stock;
+    if (filters.sortBy !== "name") params.sort_by = filters.sortBy;
+    if (filters.sortOrder !== "asc") params.sort_order = filters.sortOrder;
+    if (filters.priceRange[0] > 0) params.price_min = filters.priceRange[0];
+    if (filters.priceRange[1] < 1000000) params.price_max = filters.priceRange[1];
+    return params;
+  }, [currentPage, itemsPerPage, debouncedSearch, filters]);
 
-  // Helper function used for both initial load and refresh
+  /**
+   * Fetch products and categories from the server.
+   * This is the single source of data for the component.
+   */
   const loadData = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
-
     try {
+      const queryParams = buildQueryParams();
+      // Fetch products and categories in parallel
       const [productsRes, categoriesRes] = await Promise.all([
-        apiGet(`/product-locations/${id}`, {}, false),
+        apiGet(`/product-locations/${id}`, { params: queryParams }, false),
         apiGet("/product-categories", {}, false),
       ]);
 
-      // Extract products & location
-      const newLocationName = productsRes?.data?.location_name ?? "";
-      // The products are in data.data based on your console.log
+      // Extract products and pagination
+      const pagination = productsRes?.data?.pagination;
       const newProducts = productsRes?.data?.data ?? [];
-    
-      // Extract categories
-      const newCategories =
-        categoriesRes?.data?.product_categories ??
-        categoriesRes?.data?.data ??
-        [];
+      const newLocationName = productsRes?.data?.location_name ?? "";
 
-      // Only update state after both APIs are done
-      setLocationName(newLocationName);
+      // Extract categories from API response.
+      // The shape may be nested: { data: { product_categories: [...] } }
+      const body = categoriesRes?.data;
+      let newCategories: Category[] = [];
+
+      if (body?.data?.product_categories && Array.isArray(body.data.product_categories)) {
+        newCategories = body.data.product_categories;
+      } else if (body?.product_categories && Array.isArray(body.product_categories)) {
+        newCategories = body.product_categories;
+      } else if (Array.isArray(body)) {
+        newCategories = body;
+      }
+      // If none matched, newCategories stays [] – safe for .map()
+
+      // Update state
       setProducts(Array.isArray(newProducts) ? newProducts : []);
-      setCategories(Array.isArray(newCategories) ? newCategories : []);
+      setLocationName(newLocationName);
+      setTotalItems(pagination?.total ?? 0);
+      setTotalPages(pagination?.last_page ?? 1);
+      const serverPage = pagination?.current_page;
+      if (serverPage && serverPage !== currentPage) setCurrentPage(serverPage);
+      setCategories(newCategories);
     } catch (err: unknown) {
       const error = err as ApiError;
       console.error("Error loading data:", error);
@@ -1504,56 +1131,54 @@ const ManageProducts = ({ user }: { user?: User }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, buildQueryParams, currentPage]);
 
-  // Initial load
+  // Initial load and whenever filters/page change
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Refresh handler
+  // Refresh button handler
   const handleRefresh = async () => {
     await loadData();
-    toast.success("Data refreshed");
+    // toast.success("Data refreshed");
   };
 
+  // Delete handler – currently disabled, shows error toast
   const handleDelete = async () => {
     if (isSubmitting || !selectedProduct) return;
     setIsSubmitting(true);
-
     try {
-      toast.error("Product can not be deleted from this account level");
-      // The actual delete API call is disabled as per the original code
-    } catch (err: unknown) {
-      // Error handling is disabled as per original code
+      // The actual delete API call is disabled by design
+      toast.error("Product cannot be deleted from this account level.");
+    } catch (err) {
       console.error("Delete failed:", err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleFilterChange = <K extends keyof FilterState>(
-    key: K,
-    value: FilterState[K],
-  ) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  // Generic filter change – resets to page 1
+  const handleFilterChange = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
+  // Reset all filters to default
   const clearFilters = () => {
     setFilters({
       search: "",
       status: "all",
       category: "all",
       stock: "all",
-      priceRange: [0, maxPrice],
+      priceRange: [0, 1000000],
       sortBy: "name",
       sortOrder: "asc",
     });
     setCurrentPage(1);
   };
 
-  // Count active filters
+  // Count active filters (for badge)
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.status !== "all") count++;
@@ -1562,198 +1187,63 @@ const ManageProducts = ({ user }: { user?: User }) => {
     if (filters.sortBy !== "name") count++;
     if (filters.sortOrder !== "asc") count++;
     if (filters.search) count++;
-    // Count price range if it's not the default
-    if (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) count++;
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000000) count++;
     return count;
-  }, [filters, maxPrice]);
+  }, [filters]);
 
-  // Filtered and sorted products
-  const filteredProducts = useMemo(() => {
-    const filtered = products
-      .filter((product) => {
-        if (!product) return false;
-
-        const productName = product.product?.name || product.name || "";
-        const productSku = product.product?.sku || product.sku || "";
-        const productDescription =
-          product.product?.description || product.description || "";
-        const categoryName = product.category?.name || "";
-
-        const searchableText = [
-          productName,
-          productSku,
-          productDescription,
-          categoryName,
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        const matchesSearch = searchableText.includes(
-          debouncedSearch.toLowerCase(),
-        );
-
-        const matchesStatus =
-          filters.status === "all" ||
-          (filters.status === "active" && product.is_active) ||
-          (filters.status === "inactive" && !product.is_active);
-
-        const matchesCategory =
-          filters.category === "all" ||
-          product.category_id.toString() === filters.category;
-
-        let matchesStock = true;
-        const stockQuantity = toNumber(product.stock_quantity);
-        const lowStockThreshold = toNumber(product.low_stock_threshold) || 5;
-
-        if (filters.stock === "in_stock") {
-          matchesStock = !product.is_out_of_stock && stockQuantity > 0;
-        } else if (filters.stock === "out_of_stock") {
-          matchesStock = product.is_out_of_stock || stockQuantity <= 0;
-        } else if (filters.stock === "low_stock") {
-          matchesStock =
-            stockQuantity <= lowStockThreshold && stockQuantity > 0;
-        }
-
-        const price = toNumber(product.price);
-        const matchesPrice =
-          price >= filters.priceRange[0] && price <= filters.priceRange[1];
-
-        return (
-          matchesSearch &&
-          matchesStatus &&
-          matchesCategory &&
-          matchesStock &&
-          matchesPrice
-        );
-      })
-      .sort((a, b) => {
-        let comparison = 0;
-
-        const aName = a.product?.name || a.name || "";
-        const bName = b.product?.name || b.name || "";
-
-        switch (filters.sortBy) {
-          case "name":
-            comparison = aName.localeCompare(bName);
-            break;
-          case "price":
-            comparison = toNumber(a.price) - toNumber(b.price);
-            break;
-          case "stock":
-            comparison =
-              toNumber(a.stock_quantity) - toNumber(b.stock_quantity);
-            break;
-          case "created":
-            comparison =
-              new Date(a.created_at).getTime() -
-              new Date(b.created_at).getTime();
-            break;
-        }
-
-        return filters.sortOrder === "asc" ? comparison : -comparison;
-      });
-    
-    console.log(`Filtered ${products.length} products to ${filtered.length}`);
-    return filtered;
-  }, [products, debouncedSearch, filters]);
-
-  // Pagination
-  const totalItems = filteredProducts.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-  const currentItems = filteredProducts.slice(startIndex, endIndex);
-
-  // Statistics
+  // Compute statistics based on current page products (for rough overview)
   const statistics = useMemo((): Statistics => {
-    const totalProducts = products.length;
-    const activeProducts = products.filter((p) => p.is_active).length;
-    const totalValue = products.reduce(
-      (sum, p) => sum + toNumber(p.price) * toNumber(p.stock_quantity),
-      0,
-    );
-    const totalCost = products.reduce(
-      (sum, p) => sum + toNumber(p.cost_price) * toNumber(p.stock_quantity),
-      0,
-    );
+    const currentProducts = products;
+    const totalProducts = totalItems;
+    const activeProducts = currentProducts.filter(p => p.is_active).length;
+    const totalValue = currentProducts.reduce((sum, p) => sum + toNumber(p.price) * toNumber(p.stock_quantity), 0);
+    const totalCost = currentProducts.reduce((sum, p) => sum + toNumber(p.cost_price) * toNumber(p.stock_quantity), 0);
     const potentialProfit = totalValue - totalCost;
-    const profitMargin =
-      totalValue > 0 ? (potentialProfit / totalValue) * 100 : 0;
-
-    const lowStockCount = products.filter((p) => {
-      const stockQuantity = toNumber(p.stock_quantity);
-      const lowStockThreshold = toNumber(p.low_stock_threshold) || 5;
-      return stockQuantity <= lowStockThreshold && stockQuantity > 0;
+    const profitMargin = totalValue > 0 ? (potentialProfit / totalValue) * 100 : 0;
+    const lowStockCount = currentProducts.filter(p => {
+      const qty = toNumber(p.stock_quantity);
+      const thr = toNumber(p.low_stock_threshold) || 5;
+      return qty <= thr && qty > 0;
     }).length;
-
-    const outOfStockCount = products.filter((p) => {
-      const stockQuantity = toNumber(p.stock_quantity);
-      return p.is_out_of_stock || stockQuantity <= 0;
+    const outOfStockCount = currentProducts.filter(p => {
+      const qty = toNumber(p.stock_quantity);
+      return p.is_out_of_stock || qty <= 0;
     }).length;
+    return { totalProducts, activeProducts, totalValue, totalCost, potentialProfit, profitMargin, lowStockCount, outOfStockCount };
+  }, [products, totalItems]);
 
-    return {
-      totalProducts,
-      activeProducts,
-      totalValue,
-      totalCost,
-      potentialProfit,
-      profitMargin,
-      lowStockCount,
-      outOfStockCount,
-    };
-  }, [products]);
+  // Pagination range for display
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + products.length, totalItems);
 
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-stone-200">
+      <header className="bg-white border-b border-stone-200 mt-[-13px] w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link
-                href="/locations"
-                className="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
-              >
+              <Link href="/locations" className="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-stone-900">
-                  <ShortTextWithTooltip
-                    text={locationName || "Products"}
-                    max={30}
-                  />
+                  <ShortTextWithTooltip text={locationName || "Products"} max={30} />
                 </h1>
-                <p className="text-sm text-stone-500">
-                  Manage your product inventory
-                </p>
+                <p className="text-sm text-stone-500">Manage your product inventory</p>
               </div>
             </div>
-
             <div className="flex items-center gap-2">
               <button
-                onClick={() =>
-                  setViewMode(viewMode === "table" ? "grid" : "table")
-                }
+                onClick={() => setViewMode(viewMode === "table" ? "grid" : "table")}
                 className="p-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors border border-stone-200"
               >
-                {viewMode === "table" ? (
-                  <Grid3x3 className="h-5 w-5" />
-                ) : (
-                  <List className="h-5 w-5" />
-                )}
+                {viewMode === "table" ? <Grid3x3 className="h-5 w-5" /> : <List className="h-5 w-5" />}
               </button>
-
-              <button
-                onClick={handleRefresh}
-                className="p-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors border border-stone-200"
-              >
+              <button onClick={handleRefresh} className="p-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors border border-stone-200">
                 <RefreshCw className="h-5 w-5" />
               </button>
-
-              <Link
-                href="/addproductlocations"
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#1e3a5f]/20"
-              >
+              <Link href="/addproductlocations" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#1e3a5f]/20">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add Product</span>
               </Link>
@@ -1766,42 +1256,12 @@ const ManageProducts = ({ user }: { user?: User }) => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Statistics */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          <StatCard
-            title="Total Products"
-            value={statistics.totalProducts}
-            icon={Package}
-            color="primary"
-          />
-          <StatCard
-            title="Active"
-            value={statistics.activeProducts}
-            icon={CheckCircle}
-            color="emerald"
-          />
-          <StatCard
-            title="Low Stock"
-            value={statistics.lowStockCount}
-            icon={AlertCircle}
-            color="amber"
-          />
-          <StatCard
-            title="Out of Stock"
-            value={statistics.outOfStockCount}
-            icon={XCircle}
-            color="rose"
-          />
-          <StatCard
-            title="Inventory Value"
-            value={formatCurrency(statistics.totalValue)}
-            icon={DollarSign}
-            color="gray"
-          />
-          <StatCard
-            title="Profit Margin"
-            value={`${statistics.profitMargin.toFixed(1)}%`}
-            icon={TrendingUp}
-            color="gray"
-          />
+          <StatCard title="Total Products" value={statistics.totalProducts} icon={Package} color="primary" />
+          <StatCard title="Active" value={statistics.activeProducts} icon={CheckCircle} color="emerald" />
+          <StatCard title="Low Stock" value={statistics.lowStockCount} icon={AlertCircle} color="amber" />
+          <StatCard title="Out of Stock" value={statistics.outOfStockCount} icon={XCircle} color="rose" />
+          <StatCard title="Inventory Value" value={formatCurrency(statistics.totalValue)} icon={DollarSign} color="gray" />
+          <StatCard title="Profit Margin" value={`${statistics.profitMargin.toFixed(1)}%`} icon={TrendingUp} color="gray" />
         </div>
 
         {/* Search and Filter Bar */}
@@ -1816,8 +1276,6 @@ const ManageProducts = ({ user }: { user?: User }) => {
               className="w-full pl-10 pr-4 py-3 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition placeholder-stone-400"
             />
           </div>
-
-          {/* Floating Filter Button */}
           <button
             onClick={() => setFilterDrawerOpen(true)}
             className="relative inline-flex items-center gap-2 px-6 py-3 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition-colors shadow-sm"
@@ -1832,69 +1290,20 @@ const ManageProducts = ({ user }: { user?: User }) => {
           </button>
         </div>
 
-        {/* Filter Chips */}
+        {/* Quick Filter Chips */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <FilterChip
-            label="All"
-            active={
-              filters.status === "all" &&
-              filters.stock === "all" &&
-              filters.category === "all" &&
-              filters.priceRange[0] === 0 &&
-              filters.priceRange[1] === maxPrice
-            }
-            onClick={() => clearFilters()}
-          />
-          <FilterChip
-            label="Active"
-            active={filters.status === "active"}
-            onClick={() =>
-              handleFilterChange(
-                "status",
-                filters.status === "active" ? "all" : "active",
-              )
-            }
-          />
-          <FilterChip
-            label="In Stock"
-            active={filters.stock === "in_stock"}
-            onClick={() =>
-              handleFilterChange(
-                "stock",
-                filters.stock === "in_stock" ? "all" : "in_stock",
-              )
-            }
-          />
-          <FilterChip
-            label="Low Stock"
-            active={filters.stock === "low_stock"}
-            onClick={() =>
-              handleFilterChange(
-                "stock",
-                filters.stock === "low_stock" ? "all" : "low_stock",
-              )
-            }
-          />
-          <FilterChip
-            label="Out of Stock"
-            active={filters.stock === "out_of_stock"}
-            onClick={() =>
-              handleFilterChange(
-                "stock",
-                filters.stock === "out_of_stock" ? "all" : "out_of_stock",
-              )
-            }
-          />
+          <FilterChip label="All" active={filters.status === "all" && filters.stock === "all" && filters.category === "all"} onClick={clearFilters} />
+          <FilterChip label="Active" active={filters.status === "active"} onClick={() => handleFilterChange("status", filters.status === "active" ? "all" : "active")} />
+          <FilterChip label="In Stock" active={filters.stock === "in_stock"} onClick={() => handleFilterChange("stock", filters.stock === "in_stock" ? "all" : "in_stock")} />
+          <FilterChip label="Low Stock" active={filters.stock === "low_stock"} onClick={() => handleFilterChange("stock", filters.stock === "low_stock" ? "all" : "low_stock")} />
+          <FilterChip label="Out of Stock" active={filters.stock === "out_of_stock"} onClick={() => handleFilterChange("stock", filters.stock === "out_of_stock" ? "all" : "out_of_stock")} />
         </div>
 
         {/* Products Count */}
         <div className="mb-4 flex items-center justify-between">
           <span className="text-sm text-stone-600">
-            Showing{" "}
-            <span className="font-semibold">
-              {startIndex + 1}-{endIndex}
-            </span>{" "}
-            of <span className="font-semibold">{totalItems}</span> products
+            Showing <span className="font-semibold">{startIndex + 1}-{endIndex}</span> of{" "}
+            <span className="font-semibold">{totalItems}</span> products
           </span>
         </div>
 
@@ -1902,7 +1311,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
         {isLoading && <LoadingState />}
 
         {/* Empty State */}
-        {!isLoading && currentItems.length === 0 && (
+        {!isLoading && products.length === 0 && (
           <EmptyState
             title={filters.search || activeFilterCount > 0 ? "No products found" : "No products yet"}
             description={
@@ -1913,108 +1322,51 @@ const ManageProducts = ({ user }: { user?: User }) => {
             icon={Package}
             action={
               filters.search || activeFilterCount > 0
-                ? {
-                    label: "Clear Filters",
-                    onClick: clearFilters,
-                  }
-                : {
-                    label: "Add Your First Product",
-                    href: "/addproductlocations",
-                  }
+                ? { label: "Clear Filters", onClick: clearFilters }
+                : { label: "Add Your First Product", href: "/addproductlocations" }
             }
           />
         )}
 
         {/* Table View */}
-        {!isLoading && currentItems.length > 0 && viewMode === "table" && (
+        {!isLoading && products.length > 0 && viewMode === "table" && (
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-stone-50 text-stone-600 border-b border-stone-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider w-12">
-                      #
-                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider w-12">#</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button
-                        onClick={() =>
-                          handleFilterChange(
-                            "sortBy",
-                            filters.sortBy === "name" ? "name" : "name",
-                          )
-                        }
-                        className="flex items-center gap-1 hover:text-stone-900"
-                      >
-                        Product
-                        {filters.sortBy === "name" && (
-                          <ArrowUpDown className="h-3 w-3" />
-                        )}
+                      <button onClick={() => handleFilterChange("sortBy", "name")} className="flex items-center gap-1 hover:text-stone-900">
+                        Product {filters.sortBy === "name" && <ArrowUpDown className="h-3 w-3" />}
                       </button>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">
-                      SKU
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
-                      Category
-                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">SKU</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">Category</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button
-                        onClick={() =>
-                          handleFilterChange(
-                            "sortBy",
-                            filters.sortBy === "price" ? "price" : "price",
-                          )
-                        }
-                        className="flex items-center gap-1 hover:text-stone-900"
-                      >
-                        Price
-                        {filters.sortBy === "price" && (
-                          <ArrowUpDown className="h-3 w-3" />
-                        )}
+                      <button onClick={() => handleFilterChange("sortBy", "price")} className="flex items-center gap-1 hover:text-stone-900">
+                        Price {filters.sortBy === "price" && <ArrowUpDown className="h-3 w-3" />}
                       </button>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button
-                        onClick={() =>
-                          handleFilterChange(
-                            "sortBy",
-                            filters.sortBy === "stock" ? "stock" : "stock",
-                          )
-                        }
-                        className="flex items-center gap-1 hover:text-stone-900"
-                      >
-                        Stock
-                        {filters.sortBy === "stock" && (
-                          <ArrowUpDown className="h-3 w-3" />
-                        )}
+                      <button onClick={() => handleFilterChange("sortBy", "stock")} className="flex items-center gap-1 hover:text-stone-900">
+                        Stock {filters.sortBy === "stock" && <ArrowUpDown className="h-3 w-3" />}
                       </button>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden sm:table-cell">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider w-12">
-                      Actions
-                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden sm:table-cell">Status</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider w-12">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
-                  {currentItems.map((product, index) => (
+                  {products.map((product, index) => (
                     <ProductTableRow
                       key={product.id}
                       product={product}
                       index={index}
                       startIndex={startIndex}
-                      onView={(product) => {
-                        setSelectedProduct(product);
-                        setViewModalOpen(true);
-                      }}
-                      onEdit={(encrypted_id) =>
-                        router.push(`/updatestock/${encrypted_id}`)
-                      }
-                      onDelete={(product) => {
-                        setSelectedProduct(product);
-                        setDeleteModalOpen(true);
-                      }}
+                      onView={(product) => { setSelectedProduct(product); setViewModalOpen(true); }}
+                      onEdit={(encrypted_id) => router.push(`/updatestock/${encrypted_id}`)}
+                      onDelete={(product) => { setSelectedProduct(product); setDeleteModalOpen(true); }}
                       onHistory={(encrypted_pid) => router.push(`/locationprodhist/${encrypted_pid}`)}
                       isOpen={openRow === product.id}
                       onToggleOpen={setOpenRow}
@@ -2031,29 +1383,23 @@ const ManageProducts = ({ user }: { user?: User }) => {
               startIndex={startIndex}
               endIndex={endIndex}
               itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-              onItemsPerPageChange={setItemsPerPage}
+              onPageChange={(page) => setCurrentPage(page)}
+              onItemsPerPageChange={(items) => { setItemsPerPage(items); setCurrentPage(1); }}
             />
           </div>
         )}
 
         {/* Grid View */}
-        {!isLoading && currentItems.length > 0 && viewMode === "grid" && (
+        {!isLoading && products.length > 0 && viewMode === "grid" && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {currentItems.map((product) => (
+              {products.map((product) => (
                 <ProductGridCard
                   key={product.id}
                   product={product}
-                  onView={(product) => {
-                    setSelectedProduct(product);
-                    setViewModalOpen(true);
-                  }}
+                  onView={(product) => { setSelectedProduct(product); setViewModalOpen(true); }}
                   onEdit={(id) => router.push(`/editproduct/${id}`)}
-                  onDelete={(product) => {
-                    setSelectedProduct(product);
-                    setDeleteModalOpen(true);
-                  }}
+                  onDelete={(product) => { setSelectedProduct(product); setDeleteModalOpen(true); }}
                   formatCurrency={formatCurrency}
                 />
               ))}
@@ -2066,8 +1412,8 @@ const ManageProducts = ({ user }: { user?: User }) => {
                 startIndex={startIndex}
                 endIndex={endIndex}
                 itemsPerPage={itemsPerPage}
-                onPageChange={setCurrentPage}
-                onItemsPerPageChange={setItemsPerPage}
+                onPageChange={(page) => setCurrentPage(page)}
+                onItemsPerPageChange={(items) => { setItemsPerPage(items); setCurrentPage(1); }}
               />
             </div>
           </>
@@ -2089,24 +1435,16 @@ const ManageProducts = ({ user }: { user?: User }) => {
       {/* Delete Modal */}
       <DeleteModal
         isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setSelectedProduct(null);
-        }}
+        onClose={() => { setDeleteModalOpen(false); setSelectedProduct(null); }}
         onConfirm={handleDelete}
-        productName={
-          selectedProduct?.product?.name || selectedProduct?.name || ""
-        }
+        productName={selectedProduct?.product?.name || selectedProduct?.name || ""}
         isSubmitting={isSubmitting}
       />
 
       {/* View Modal */}
       <ViewProductModal
         isOpen={viewModalOpen}
-        onClose={() => {
-          setViewModalOpen(false);
-          setSelectedProduct(null);
-        }}
+        onClose={() => { setViewModalOpen(false); setSelectedProduct(null); }}
         product={selectedProduct}
         onEdit={(encrypted_id) => router.push(`/updatestock/${encrypted_id}`)}
         onHistory={(encrypted_pid) => router.push(`/products/${encrypted_pid}/history`)}
