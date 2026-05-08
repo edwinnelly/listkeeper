@@ -48,9 +48,8 @@ import { toast } from "react-hot-toast";
 import ShortTextWithTooltip from "../../component/shorten_len";
 
 // ==============================================
-// TypeScript Interfaces
+// TypeScript Interfaces (unchanged)
 // ==============================================
-
 interface Product {
   id: number;
   owner_id: number;
@@ -100,34 +99,15 @@ interface Product {
     length?: string | null;
     width?: string | null;
     height?: string | null;
-    unit?: {
-      symbol: string;
-    };
+    unit?: { symbol: string };
   };
-  category?: {
-    id: number;
-    name: string;
-  };
-  unit?: {
-    id: number;
-    name: string;
-    symbol: string;
-  };
-  supplier?: {
-    id: number;
-    vid: number;
-    name: string;
-  };
-  business?: {
-    business_key: string;
-    business_name: string;
-  };
+  category?: { id: number; name: string };
+  unit?: { id: number; name: string; symbol: string };
+  supplier?: { id: number; vid: number; name: string };
+  business?: { business_key: string; business_name: string };
 }
 
-interface Category {
-  id: number;
-  name: string;
-}
+interface Category { id: number; name: string; }
 
 interface FilterState {
   search: string;
@@ -161,128 +141,26 @@ interface StatCardProps {
   value: string | number;
   icon: React.ElementType;
   color: "primary" | "emerald" | "amber" | "rose" | "gray";
-  trend?: {
-    value: number;
-    label: string;
-  };
+  trend?: { value: number; label: string };
 }
 
-interface FilterChipProps {
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-}
-
-interface EmptyStateProps {
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  action?: {
-    label: string;
-    onClick?: () => void;
-    href?: string;
-  };
-}
-
-interface DeleteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  productName: string;
-  isSubmitting: boolean;
-}
-
-interface ProductImageProps {
-  src?: string | null;
-  alt: string;
-  className?: string;
-}
-
-interface StockBadgeProps {
-  product: Product;
-}
-
-interface ProfitTrendProps {
-  product: Product;
-}
-
-interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  startIndex: number;
-  endIndex: number;
-  itemsPerPage: number;
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (items: number) => void;
-}
-
-interface ProductTableRowProps {
-  product: Product;
-  index: number;
-  startIndex: number;
-  onView: (product: Product) => void;
-  onEdit: (id: string | null) => void;
-  onDelete: (product: Product) => void;
-  onHistory: (id: string | null) => void;
-  isOpen: boolean;
-  onToggleOpen: (id: number | null) => void;
-  formatCurrency: (amount: number) => string;
-}
-
-interface ProductGridCardProps {
-  product: Product;
-  onView: (product: Product) => void;
-  onEdit: (id: number) => void;
-  onDelete: (product: Product) => void;
-  formatCurrency: (amount: number) => string;
-}
-
-interface FilterDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  filters: FilterState;
-  categories: Category[];
-  totalItems: number;
-  onFilterChange: <K extends keyof FilterState>(
-    key: K,
-    value: FilterState[K],
-  ) => void;
-  onClearFilters: () => void;
-  activeFilterCount: number;
-}
-
-interface ViewProductModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  product: Product | null;
-  onEdit: (id: string | null) => void;
-  onHistory: (id: string | null) => void;
-  formatCurrency: (amount: number) => string;
-}
-
-interface ApiError {
-  userMessage?: string;
-  response?: {
-    data?: {
-      message?: string;
-      errors?: Record<string, string[]>;
-    };
-    status?: number;
-  };
-}
-
-interface User {
-  businesses_one?: Array<{
-    currency?: string;
-  }>;
-}
+interface FilterChipProps { label: string; active?: boolean; onClick?: () => void; }
+interface EmptyStateProps { title: string; description: string; icon: React.ElementType; action?: { label: string; onClick?: () => void; href?: string }; }
+interface DeleteModalProps { isOpen: boolean; onClose: () => void; onConfirm: () => void; productName: string; isSubmitting: boolean; }
+interface ProductImageProps { src?: string | null; alt: string; className?: string; }
+interface StockBadgeProps { product: Product; }
+interface ProfitTrendProps { product: Product; }
+interface PaginationProps { currentPage: number; totalPages: number; totalItems: number; startIndex: number; endIndex: number; itemsPerPage: number; onPageChange: (page: number) => void; onItemsPerPageChange: (items: number) => void; }
+interface ProductTableRowProps { product: Product; index: number; startIndex: number; onView: (product: Product) => void; onEdit: (id: string | null) => void; onDelete: (product: Product) => void; onHistory: (id: string | null) => void; isOpen: boolean; onToggleOpen: (id: number | null) => void; formatCurrency: (amount: number) => string; }
+interface ProductGridCardProps { product: Product; onView: (product: Product) => void; onEdit: (id: number) => void; onDelete: (product: Product) => void; formatCurrency: (amount: number) => string; }
+interface FilterDrawerProps { isOpen: boolean; onClose: () => void; filters: FilterState; categories: Category[]; totalItems: number; onFilterChange: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void; onClearFilters: () => void; activeFilterCount: number; }
+interface ViewProductModalProps { isOpen: boolean; onClose: () => void; product: Product | null; onEdit: (id: string | null) => void; onHistory: (id: string | null) => void; formatCurrency: (amount: number) => string; }
+interface ApiError { userMessage?: string; response?: { data?: { message?: string; errors?: Record<string, string[]> }; status?: number }; }
+interface User { businesses_one?: Array<{ currency?: string }>; }
 
 // ==============================================
-// Utility Functions
+// Utility Functions (unchanged)
 // ==============================================
-
-/** Safely convert a potentially null/string/number value to a number. */
 const toNumber = (value: string | number | null | undefined): number => {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return value;
@@ -290,29 +168,21 @@ const toNumber = (value: string | number | null | undefined): number => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
-/** Format a date string (or null) to a human-readable date, returns "N/A" if empty. */
 const formatDate = (dateString: string | null): string => {
   if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 };
 
-/** Format a number using locale separators. */
 const formatNumber = (value: string | number | null | undefined): string => {
   const num = toNumber(value);
   return new Intl.NumberFormat("en-US").format(num);
 };
 
-/** Build full image URL from storage path. */
 const getImageUrl = (src: string | null): string => {
   if (!src) return "";
   return `http://localhost:8000/storage/${src}`;
 };
 
-/** Debounce a value by a given delay in milliseconds. */
 const useDebounce = <T,>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -323,10 +193,9 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 };
 
 // ==============================================
-// Sub‑components
+// Sub-components — Updated with Black Text
 // ==============================================
 
-/** Small card for showing a statistic. */
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => {
   const colorClasses: Record<string, string> = {
     primary: "bg-[#1e3a5f]/10 text-[#1e3a5f]",
@@ -340,10 +209,10 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, tr
     <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-stone-600">{title}</p>
-          <p className="text-normal font-bold text-stone-900 mt-0.5">{value}</p>
+          <p className="text-xs font-medium text-black/60">{title}</p>
+          <p className="text-normal font-bold text-black mt-0.5">{value}</p>
           {trend && (
-            <p className="text-xs text-stone-500 mt-0.5">
+            <p className="text-xs text-black/50 mt-0.5">
               <span className={trend.value > 0 ? "text-emerald-600" : "text-rose-600"}>
                 {trend.value > 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
               </span>{" "}
@@ -359,41 +228,33 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, tr
   );
 };
 
-/** Active/inactive chip filter button. */
 const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
     className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-      active ? "bg-[#1e3a5f] text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+      active ? "bg-[#1e3a5f] text-white" : "bg-stone-100 text-black hover:bg-stone-200"
     }`}
   >
     {label}
   </button>
 );
 
-/** Empty state placeholder. */
 const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon: Icon, action }) => (
   <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
     <div className="flex flex-col items-center text-center max-w-md mx-auto">
       <div className="w-20 h-20 bg-stone-100 rounded-2xl flex items-center justify-center mb-4">
-        <Icon className="h-10 w-10 text-stone-400" />
+        <Icon className="h-10 w-10 text-black/40" />
       </div>
-      <h3 className="text-lg font-semibold text-stone-900 mb-2">{title}</h3>
-      <p className="text-stone-500 text-sm mb-6">{description}</p>
+      <h3 className="text-lg font-semibold text-black mb-2">{title}</h3>
+      <p className="text-black/60 text-sm mb-6">{description}</p>
       {action &&
         (action.href ? (
-          <Link
-            href={action.href}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20"
-          >
+          <Link href={action.href} className="inline-flex items-center gap-2 px-6 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20">
             <Plus className="h-4 w-4" />
             {action.label}
           </Link>
         ) : (
-          <button
-            onClick={action.onClick}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20"
-          >
+          <button onClick={action.onClick} className="inline-flex items-center gap-2 px-6 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20">
             <Plus className="h-4 w-4" />
             {action.label}
           </button>
@@ -402,7 +263,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon: Icon,
   </div>
 );
 
-/** Loading spinner with product icon. */
 const LoadingState: React.FC = () => (
   <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
     <div className="flex flex-col items-center justify-center">
@@ -410,17 +270,16 @@ const LoadingState: React.FC = () => (
         <div className="w-16 h-16 border-4 border-[#1e3a5f]/20 border-t-[#1e3a5f] rounded-full animate-spin"></div>
         <Package className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-[#1e3a5f]/60" />
       </div>
-      <p className="mt-4 text-stone-600 font-medium">Loading products...</p>
-      <p className="text-stone-400 text-sm mt-1">Please wait a moment</p>
+      <p className="mt-4 text-black/70 font-medium">Loading products...</p>
+      <p className="text-black/40 text-sm mt-1">Please wait a moment</p>
     </div>
   </div>
 );
 
-/** Confirmation modal for deleting a product. */
 const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, onConfirm, productName, isSubmitting }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
         <div className="p-6">
           <div className="flex flex-col items-center text-center space-y-4">
@@ -428,17 +287,17 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, onConfirm, p
               <AlertTriangle className="w-7 h-7 text-rose-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-stone-900 mb-2">Delete Product</h2>
-              <p className="text-stone-600 text-sm leading-relaxed">
+              <h2 className="text-xl font-bold text-black mb-2">Delete Product</h2>
+              <p className="text-black/70 text-sm leading-relaxed">
                 Are you sure you want to delete{" "}
-                <span className="font-semibold text-stone-900">{productName}</span>? This action cannot be undone.
+                <span className="font-semibold text-black">{productName}</span>? This action cannot be undone.
               </p>
             </div>
             <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3 w-full">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-3 rounded-lg border border-stone-300 bg-white text-stone-700 font-medium hover:bg-stone-50 transition disabled:opacity-50 order-2 sm:order-1"
+                className="px-6 py-3 rounded-lg border border-stone-300 bg-white text-black font-medium hover:bg-stone-50 transition disabled:opacity-50 order-2 sm:order-1"
                 disabled={isSubmitting}
               >
                 Cancel
@@ -450,15 +309,9 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, onConfirm, p
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Deleting...
-                  </>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Deleting...</>
                 ) : (
-                  <>
-                    <Trash2 className="h-4 w-4" />
-                    Delete Product
-                  </>
+                  <><Trash2 className="h-4 w-4" /> Delete Product</>
                 )}
               </button>
             </div>
@@ -469,14 +322,11 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, onConfirm, p
   );
 };
 
-/** Product image component with fallback. */
 const ProductImage: React.FC<ProductImageProps> = ({ src, alt, className = "w-10 h-10" }) => {
   const [error, setError] = useState(false);
   const imageUrl = getImageUrl(src);
   return (
-    <div
-      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden relative`}
-    >
+    <div className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden relative`}>
       {src && !error && imageUrl ? (
         <Image src={imageUrl} alt={alt} fill className="object-cover" sizes="40px" onError={() => setError(true)} />
       ) : (
@@ -486,25 +336,22 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, alt, className = "w-10
   );
 };
 
-/** Shows stock status with colour and icon. */
 const StockBadge: React.FC<StockBadgeProps> = ({ product }) => {
   const stockQuantity = toNumber(product.stock_quantity);
   const lowStockThreshold = toNumber(product.low_stock_threshold) || 5;
 
   const getStatus = (): StockStatus => {
-    if (product.is_out_of_stock || stockQuantity <= 0)
-      return { label: "Out of Stock", color: "error", icon: XCircle };
-    if (stockQuantity <= lowStockThreshold)
-      return { label: "Low Stock", color: "warning", icon: AlertCircle };
+    if (product.is_out_of_stock || stockQuantity <= 0) return { label: "Out of Stock", color: "error", icon: XCircle };
+    if (stockQuantity <= lowStockThreshold) return { label: "Low Stock", color: "warning", icon: AlertCircle };
     return { label: "In Stock", color: "success", icon: CheckCircle };
   };
 
   const status = getStatus();
   const Icon = status.icon;
   const colorClasses = {
-    success: "text-emerald-700 bg-emerald-50 border-emerald-200",
-    warning: "text-amber-700 bg-amber-50 border-amber-200",
-    error: "text-rose-700 bg-rose-50 border-rose-200",
+    success: "text-emerald-800 bg-emerald-50 border-emerald-200",
+    warning: "text-amber-800 bg-amber-50 border-amber-200",
+    error: "text-rose-800 bg-rose-50 border-rose-200",
   };
 
   return (
@@ -515,38 +362,24 @@ const StockBadge: React.FC<StockBadgeProps> = ({ product }) => {
   );
 };
 
-/** Profit margin indicator with trend icon. */
 const ProfitTrend: React.FC<ProfitTrendProps> = ({ product }) => {
   const price = toNumber(product.price);
   const costPrice = toNumber(product.cost_price);
   if (!price || !costPrice) return null;
-
   const margin = ((price - costPrice) / costPrice) * 100;
   let Icon = Minus;
   let color = "text-amber-600";
-
   if (margin > 20) { Icon = TrendingUp; color = "text-emerald-600"; }
   else if (margin < 10) { Icon = TrendingDown; color = "text-rose-600"; }
-
-  return (
-    <span className={`ml-2 inline-flex items-center gap-0.5 text-xs ${color}`}>
-      <Icon className="h-3 w-3" />
-      {margin.toFixed(0)}%
-    </span>
-  );
+  return <span className={`ml-2 inline-flex items-center gap-0.5 text-xs ${color}`}><Icon className="h-3 w-3" />{margin.toFixed(0)}%</span>;
 };
 
-/** Pagination controls with page size selector. */
-const Pagination: React.FC<PaginationProps> = ({
-  currentPage, totalPages, totalItems, startIndex, endIndex,
-  itemsPerPage, onPageChange, onItemsPerPageChange,
-}) => {
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, totalItems, startIndex, endIndex, itemsPerPage, onPageChange, onItemsPerPageChange }) => {
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
+    if (totalPages <= maxVisible) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
+    else {
       pages.push(1);
       let start = Math.max(2, currentPage - 1);
       let end = Math.min(totalPages - 1, currentPage + 1);
@@ -559,139 +392,78 @@ const Pagination: React.FC<PaginationProps> = ({
     }
     return pages;
   };
-
   if (totalPages <= 1) return null;
-
   return (
     <div className="px-6 py-4 border-t border-stone-200 bg-stone-50/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-stone-600">Show</span>
-          <select
-            value={itemsPerPage}
-            onChange={(e) => {
-              onItemsPerPageChange(Number(e.target.value));
-              onPageChange(1);
-            }}
-            className="px-2 py-1.5 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
-          >
-            {[10, 25, 50, 100].map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
+          <span className="text-sm text-black/70">Show</span>
+          <select value={itemsPerPage} onChange={(e) => { onItemsPerPageChange(Number(e.target.value)); onPageChange(1); }} className="px-2 py-1.5 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-black">
+            {[10, 25, 50, 100].map((value) => <option key={value} value={value} className="text-black">{value}</option>)}
           </select>
-          <span className="text-sm text-stone-600">per page</span>
+          <span className="text-sm text-black/70">per page</span>
         </div>
-        <span className="text-sm text-stone-600">
-          Showing {startIndex + 1}-{endIndex} of {totalItems}
-        </span>
+        <span className="text-sm text-black/70">Showing {startIndex + 1}-{endIndex} of {totalItems}</span>
       </div>
-
       <div className="flex items-center justify-center sm:justify-end gap-2">
-        <button onClick={() => onPageChange(1)} disabled={currentPage === 1} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          <ChevronsLeft className="h-4 w-4" />
-        </button>
-        <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-
+        <button onClick={() => onPageChange(1)} disabled={currentPage === 1} className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><ChevronsLeft className="h-4 w-4" /></button>
+        <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><ChevronLeft className="h-4 w-4" /></button>
         <div className="flex items-center gap-1">
           {getPageNumbers().map((page, index) => (
             <React.Fragment key={index}>
-              {page === "..." ? (
-                <span className="px-3 py-2 text-stone-400">...</span>
-              ) : (
-                <button
-                  onClick={() => onPageChange(page as number)}
-                  className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                    currentPage === page
-                      ? "bg-[#1e3a5f] text-white"
-                      : "text-stone-700 hover:bg-stone-100 border border-stone-300"
-                  }`}
-                >
-                  {page}
-                </button>
+              {page === "..." ? <span className="px-3 py-2 text-black/40">...</span> : (
+                <button onClick={() => onPageChange(page as number)} className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === page ? "bg-[#1e3a5f] text-white" : "text-black hover:bg-stone-100 border border-stone-300"}`}>{page}</button>
               )}
             </React.Fragment>
           ))}
         </div>
-
-        <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          <ChevronRight className="h-4 w-4" />
-        </button>
-        <button onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          <ChevronsRight className="h-4 w-4" />
-        </button>
+        <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="h-4 w-4" /></button>
+        <button onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><ChevronsRight className="h-4 w-4" /></button>
       </div>
     </div>
   );
 };
 
-/** Single row in the table view. */
-const ProductTableRow: React.FC<ProductTableRowProps> = ({
-  product, index, startIndex, onView, onEdit, onDelete, onHistory,
-  isOpen, onToggleOpen, formatCurrency,
-}) => {
+const ProductTableRow: React.FC<ProductTableRowProps> = ({ product, index, startIndex, onView, onEdit, onDelete, onHistory, isOpen, onToggleOpen, formatCurrency }) => {
   const productName = product.product?.name || product.name || "";
   const productSku = product.product?.sku || product.sku || "";
   const productImage = product.product?.image || product.image || null;
-
   return (
     <tr className="hover:bg-stone-50/50 transition-colors group">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">{startIndex + index + 1}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-black/50">{startIndex + index + 1}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <ProductImage src={productImage} alt={productName} />
           <div>
-            <div className="font-medium text-stone-900"><ShortTextWithTooltip text={productName} max={30} /></div>
-            <div className="text-xs text-stone-500 flex items-center gap-1 mt-0.5"><Hash className="h-3 w-3" />{productSku}</div>
+            <div className="font-medium text-black"><ShortTextWithTooltip text={productName} max={30} /></div>
+            <div className="text-xs text-black/50 flex items-center gap-1 mt-0.5"><Hash className="h-3 w-3" />{productSku}</div>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-        <code className="text-xs bg-stone-100 px-2 py-1 rounded font-mono">{productSku}</code>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-        <span className="text-stone-600">{product.category?.name || "Uncategorized"}</span>
-      </td>
+      <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell"><code className="text-xs bg-stone-100 px-2 py-1 rounded font-mono text-black/80">{productSku}</code></td>
+      <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell"><span className="text-black/80">{product.category?.name || "Uncategorized"}</span></td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex flex-col">
-          <span className="font-semibold text-stone-900">{formatCurrency(toNumber(product.price))}</span>
+          <span className="font-semibold text-black">{formatCurrency(toNumber(product.price))}</span>
           <ProfitTrend product={product} />
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap"><StockBadge product={product} /></td>
       <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          product.is_active
-            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-            : "bg-stone-100 text-stone-600 border border-stone-200"
-        }`}>
+        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${product.is_active ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-stone-100 text-black/70 border border-stone-200"}`}>
           {product.is_active ? "Active" : "Inactive"}
         </span>
       </td>
       <td className="px-6 py-4 text-center relative">
-        <button
-          onClick={() => onToggleOpen(isOpen ? null : product.id)}
-          className="p-2 rounded-lg hover:bg-stone-100 transition text-stone-400 hover:text-stone-600"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
+        <button onClick={() => onToggleOpen(isOpen ? null : product.id)} className="p-2 rounded-lg hover:bg-stone-100 transition text-black/40 hover:text-black/70"><MoreVertical className="h-4 w-4" /></button>
         {isOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => onToggleOpen(null)} />
             <div className="absolute right-6 z-40 w-48 bg-white border border-stone-200 rounded-xl shadow-lg shadow-stone-200/50 animate-fadeIn">
-              <button onClick={() => { onView(product); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition first:rounded-t-xl border-b border-stone-100">
-                <Eye className="h-4 w-4 text-[#1e3a5f]" /> View Details
-              </button>
-              <button onClick={() => { onEdit(product.encrypted_id); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100">
-                <Edit className="h-4 w-4 text-[#1e3a5f]" /> Update Stock
-              </button>
-              <button onClick={() => { onHistory(product.encrypted_pid); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100">
-                <History className="h-4 w-4 text-stone-600" /> History
-              </button>
-              <button onClick={() => { onDelete(product); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition last:rounded-b-xl">
-                <Trash2 className="h-4 w-4" /> Delete Product
-              </button>
+              <button onClick={() => { onView(product); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition first:rounded-t-xl border-b border-stone-100"><Eye className="h-4 w-4 text-[#1e3a5f]" /> View Details</button>
+              <button onClick={() => { onEdit(product.encrypted_id); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"><Edit className="h-4 w-4 text-[#1e3a5f]" /> Update Stock</button>
+              <button onClick={() => { onHistory(product.encrypted_pid); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"><History className="h-4 w-4 text-black/70" /> History</button>
+              <button onClick={() => { onDelete(product); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition last:rounded-b-xl"><Trash2 className="h-4 w-4" /> Delete Product</button>
             </div>
           </>
         )}
@@ -700,31 +472,19 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   );
 };
 
-/** Grid card for product. */
-const ProductGridCard: React.FC<ProductGridCardProps> = ({
-  product, onView, onEdit, onDelete, formatCurrency,
-}) => {
+const ProductGridCard: React.FC<ProductGridCardProps> = ({ product, onView, onEdit, onDelete, formatCurrency }) => {
   const productName = product.product?.name || product.name || "";
   const productSku = product.product?.sku || product.sku || "";
   const productImage = product.product?.image || product.image || null;
   const categoryName = product.category?.name || "Uncategorized";
-
   return (
     <div className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all group">
       <div className="p-5">
         <div className="relative mb-4">
           <div className="aspect-square bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden relative">
             {productImage ? (
-              <Image
-                src={getImageUrl(productImage)}
-                alt={productName}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            ) : (
-              <Package className="h-12 w-12 text-stone-400" />
-            )}
+              <Image src={getImageUrl(productImage)} alt={productName} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+            ) : <Package className="h-12 w-12 text-black/40" />}
           </div>
           <div className="absolute top-2 right-2 flex gap-1">
             {product.is_featured && <span className="bg-amber-500 text-white p-1.5 rounded-lg"><Star className="h-3 w-3" /></span>}
@@ -733,13 +493,10 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
         </div>
         <div className="space-y-3">
           <div>
-            <h3 className="font-semibold text-stone-900"><ShortTextWithTooltip text={productName} max={25} /></h3>
-            <p className="text-xs text-stone-500 mt-0.5">SKU: {productSku}</p>
+            <h3 className="font-semibold text-black"><ShortTextWithTooltip text={productName} max={25} /></h3>
+            <p className="text-xs text-black/50 mt-0.5">SKU: {productSku}</p>
           </div>
-          <div className="flex items-center gap-1 text-xs text-stone-600">
-            <Layers className="h-3 w-3" />
-            <span><ShortTextWithTooltip text={categoryName} max={11} /></span>
-          </div>
+          <div className="flex items-center gap-1 text-xs text-black/70"><Layers className="h-3 w-3" /><span><ShortTextWithTooltip text={categoryName} max={11} /></span></div>
           <div className="flex items-center justify-between">
             <div>
               <span className="text-lg font-bold text-[#1e3a5f]">{formatCurrency(toNumber(product.price))}</span>
@@ -748,9 +505,9 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
             <StockBadge product={product} />
           </div>
           <div className="grid grid-cols-3 gap-2 pt-2">
-            <button onClick={() => onView(product)} className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="View Details"><Eye className="h-4 w-4" /></button>
-            <button onClick={() => onEdit(product.id)} className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="Adjust Stock"><Edit className="h-4 w-4" /></button>
-            <button onClick={() => onDelete(product)} className="p-2 text-stone-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center" title="Delete Product"><Trash2 className="h-4 w-4" /></button>
+            <button onClick={() => onView(product)} className="p-2 text-black/70 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="View Details"><Eye className="h-4 w-4" /></button>
+            <button onClick={() => onEdit(product.id)} className="p-2 text-black/70 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="Adjust Stock"><Edit className="h-4 w-4" /></button>
+            <button onClick={() => onDelete(product)} className="p-2 text-black/70 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center" title="Delete Product"><Trash2 className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
@@ -758,153 +515,76 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
   );
 };
 
-/** Slide‑in filter drawer for all filter options. */
-const FilterDrawer: React.FC<FilterDrawerProps> = ({
-  isOpen, onClose, filters, categories, totalItems,
-  onFilterChange, onClearFilters, activeFilterCount,
-}) => {
+const FilterDrawer: React.FC<FilterDrawerProps> = ({ isOpen, onClose, filters, categories, totalItems, onFilterChange, onClearFilters, activeFilterCount }) => {
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute right-0 top-0 h-full w-96 bg-white shadow-2xl animate-slideIn">
         <div className="p-4 border-b border-stone-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Filter size={20} className="text-[#1e3a5f]" />
-            <h3 className="font-semibold text-stone-900">Filters</h3>
-            {activeFilterCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-[#1e3a5f] text-white rounded-full">{activeFilterCount}</span>
-            )}
+            <h3 className="font-semibold text-black">Filters</h3>
+            {activeFilterCount > 0 && <span className="ml-2 px-2 py-0.5 text-xs bg-[#1e3a5f] text-white rounded-full">{activeFilterCount}</span>}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-lg transition"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-lg transition text-black/70"><X size={20} /></button>
         </div>
-
         <div className="overflow-y-auto h-[calc(100vh-140px)] p-4 space-y-4">
-          {/* Status Filter */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Status</label>
-            <select
-              value={filters.status}
-              onChange={(e) => onFilterChange("status", e.target.value as FilterState["status"])}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">Status</label>
+            <select value={filters.status} onChange={(e) => onFilterChange("status", e.target.value as FilterState["status"])} className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition text-black">
+              <option value="all" className="text-black">All Status</option>
+              <option value="active" className="text-black">Active</option>
+              <option value="inactive" className="text-black">Inactive</option>
             </select>
           </div>
-
-          {/* Category Filter */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Category</label>
-            <select
-              value={filters.category}
-              onChange={(e) => onFilterChange("category", e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
-            >
-              <option value="all">All Categories</option>
-              {categories.length === 0 ? (
-                <option disabled>Loading categories…</option>
-              ) : (
-                categories.map((category) => (
-                  <option key={category.id} value={category.id.toString()}>{category.name}</option>
-                ))
-              )}
+            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">Category</label>
+            <select value={filters.category} onChange={(e) => onFilterChange("category", e.target.value)} className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition text-black">
+              <option value="all" className="text-black">All Categories</option>
+              {categories.length === 0 ? <option disabled className="text-black/50">Loading categories…</option> : categories.map((category) => <option key={category.id} value={category.id.toString()} className="text-black">{category.name}</option>)}
             </select>
           </div>
-
-          {/* Stock Filter */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Stock Level</label>
-            <select
-              value={filters.stock}
-              onChange={(e) => onFilterChange("stock", e.target.value as FilterState["stock"])}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
-            >
-              <option value="all">All Stock</option>
-              <option value="in_stock">In Stock</option>
-              <option value="low_stock">Low Stock</option>
-              <option value="out_of_stock">Out of Stock</option>
+            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">Stock Level</label>
+            <select value={filters.stock} onChange={(e) => onFilterChange("stock", e.target.value as FilterState["stock"])} className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition text-black">
+              <option value="all" className="text-black">All Stock</option>
+              <option value="in_stock" className="text-black">In Stock</option>
+              <option value="low_stock" className="text-black">Low Stock</option>
+              <option value="out_of_stock" className="text-black">Out of Stock</option>
             </select>
           </div>
-
-          {/* Sort By */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Sort By</label>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => onFilterChange("sortBy", e.target.value as FilterState["sortBy"])}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
-            >
-              <option value="name">Name</option>
-              <option value="price">Price</option>
-              <option value="stock">Stock</option>
-              <option value="created">Date Added</option>
+            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">Sort By</label>
+            <select value={filters.sortBy} onChange={(e) => onFilterChange("sortBy", e.target.value as FilterState["sortBy"])} className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition text-black">
+              <option value="name" className="text-black">Name</option>
+              <option value="price" className="text-black">Price</option>
+              <option value="stock" className="text-black">Stock</option>
+              <option value="created" className="text-black">Date Added</option>
             </select>
           </div>
-
-          {/* Sort Order */}
           <div>
-            <label className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2 block">Order</label>
+            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">Order</label>
             <div className="flex gap-2">
-              <button
-                onClick={() => onFilterChange("sortOrder", "asc")}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
-                  filters.sortOrder === "asc"
-                    ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
-                    : "bg-white text-stone-700 border-stone-300 hover:bg-stone-50"
-                }`}
-              >
-                Asc
-              </button>
-              <button
-                onClick={() => onFilterChange("sortOrder", "desc")}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
-                  filters.sortOrder === "desc"
-                    ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
-                    : "bg-white text-stone-700 border-stone-300 hover:bg-stone-50"
-                }`}
-              >
-                Desc
-              </button>
+              <button onClick={() => onFilterChange("sortOrder", "asc")} className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${filters.sortOrder === "asc" ? "bg-[#1e3a5f] text-white border-[#1e3a5f]" : "bg-white text-black border-stone-300 hover:bg-stone-50"}`}>Asc</button>
+              <button onClick={() => onFilterChange("sortOrder", "desc")} className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${filters.sortOrder === "desc" ? "bg-[#1e3a5f] text-white border-[#1e3a5f]" : "bg-white text-black border-stone-300 hover:bg-stone-50"}`}>Desc</button>
             </div>
           </div>
         </div>
-
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-stone-200 bg-stone-50/50">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-stone-600">
-              <span className="font-semibold">{totalItems}</span> products found
-            </p>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={onClearFilters}
-                className="text-sm text-[#1e3a5f] hover:text-[#2c4c6e] font-medium inline-flex items-center gap-1"
-              >
-                <FilterX size={14} />
-                Clear all
-              </button>
-            )}
+            <p className="text-sm text-black/70"><span className="font-semibold text-black">{totalItems}</span> products found</p>
+            {activeFilterCount > 0 && <button onClick={onClearFilters} className="text-sm text-[#1e3a5f] hover:text-[#2c4c6e] font-medium inline-flex items-center gap-1"><FilterX size={14} /> Clear all</button>}
           </div>
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-colors font-medium"
-          >
-            Apply Filters
-          </button>
+          <button onClick={onClose} className="w-full px-4 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-colors font-medium">Apply Filters</button>
         </div>
       </div>
     </div>
   );
 };
 
-/** Detailed product view modal. */
-const ViewProductModal: React.FC<ViewProductModalProps> = ({
-  isOpen, onClose, product, onEdit, onHistory, formatCurrency,
-}) => {
+const ViewProductModal: React.FC<ViewProductModalProps> = ({ isOpen, onClose, product, onEdit, onHistory, formatCurrency }) => {
   if (!isOpen || !product) return null;
-
   const productName = product.product?.name || product.name || "";
   const productSku = product.product?.sku || product.sku || "";
   const productImage = product.product?.image || product.image || null;
@@ -916,67 +596,64 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
   const productHeight = product.product?.height || product.height || null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-scaleIn">
         <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <ProductImage src={productImage} alt={productName} className="w-12 h-12" />
             <div>
-              <h2 className="text-xl font-bold text-stone-900">{productName}</h2>
-              <p className="text-sm text-stone-500">SKU: {productSku}</p>
+              <h2 className="text-xl font-bold text-black">{productName}</h2>
+              <p className="text-sm text-black/60">SKU: {productSku}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition">
-            <X className="h-5 w-5" />
-          </button>
+          <button onClick={onClose} className="p-2 text-black/50 hover:text-black hover:bg-stone-100 rounded-lg transition"><X className="h-5 w-5" /></button>
         </div>
-
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Box className="h-4 w-4" /> Basic Information</h3>
+                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2"><Box className="h-4 w-4" /> Basic Information</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Description</span><span className="text-sm text-stone-900 text-right max-w-[200px]">{productDescription}</span></div>
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Category</span><span className="text-sm text-stone-900">{product.category?.name || "Uncategorized"}</span></div>
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Unit</span><span className="text-sm text-stone-900">{product.unit?.name || "N/A"}{product.unit?.symbol && ` (${product.unit.symbol})`}</span></div>
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Status</span><span className={`text-sm font-medium ${product.is_active ? "text-emerald-700" : "text-stone-600"}`}>{product.is_active ? "Active" : "Inactive"}</span></div>
-                  {product.supplier && <div className="flex justify-between"><span className="text-sm text-stone-600">Supplier</span><span className="text-sm text-stone-900">{product.supplier.name}</span></div>}
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Description</span><span className="text-sm text-black text-right max-w-[200px]">{productDescription}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Category</span><span className="text-sm text-black">{product.category?.name || "Uncategorized"}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Unit</span><span className="text-sm text-black">{product.unit?.name || "N/A"}{product.unit?.symbol && ` (${product.unit.symbol})`}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Status</span><span className={`text-sm font-medium ${product.is_active ? "text-emerald-700" : "text-black/70"}`}>{product.is_active ? "Active" : "Inactive"}</span></div>
+                  {product.supplier && <div className="flex justify-between"><span className="text-sm text-black/70">Supplier</span><span className="text-sm text-black">{product.supplier.name}</span></div>}
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><DollarSign className="h-4 w-4" /> Pricing</h3>
+                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2"><DollarSign className="h-4 w-4" /> Pricing</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Regular Price</span><span className="text-lg font-bold text-[#1e3a5f]">{formatCurrency(toNumber(product.price))}</span></div>
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Cost Price</span><span className="text-sm text-stone-900">{formatCurrency(toNumber(product.cost_price))}</span></div>
-                  {product.is_on_sale && product.sale_price && <div className="flex justify-between"><span className="text-sm text-stone-600">Sale Price</span><span className="text-sm font-semibold text-rose-600">{formatCurrency(toNumber(product.sale_price))}</span></div>}
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Regular Price</span><span className="text-lg font-bold text-[#1e3a5f]">{formatCurrency(toNumber(product.price))}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Cost Price</span><span className="text-sm text-black">{formatCurrency(toNumber(product.cost_price))}</span></div>
+                  {product.is_on_sale && product.sale_price && <div className="flex justify-between"><span className="text-sm text-black/70">Sale Price</span><span className="text-sm font-semibold text-rose-600">{formatCurrency(toNumber(product.sale_price))}</span></div>}
                 </div>
               </div>
             </div>
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Package className="h-4 w-4" /> Stock Information</h3>
+                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2"><Package className="h-4 w-4" /> Stock Information</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-center"><span className="text-sm text-stone-600">Stock Status</span><StockBadge product={product} /></div>
-                  {product.low_stock_threshold && <div className="flex justify-between"><span className="text-sm text-stone-600">Low Stock Threshold</span><span className="text-sm text-stone-900">{formatNumber(product.low_stock_threshold)} units</span></div>}
+                  <div className="flex justify-between items-center"><span className="text-sm text-black/70">Stock Status</span><StockBadge product={product} /></div>
+                  {product.low_stock_threshold && <div className="flex justify-between"><span className="text-sm text-black/70">Low Stock Threshold</span><span className="text-sm text-black">{formatNumber(product.low_stock_threshold)} units</span></div>}
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Calendar className="h-4 w-4" /> Important Dates</h3>
+                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2"><Calendar className="h-4 w-4" /> Important Dates</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  {product.manufactured_at && <div className="flex justify-between"><span className="text-sm text-stone-600">Manufactured</span><span className="text-sm text-stone-900">{formatDate(product.manufactured_at)}</span></div>}
-                  {product.expires_at && <div className="flex justify-between"><span className="text-sm text-stone-600">Expires</span><span className="text-sm text-rose-600 font-medium">{formatDate(product.expires_at)}</span></div>}
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Created</span><span className="text-sm text-stone-900">{formatDate(product.created_at)}</span></div>
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Last Updated</span><span className="text-sm text-stone-900">{formatDate(product.updated_at)}</span></div>
+                  {product.manufactured_at && <div className="flex justify-between"><span className="text-sm text-black/70">Manufactured</span><span className="text-sm text-black">{formatDate(product.manufactured_at)}</span></div>}
+                  {product.expires_at && <div className="flex justify-between"><span className="text-sm text-black/70">Expires</span><span className="text-sm text-rose-600 font-medium">{formatDate(product.expires_at)}</span></div>}
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Created</span><span className="text-sm text-black">{formatDate(product.created_at)}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-black/70">Last Updated</span><span className="text-sm text-black">{formatDate(product.updated_at)}</span></div>
                 </div>
               </div>
               {(productDimensions || productWeight || productLength || productWidth || productHeight) && (
                 <div>
-                  <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><Scale className="h-4 w-4" /> Dimensions & Weight</h3>
+                  <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2"><Scale className="h-4 w-4" /> Dimensions & Weight</h3>
                   <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                    {productDimensions && <div className="flex justify-between"><span className="text-sm text-stone-600">Dimensions</span><span className="text-sm text-stone-900">{productDimensions}</span></div>}
-                    {productWeight && <div className="flex justify-between"><span className="text-sm text-stone-600">Weight</span><span className="text-sm text-stone-900">{formatNumber(productWeight)} {product.unit?.symbol || "kg"}</span></div>}
-                    {(productLength || productWidth || productHeight) && <div className="flex justify-between"><span className="text-sm text-stone-600">Size (L×W×H)</span><span className="text-sm text-stone-900">{productLength || "0"} × {productWidth || "0"} × {productHeight || "0"}</span></div>}
+                    {productDimensions && <div className="flex justify-between"><span className="text-sm text-black/70">Dimensions</span><span className="text-sm text-black">{productDimensions}</span></div>}
+                    {productWeight && <div className="flex justify-between"><span className="text-sm text-black/70">Weight</span><span className="text-sm text-black">{formatNumber(productWeight)} {product.unit?.symbol || "kg"}</span></div>}
+                    {(productLength || productWidth || productHeight) && <div className="flex justify-between"><span className="text-sm text-black/70">Size (L×W×H)</span><span className="text-sm text-black">{productLength || "0"} × {productWidth || "0"} × {productHeight || "0"}</span></div>}
                   </div>
                 </div>
               )}
@@ -988,14 +665,14 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#1e3a5f]/10 rounded-lg flex items-center justify-center"><BarChart3 className="h-5 w-5 text-[#1e3a5f]" /></div>
                   <div>
-                    <h4 className="font-semibold text-stone-900">Profit Analysis</h4>
-                    <p className="text-sm text-stone-600">Based on current pricing and cost</p>
+                    <h4 className="font-semibold text-black">Profit Analysis</h4>
+                    <p className="text-sm text-black/70">Based on current pricing and cost</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                  <div><p className="text-xs text-stone-500">Profit per Unit</p><p className="text-lg font-bold text-emerald-700">{formatCurrency(toNumber(product.price) - toNumber(product.cost_price))}</p></div>
-                  <div><p className="text-xs text-stone-500">Profit Margin</p><p className="text-lg font-bold text-[#1e3a5f]">{(((toNumber(product.price) - toNumber(product.cost_price)) / toNumber(product.cost_price)) * 100).toFixed(1)}%</p></div>
-                  <div className="col-span-2 sm:col-span-1"><p className="text-xs text-stone-500">Total Stock Value</p><p className="text-lg font-bold text-stone-900">{formatCurrency(toNumber(product.price) * toNumber(product.stock_quantity))}</p></div>
+                  <div><p className="text-xs text-black/60">Profit per Unit</p><p className="text-lg font-bold text-emerald-700">{formatCurrency(toNumber(product.price) - toNumber(product.cost_price))}</p></div>
+                  <div><p className="text-xs text-black/60">Profit Margin</p><p className="text-lg font-bold text-[#1e3a5f]">{(((toNumber(product.price) - toNumber(product.cost_price)) / toNumber(product.cost_price)) * 100).toFixed(1)}%</p></div>
+                  <div className="col-span-2 sm:col-span-1"><p className="text-xs text-black/60">Total Stock Value</p><p className="text-lg font-bold text-black">{formatCurrency(toNumber(product.price) * toNumber(product.stock_quantity))}</p></div>
                 </div>
               </div>
             </div>
@@ -1007,40 +684,21 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
 };
 
 // ==============================================
-// Main Component
+// Main Component — Black Text Updates
 // ==============================================
 
 const ManageProducts = ({ user }: { user?: User }) => {
   const router = useRouter();
   const params = useParams();
-  // Location id from route parameter
   const id = params.id as string;
 
-  // Format money according to user's business currency
   const formatCurrency = (amount: number): string => {
     const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-      .format(amount)
-      .replace(/^\$/, currencySymbol);
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      .format(amount).replace(/^\$/, currencySymbol);
   };
 
-  // Filters state
-  const [filters, setFilters] = useState<FilterState>({
-    search: "",
-    status: "all",
-    category: "all",
-    stock: "all",
-    priceRange: [0, 1000000],
-    sortBy: "name",
-    sortOrder: "asc",
-  });
-
-  // UI state
+  const [filters, setFilters] = useState<FilterState>({ search: "", status: "all", category: "all", stock: "all", priceRange: [0, 1000000], sortBy: "name", sortOrder: "asc" });
   const [openRow, setOpenRow] = useState<number | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -1048,8 +706,6 @@ const ManageProducts = ({ user }: { user?: User }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Data state
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1059,18 +715,10 @@ const ManageProducts = ({ user }: { user?: User }) => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  // Debounce search input to avoid excessive API calls
   const debouncedSearch = useDebounce(filters.search, 300);
 
-  /**
-   * Build query parameters for the API based on current filters and pagination.
-   * Only includes non-default values to keep URL clean.
-   */
   const buildQueryParams = useCallback(() => {
-    const params: Record<string, string | number> = {
-      page: currentPage,
-      per_page: itemsPerPage,
-    };
+    const params: Record<string, string | number> = { page: currentPage, per_page: itemsPerPage };
     if (debouncedSearch) params.search = debouncedSearch;
     if (filters.status !== "all") params.status = filters.status;
     if (filters.category !== "all") params.category = filters.category;
@@ -1082,41 +730,23 @@ const ManageProducts = ({ user }: { user?: User }) => {
     return params;
   }, [currentPage, itemsPerPage, debouncedSearch, filters]);
 
-  /**
-   * Fetch products and categories from the server.
-   * This is the single source of data for the component.
-   */
   const loadData = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
     try {
       const queryParams = buildQueryParams();
-      // Fetch products and categories in parallel
       const [productsRes, categoriesRes] = await Promise.all([
         apiGet(`/product-locations/${id}`, { params: queryParams }, false),
         apiGet("/product-categories", {}, false),
       ]);
-
-      // Extract products and pagination
       const pagination = productsRes?.data?.pagination;
       const newProducts = productsRes?.data?.data ?? [];
       const newLocationName = productsRes?.data?.location_name ?? "";
-
-      // Extract categories from API response.
-      // The shape may be nested: { data: { product_categories: [...] } }
       const body = categoriesRes?.data;
       let newCategories: Category[] = [];
-
-      if (body?.data?.product_categories && Array.isArray(body.data.product_categories)) {
-        newCategories = body.data.product_categories;
-      } else if (body?.product_categories && Array.isArray(body.product_categories)) {
-        newCategories = body.product_categories;
-      } else if (Array.isArray(body)) {
-        newCategories = body;
-      }
-      // If none matched, newCategories stays [] – safe for .map()
-
-      // Update state
+      if (body?.data?.product_categories && Array.isArray(body.data.product_categories)) newCategories = body.data.product_categories;
+      else if (body?.product_categories && Array.isArray(body.product_categories)) newCategories = body.product_categories;
+      else if (Array.isArray(body)) newCategories = body;
       setProducts(Array.isArray(newProducts) ? newProducts : []);
       setLocationName(newLocationName);
       setTotalItems(pagination?.total ?? 0);
@@ -1128,57 +758,24 @@ const ManageProducts = ({ user }: { user?: User }) => {
       const error = err as ApiError;
       console.error("Error loading data:", error);
       toast.error("Failed to load data");
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   }, [id, buildQueryParams, currentPage]);
 
-  // Initial load and whenever filters/page change
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  // Refresh button handler
-  const handleRefresh = async () => {
-    await loadData();
-    // toast.success("Data refreshed");
-  };
+  const handleRefresh = async () => { await loadData(); };
 
-  // Delete handler – currently disabled, shows error toast
   const handleDelete = async () => {
     if (isSubmitting || !selectedProduct) return;
     setIsSubmitting(true);
-    try {
-      // The actual delete API call is disabled by design
-      toast.error("Product cannot be deleted from this account level.");
-    } catch (err) {
-      console.error("Delete failed:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
+    try { toast.error("Product cannot be deleted from this account level."); }
+    catch (err) { console.error("Delete failed:", err); }
+    finally { setIsSubmitting(false); }
   };
 
-  // Generic filter change – resets to page 1
-  const handleFilterChange = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  };
+  const handleFilterChange = <K extends keyof FilterState>(key: K, value: FilterState[K]) => { setFilters(prev => ({ ...prev, [key]: value })); setCurrentPage(1); };
+  const clearFilters = () => { setFilters({ search: "", status: "all", category: "all", stock: "all", priceRange: [0, 1000000], sortBy: "name", sortOrder: "asc" }); setCurrentPage(1); };
 
-  // Reset all filters to default
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      status: "all",
-      category: "all",
-      stock: "all",
-      priceRange: [0, 1000000],
-      sortBy: "name",
-      sortOrder: "asc",
-    });
-    setCurrentPage(1);
-  };
-
-  // Count active filters (for badge)
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.status !== "all") count++;
@@ -1191,7 +788,6 @@ const ManageProducts = ({ user }: { user?: User }) => {
     return count;
   }, [filters]);
 
-  // Compute statistics based on current page products (for rough overview)
   const statistics = useMemo((): Statistics => {
     const currentProducts = products;
     const totalProducts = totalItems;
@@ -1200,19 +796,11 @@ const ManageProducts = ({ user }: { user?: User }) => {
     const totalCost = currentProducts.reduce((sum, p) => sum + toNumber(p.cost_price) * toNumber(p.stock_quantity), 0);
     const potentialProfit = totalValue - totalCost;
     const profitMargin = totalValue > 0 ? (potentialProfit / totalValue) * 100 : 0;
-    const lowStockCount = currentProducts.filter(p => {
-      const qty = toNumber(p.stock_quantity);
-      const thr = toNumber(p.low_stock_threshold) || 5;
-      return qty <= thr && qty > 0;
-    }).length;
-    const outOfStockCount = currentProducts.filter(p => {
-      const qty = toNumber(p.stock_quantity);
-      return p.is_out_of_stock || qty <= 0;
-    }).length;
+    const lowStockCount = currentProducts.filter(p => { const qty = toNumber(p.stock_quantity); const thr = toNumber(p.low_stock_threshold) || 5; return qty <= thr && qty > 0; }).length;
+    const outOfStockCount = currentProducts.filter(p => { const qty = toNumber(p.stock_quantity); return p.is_out_of_stock || qty <= 0; }).length;
     return { totalProducts, activeProducts, totalValue, totalCost, potentialProfit, profitMargin, lowStockCount, outOfStockCount };
   }, [products, totalItems]);
 
-  // Pagination range for display
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + products.length, totalItems);
 
@@ -1223,29 +811,19 @@ const ManageProducts = ({ user }: { user?: User }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link href="/locations" className="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
+              <Link href="/locations" className="p-2 text-black/60 hover:text-black hover:bg-stone-100 rounded-lg transition-colors"><ArrowLeft className="h-5 w-5" /></Link>
               <div>
-                <h1 className="text-2xl font-bold text-stone-900">
-                  <ShortTextWithTooltip text={locationName || "Products"} max={30} />
-                </h1>
-                <p className="text-sm text-stone-500">Manage your product inventory</p>
+                <h1 className="text-2xl font-bold text-black"><ShortTextWithTooltip text={locationName || "Products"} max={30} /></h1>
+                <p className="text-sm text-black/70">Manage your product inventory</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode(viewMode === "table" ? "grid" : "table")}
-                className="p-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors border border-stone-200"
-              >
+              <button onClick={() => setViewMode(viewMode === "table" ? "grid" : "table")} className="p-2.5 text-black/70 hover:text-black hover:bg-stone-100 rounded-lg transition-colors border border-stone-200">
                 {viewMode === "table" ? <Grid3x3 className="h-5 w-5" /> : <List className="h-5 w-5" />}
               </button>
-              <button onClick={handleRefresh} className="p-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors border border-stone-200">
-                <RefreshCw className="h-5 w-5" />
-              </button>
+              <button onClick={handleRefresh} className="p-2.5 text-black/70 hover:text-black hover:bg-stone-100 rounded-lg transition-colors border border-stone-200"><RefreshCw className="h-5 w-5" /></button>
               <Link href="/addproductlocations" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#1e3a5f]/20">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Product</span>
+                <Plus className="h-4 w-4" /><span className="hidden sm:inline">Add Product</span>
               </Link>
             </div>
           </div>
@@ -1267,26 +845,12 @@ const ManageProducts = ({ user }: { user?: User }) => {
         {/* Search and Filter Bar */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 h-5 w-5" />
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => handleFilterChange("search", e.target.value)}
-              placeholder="Search products by name, SKU, description..."
-              className="w-full pl-10 pr-4 py-3 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition placeholder-stone-400"
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40 h-5 w-5" />
+            <input type="text" value={filters.search} onChange={(e) => handleFilterChange("search", e.target.value)} placeholder="Search products by name, SKU, description..." className="w-full pl-10 pr-4 py-3 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition placeholder-black/40 text-black" />
           </div>
-          <button
-            onClick={() => setFilterDrawerOpen(true)}
-            className="relative inline-flex items-center gap-2 px-6 py-3 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition-colors shadow-sm"
-          >
-            <Filter className="h-5 w-5 text-stone-600" />
-            <span className="text-sm font-medium text-stone-700">Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#1e3a5f] text-white text-xs rounded-full flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
+          <button onClick={() => setFilterDrawerOpen(true)} className="relative inline-flex items-center gap-2 px-6 py-3 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition-colors shadow-sm">
+            <Filter className="h-5 w-5 text-black/70" /><span className="text-sm font-medium text-black">Filters</span>
+            {activeFilterCount > 0 && <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#1e3a5f] text-white text-xs rounded-full flex items-center justify-center">{activeFilterCount}</span>}
           </button>
         </div>
 
@@ -1301,10 +865,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
 
         {/* Products Count */}
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm text-stone-600">
-            Showing <span className="font-semibold">{startIndex + 1}-{endIndex}</span> of{" "}
-            <span className="font-semibold">{totalItems}</span> products
-          </span>
+          <span className="text-sm text-black/70">Showing <span className="font-semibold text-black">{startIndex + 1}-{endIndex}</span> of <span className="font-semibold text-black">{totalItems}</span> products</span>
         </div>
 
         {/* Loading State */}
@@ -1312,20 +873,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
 
         {/* Empty State */}
         {!isLoading && products.length === 0 && (
-          <EmptyState
-            title={filters.search || activeFilterCount > 0 ? "No products found" : "No products yet"}
-            description={
-              filters.search || activeFilterCount > 0
-                ? "Try adjusting your search terms or filters"
-                : "Get started by adding your first product to the inventory"
-            }
-            icon={Package}
-            action={
-              filters.search || activeFilterCount > 0
-                ? { label: "Clear Filters", onClick: clearFilters }
-                : { label: "Add Your First Product", href: "/addproductlocations" }
-            }
-          />
+          <EmptyState title={filters.search || activeFilterCount > 0 ? "No products found" : "No products yet"} description={filters.search || activeFilterCount > 0 ? "Try adjusting your search terms or filters" : "Get started by adding your first product to the inventory"} icon={Package} action={filters.search || activeFilterCount > 0 ? { label: "Clear Filters", onClick: clearFilters } : { label: "Add Your First Product", href: "/addproductlocations" }} />
         )}
 
         {/* Table View */}
@@ -1333,25 +881,19 @@ const ManageProducts = ({ user }: { user?: User }) => {
           <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-stone-50 text-stone-600 border-b border-stone-200">
+                <thead className="bg-stone-50 text-black/70 border-b border-stone-200">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider w-12">#</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button onClick={() => handleFilterChange("sortBy", "name")} className="flex items-center gap-1 hover:text-stone-900">
-                        Product {filters.sortBy === "name" && <ArrowUpDown className="h-3 w-3" />}
-                      </button>
+                      <button onClick={() => handleFilterChange("sortBy", "name")} className="flex items-center gap-1 hover:text-black">Product {filters.sortBy === "name" && <ArrowUpDown className="h-3 w-3" />}</button>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">SKU</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">Category</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button onClick={() => handleFilterChange("sortBy", "price")} className="flex items-center gap-1 hover:text-stone-900">
-                        Price {filters.sortBy === "price" && <ArrowUpDown className="h-3 w-3" />}
-                      </button>
+                      <button onClick={() => handleFilterChange("sortBy", "price")} className="flex items-center gap-1 hover:text-black">Price {filters.sortBy === "price" && <ArrowUpDown className="h-3 w-3" />}</button>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button onClick={() => handleFilterChange("sortBy", "stock")} className="flex items-center gap-1 hover:text-stone-900">
-                        Stock {filters.sortBy === "stock" && <ArrowUpDown className="h-3 w-3" />}
-                      </button>
+                      <button onClick={() => handleFilterChange("sortBy", "stock")} className="flex items-center gap-1 hover:text-black">Stock {filters.sortBy === "stock" && <ArrowUpDown className="h-3 w-3" />}</button>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden sm:table-cell">Status</th>
                     <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider w-12">Actions</th>
@@ -1359,33 +901,12 @@ const ManageProducts = ({ user }: { user?: User }) => {
                 </thead>
                 <tbody className="divide-y divide-stone-100">
                   {products.map((product, index) => (
-                    <ProductTableRow
-                      key={product.id}
-                      product={product}
-                      index={index}
-                      startIndex={startIndex}
-                      onView={(product) => { setSelectedProduct(product); setViewModalOpen(true); }}
-                      onEdit={(encrypted_id) => router.push(`/updatestock/${encrypted_id}`)}
-                      onDelete={(product) => { setSelectedProduct(product); setDeleteModalOpen(true); }}
-                      onHistory={(encrypted_pid) => router.push(`/locationprodhist/${encrypted_pid}`)}
-                      isOpen={openRow === product.id}
-                      onToggleOpen={setOpenRow}
-                      formatCurrency={formatCurrency}
-                    />
+                    <ProductTableRow key={product.id} product={product} index={index} startIndex={startIndex} onView={(product) => { setSelectedProduct(product); setViewModalOpen(true); }} onEdit={(encrypted_id) => router.push(`/updatestock/${encrypted_id}`)} onDelete={(product) => { setSelectedProduct(product); setDeleteModalOpen(true); }} onHistory={(encrypted_pid) => router.push(`/locationprodhist/${encrypted_pid}`)} isOpen={openRow === product.id} onToggleOpen={setOpenRow} formatCurrency={formatCurrency} />
                   ))}
                 </tbody>
               </table>
             </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              startIndex={startIndex}
-              endIndex={endIndex}
-              itemsPerPage={itemsPerPage}
-              onPageChange={(page) => setCurrentPage(page)}
-              onItemsPerPageChange={(items) => { setItemsPerPage(items); setCurrentPage(1); }}
-            />
+            <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} startIndex={startIndex} endIndex={endIndex} itemsPerPage={itemsPerPage} onPageChange={(page) => setCurrentPage(page)} onItemsPerPageChange={(items) => { setItemsPerPage(items); setCurrentPage(1); }} />
           </div>
         )}
 
@@ -1394,62 +915,20 @@ const ManageProducts = ({ user }: { user?: User }) => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
-                <ProductGridCard
-                  key={product.id}
-                  product={product}
-                  onView={(product) => { setSelectedProduct(product); setViewModalOpen(true); }}
-                  onEdit={(id) => router.push(`/editproduct/${id}`)}
-                  onDelete={(product) => { setSelectedProduct(product); setDeleteModalOpen(true); }}
-                  formatCurrency={formatCurrency}
-                />
+                <ProductGridCard key={product.id} product={product} onView={(product) => { setSelectedProduct(product); setViewModalOpen(true); }} onEdit={(id) => router.push(`/editproduct/${id}`)} onDelete={(product) => { setSelectedProduct(product); setDeleteModalOpen(true); }} formatCurrency={formatCurrency} />
               ))}
             </div>
             <div className="mt-6">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                startIndex={startIndex}
-                endIndex={endIndex}
-                itemsPerPage={itemsPerPage}
-                onPageChange={(page) => setCurrentPage(page)}
-                onItemsPerPageChange={(items) => { setItemsPerPage(items); setCurrentPage(1); }}
-              />
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} startIndex={startIndex} endIndex={endIndex} itemsPerPage={itemsPerPage} onPageChange={(page) => setCurrentPage(page)} onItemsPerPageChange={(items) => { setItemsPerPage(items); setCurrentPage(1); }} />
             </div>
           </>
         )}
       </main>
 
-      {/* Filter Drawer */}
-      <FilterDrawer
-        isOpen={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={filters}
-        categories={categories}
-        totalItems={totalItems}
-        onFilterChange={handleFilterChange}
-        onClearFilters={clearFilters}
-        activeFilterCount={activeFilterCount}
-      />
-
-      {/* Delete Modal */}
-      <DeleteModal
-        isOpen={deleteModalOpen}
-        onClose={() => { setDeleteModalOpen(false); setSelectedProduct(null); }}
-        onConfirm={handleDelete}
-        productName={selectedProduct?.product?.name || selectedProduct?.name || ""}
-        isSubmitting={isSubmitting}
-      />
-
-      {/* View Modal */}
-      <ViewProductModal
-        isOpen={viewModalOpen}
-        onClose={() => { setViewModalOpen(false); setSelectedProduct(null); }}
-        product={selectedProduct}
-        onEdit={(encrypted_id) => router.push(`/updatestock/${encrypted_id}`)}
-        onHistory={(encrypted_pid) => router.push(`/products/${encrypted_pid}/history`)}
-        formatCurrency={formatCurrency}
-      />
+      {/* Modals & Drawers */}
+      <FilterDrawer isOpen={filterDrawerOpen} onClose={() => setFilterDrawerOpen(false)} filters={filters} categories={categories} totalItems={totalItems} onFilterChange={handleFilterChange} onClearFilters={clearFilters} activeFilterCount={activeFilterCount} />
+      <DeleteModal isOpen={deleteModalOpen} onClose={() => { setDeleteModalOpen(false); setSelectedProduct(null); }} onConfirm={handleDelete} productName={selectedProduct?.product?.name || selectedProduct?.name || ""} isSubmitting={isSubmitting} />
+      <ViewProductModal isOpen={viewModalOpen} onClose={() => { setViewModalOpen(false); setSelectedProduct(null); }} product={selectedProduct} onEdit={(encrypted_id) => router.push(`/updatestock/${encrypted_id}`)} onHistory={(encrypted_pid) => router.push(`/products/${encrypted_pid}/history`)} formatCurrency={formatCurrency} />
     </div>
   );
 };

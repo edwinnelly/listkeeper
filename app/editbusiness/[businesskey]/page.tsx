@@ -475,16 +475,16 @@ const EditBusinessPage: React.FC = () => {
                       onChange={(e) => handleInputChange('currency', e.target.value)}
                       className={inputClass}
                     >
-                      <option value="USD">$ - US Dollar (USD)</option>
-                      <option value="EUR">€ - Euro (EUR)</option>
-                      <option value="GBP">£ - British Pound (GBP)</option>
-                      <option value="NGN">₦ - Nigerian Naira (NGN)</option>
-                      <option value="KES">KSh - Kenyan Shilling (KES)</option>
-                      <option value="GHS">₵ - Ghanaian Cedi (GHS)</option>
-                      <option value="ZAR">R - South African Rand (ZAR)</option>
-                      <option value="INR">₹ - Indian Rupee (INR)</option>
-                      <option value="JPY">¥ - Japanese Yen (JPY)</option>
-                      <option value="CNY">¥ - Chinese Yuan (CNY)</option>
+                      <option value="$">$ - US Dollar (USD)</option>
+                      <option value="€">€ - Euro (EUR)</option>
+                      <option value="£">£ - British Pound (GBP)</option>
+                      <option value="₦">₦ - Nigerian Naira (NGN)</option>
+                      <option value="KSh">KSh - Kenyan Shilling (KES)</option>
+                      <option value="₵">₵ - Ghanaian Cedi (GHS)</option>
+                      <option value="R">R - South African Rand (ZAR)</option>
+                      <option value="₹">₹ - Indian Rupee (INR)</option>
+                      <option value="¥">¥ - Japanese Yen (JPY)</option>
+                      <option value="¥">¥ - Chinese Yuan (CNY)</option>
                     </select>
                   </div>
                   <div>

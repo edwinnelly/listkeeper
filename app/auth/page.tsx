@@ -12,11 +12,12 @@ import {
   ErrorCircleRegular,
   ArrowRightRegular,
   CheckmarkRegular,
+  CheckboxCheckedRegular,
+  CheckboxUncheckedRegular,
 } from "@fluentui/react-icons";
 import { api, withCsrf } from "@/lib/axios";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-
 interface User {
   id: number;
   name: string;
@@ -28,28 +29,44 @@ interface ApiError {
   message?: string;
 }
 
-// ── Design tokens: Dark Blue & Black Theme ─────────────────────────────────
-
-const T = {
-  black:      "#000000",
-  surface:    "#0a0e17",      // Deep navy-black
-  surface2:   "#111827",      // Dark blue-gray
-  border:     "rgba(255,255,255,0.06)",
-  borderHover:"rgba(96,165,250,0.35)",
-  blue:       "#3b82f6",      // Electric blue primary
-  blueHover:  "#60a5fa",      // Lighter blue for hover
-  blueGlow:   "rgba(59,130,246,0.18)",
-  blueDeep:   "#1d4ed8",      // Darker blue for depth
-  white:      "#ffffff",
-  muted:      "rgba(255,255,255,0.42)",
-  faint:      "rgba(255,255,255,0.18)",
-  error:      "#f87171",
-  errorBg:    "rgba(248,113,113,0.10)",
-  errorBdr:   "rgba(248,113,113,0.25)",
+// ── Fluent Design Tokens: Microsoft Dark Theme ─────────────────────────────
+const F = {
+  // Core surfaces (Mica-inspired)
+  background: "#0f0f0f",
+  surface: "rgba(32,32,32,0.6)",
+  surfaceAlt: "rgba(44,44,44,0.7)",
+  surfaceHover: "rgba(64,64,64,0.5)",
+  
+  // Borders & dividers
+  border: "rgba(255,255,255,0.08)",
+  borderFocus: "rgba(0,120,212,0.6)",
+  borderHover: "rgba(255,255,255,0.15)",
+  
+  // Brand colors (Microsoft Blue)
+  primary: "#0078d4",
+  primaryHover: "#1084d8",
+  primaryPressed: "#005a9e",
+  primaryGlow: "rgba(0,120,212,0.25)",
+  
+  // Typography
+  text: "#ffffff",
+  textSecondary: "rgba(255,255,255,0.7)",
+  textTertiary: "rgba(255,255,255,0.45)",
+  textOnPrimary: "#ffffff",
+  
+  // States
+  error: "#f1707a",
+  errorBg: "rgba(241,112,122,0.12)",
+  success: "#6cc24a",
+  
+  // Effects
+  elevation1: "0 1.6px 3.2px rgba(0,0,0,0.12), 0 0.4px 1.2px rgba(0,0,0,0.08)",
+  elevation2: "0 3.2px 6.4px rgba(0,0,0,0.18), 0 0.8px 2.4px rgba(0,0,0,0.12)",
+  elevation4: "0 6.4px 14.4px rgba(0,0,0,0.22), 0 1.6px 4.8px rgba(0,0,0,0.16)",
+  revealHighlight: "inset 0 0 0 1px rgba(255,255,255,0.08)",
 };
 
 // ── Constants ──────────────────────────────────────────────────────────────
-
 const STATS = [
   { value: "15K+", label: "Products" },
   { value: "500+", label: "Warehouses" },
@@ -62,31 +79,33 @@ const FEATURES = [
   "Role-based access with full audit logs",
 ];
 
-// Dark industrial warehouse image with blue-toned overlay
 const PHOTO = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=85&auto=format&fit=crop";
 
-// ── Stagger variants ───────────────────────────────────────────────────────
-
-const stagger = {
-  container: { animate: { transition: { staggerChildren: 0.08 } } },
-  item: {
-    initial: { opacity: 0, y: 18 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
+// ── Animation Variants ─────────────────────────────────────────────────────
+const fadeInUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } 
   },
 };
 
-// ── Component ──────────────────────────────────────────────────────────────
+const staggerContainer = {
+  animate: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } }
+};
 
+// ── Component ──────────────────────────────────────────────────────────────
 const LoginPage: React.FC = () => {
   const router = useRouter();
 
-  const [email, setEmail]           = useState("");
-  const [password, setPassword]     = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [showPwd, setShowPwd]       = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState("");
-  const [focused, setFocused]       = useState<"email" | "password" | null>(null);
+  const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [focused, setFocused] = useState<"email" | "password" | null>(null);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -106,528 +125,603 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const inputStyle = (f: "email" | "password") => ({
-    display: "flex" as const,
-    alignItems: "center" as const,
-    gap: 12,
-    padding: "13px 16px",
-    borderRadius: 10,
-    background: T.surface2,
-    border: `1px solid ${focused === f ? T.blue : T.border}`,
-    boxShadow: focused === f ? `0 0 0 3px ${T.blueGlow}` : "none",
-    transition: "border 0.15s ease, box-shadow 0.15s ease",
-  });
-
   const canSubmit = !loading && email.trim() && password.trim();
 
   return (
     <>
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      {/* ── Fluent Typography & Base Styles ── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; }
-
-        html, body { background: #000; }
-
-        .lk-root {
-          font-family: 'Barlow', sans-serif;
-          min-height: 100dvh;
-          display: flex;
-          flex-direction: column;
-          background: ${T.black};
+        
+        html, body { 
+          background: ${F.background}; 
+          font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+          -webkit-font-smoothing: antialiased;
         }
-        @media (min-width: 1024px) { .lk-root { flex-direction: row; } }
 
-        .lk-display { font-family: 'Unbounded', sans-serif; }
-        .lk-mono    { font-family: 'Space Mono', monospace; }
+        /* ── Mica/Acrylic Background Effect ── */
+        .fluent-mica {
+          background: ${F.surface};
+          backdrop-filter: blur(24px) saturate(180%);
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
+          border: 1px solid ${F.border};
+        }
 
-        /* ── Input ── */
-        .lk-input {
-          flex: 1;
-          background: transparent;
-          border: none;
+        /* ── Reveal Highlight Effect (Fluent hover) ── */
+        .fluent-reveal {
+          position: relative;
+          transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .fluent-reveal::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: ${F.surfaceHover};
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          pointer-events: none;
+        }
+        .fluent-reveal:hover::before { opacity: 1; }
+        .fluent-reveal:active::before { background: rgba(255,255,255,0.08); }
+
+        /* ── Input Fields ── */
+        .fluent-input {
+          width: 100%;
+          padding: 12px 14px;
+          border-radius: 4px;
+          background: ${F.surfaceAlt};
+          border: 1px solid ${F.border};
+          color: ${F.text};
+          font-size: 14px;
+          font-family: inherit;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
           outline: none;
-          font-family: 'Barlow', sans-serif;
-          font-size: 15px;
+        }
+        .fluent-input::placeholder { color: ${F.textTertiary}; }
+        .fluent-input:focus {
+          border-color: ${F.primary};
+          box-shadow: 0 0 0 2px ${F.primaryGlow};
+        }
+        .fluent-input:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* ── Primary Button (Fluent) ── */
+        .fluent-btn {
+          width: 100%;
+          padding: 11px 20px;
+          border-radius: 4px;
+          border: none;
+          background: ${F.primary};
+          color: ${F.textOnPrimary};
+          font-size: 14px;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: background 0.2s ease, transform 0.05s ease;
+          box-shadow: ${F.elevation1};
+        }
+        .fluent-btn:hover { background: ${F.primaryHover}; }
+        .fluent-btn:active { 
+          background: ${F.primaryPressed}; 
+          transform: scale(0.995); 
+        }
+        .fluent-btn:disabled {
+          background: ${F.surfaceAlt};
+          color: ${F.textTertiary};
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+        .fluent-btn:focus-visible {
+          outline: 2px solid ${F.primary};
+          outline-offset: 2px;
+        }
+
+        /* ── Secondary/Text Button ── */
+        .fluent-link {
+          color: ${F.primary};
+          text-decoration: none;
           font-weight: 500;
-          color: ${T.white};
-          min-width: 0;
+          transition: opacity 0.2s ease;
         }
-        .lk-input::placeholder { color: ${T.faint}; }
-        .lk-input:disabled     { opacity: 0.4; }
-
-        /* ── Icon button ── */
-        .lk-icon-btn {
-          background: none; border: none; cursor: pointer;
-          padding: 3px; display: flex; flex-shrink: 0;
-          color: ${T.muted}; transition: color 0.15s ease;
-        }
-        .lk-icon-btn:hover { color: ${T.white}; }
-        .lk-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* ── Submit button ── */
-        .lk-btn {
-          width: 100%; padding: 15px 20px; border-radius: 10px; border: none;
-          font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 600;
-          letter-spacing: 0.03em; display: flex; align-items: center;
-          justify-content: center; gap: 8px; cursor: pointer;
-          transition: opacity 0.2s ease, transform 0.1s ease, background 0.2s ease;
-        }
-        .lk-btn-active {
-          background: ${T.blue}; color: ${T.white};
-        }
-        .lk-btn-active:hover { 
-          background: ${T.blueHover}; 
-          box-shadow: 0 4px 20px ${T.blueGlow};
-        }
-        .lk-btn-disabled {
-          background: ${T.surface2}; color: ${T.faint}; cursor: not-allowed;
-          border: 1px solid ${T.border};
+        .fluent-link:hover { opacity: 0.85; }
+        .fluent-link:focus-visible {
+          outline: 2px solid ${F.primary};
+          outline-offset: 2px;
+          border-radius: 2px;
         }
 
-        /* ── Checkbox ── */
-        .lk-checkbox {
-          width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; background: none; border: none;
-          transition: background 0.15s ease, border-color 0.15s ease;
+        /* ── Checkbox (Fluent) ── */
+        .fluent-checkbox {
+          width: 20px;
+          height: 20px;
+          border-radius: 4px;
+          border: 1.5px solid ${F.border};
+          background: ${F.surfaceAlt};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
+        }
+        .fluent-checkbox:hover { border-color: ${F.borderHover}; }
+        .fluent-checkbox[aria-checked="true"] {
+          background: ${F.primary};
+          border-color: ${F.primary};
+        }
+        .fluent-checkbox:focus-visible {
+          outline: 2px solid ${F.primary};
+          outline-offset: 2px;
+        }
+
+        /* ── Error Message ── */
+        .fluent-error {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 10px 12px;
+          border-radius: 4px;
+          background: ${F.errorBg};
+          border: 1px solid rgba(241,112,122,0.3);
+          color: ${F.error};
+          font-size: 13px;
+          line-height: 1.4;
         }
 
         /* ── Spinner ── */
-        @keyframes lk-spin { to { transform: rotate(360deg); } }
-        .lk-spinner {
-          width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
-          border: 2px solid rgba(255,255,255,0.15); border-top-color: ${T.blue};
-          animation: lk-spin 0.75s linear infinite;
+        @keyframes fluent-spin { to { transform: rotate(360deg); } }
+        .fluent-spinner {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          border: 2px solid rgba(255,255,255,0.2);
+          border-top-color: ${F.textOnPrimary};
+          animation: fluent-spin 0.7s linear infinite;
+          flex-shrink: 0;
         }
 
-        /* ── Photo grain ── */
-        .lk-photo-wrap::after {
-          content: '';
-          position: absolute; inset: 0; z-index: 3;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-          opacity: 0.025; pointer-events: none; mix-blend-mode: screen;
+        /* ── Layout ── */
+        .fluent-root {
+          min-height: 100dvh;
+          display: flex;
+          background: ${F.background};
+        }
+        @media (min-width: 1024px) {
+          .fluent-root { flex-direction: row; }
         }
 
-        /* ── Scan lines (subtle) ── */
-        .lk-scanlines::before {
-          content: '';
-          position: absolute; inset: 0; z-index: 10; pointer-events: none;
-          background: repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(0,0,0,0.04) 2px,
-            rgba(0,0,0,0.04) 4px
-          );
+        /* ── Scrollbar (Fluent) ── */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { 
+          background: ${F.surfaceHover}; 
+          border-radius: 4px;
+          border: 2px solid transparent;
+          background-clip: content-box;
         }
-
-        /* ── Scrollbar ── */
-        .lk-form-panel::-webkit-scrollbar { width: 4px; }
-        .lk-form-panel::-webkit-scrollbar-track { background: transparent; }
-        .lk-form-panel::-webkit-scrollbar-thumb { background: ${T.surface2}; border-radius: 4px; }
-        .lk-form-panel::-webkit-scrollbar-thumb:hover { background: ${T.blueDeep}; }
+        ::-webkit-scrollbar-thumb:hover { background: ${F.borderHover}; }
 
         /* ── Divider ── */
-        .lk-divider {
-          height: 1px; background: ${T.border}; margin: 24px 0;
+        .fluent-divider {
+          height: 1px;
+          background: ${F.border};
+          margin: 20px 0;
         }
 
-        /* ── Link ── */
-        .lk-link { color: ${T.blue}; font-weight: 500; text-decoration: none; transition: opacity 0.15s ease; }
-        .lk-link:hover { opacity: 0.8; color: ${T.blueHover}; }
-        .lk-link-white { color: ${T.white}; font-weight: 600; text-decoration: none; transition: opacity 0.15s ease; }
-        .lk-link-white:hover { opacity: 0.75; }
-        .lk-link-muted { color: ${T.muted}; text-decoration: none; transition: opacity 0.15s ease; }
-        .lk-link-muted:hover { opacity: 0.8; color: ${T.white}; }
-
-        /* ── Focus ring for accessibility ── */
-        .lk-input:focus-visible,
-        .lk-checkbox:focus-visible,
-        .lk-icon-btn:focus-visible,
-        .lk-btn:focus-visible {
-          outline: 2px solid ${T.blue};
-          outline-offset: 2px;
-        }
+        /* ── Utility ── */
+        .text-secondary { color: ${F.textSecondary}; }
+        .text-tertiary { color: ${F.textTertiary}; }
+        .text-primary { color: ${F.primary}; }
+        .font-mono { font-family: 'Cascadia Code', 'Consolas', monospace; }
       `}</style>
 
-      <div className="lk-root">
+      <div className="fluent-root">
 
         {/* ════════════════════════════════════════════════════════════
-            LEFT PANEL — Photo + Brand (desktop)
+            LEFT PANEL — Brand & Visual (Desktop)
         ════════════════════════════════════════════════════════════ */}
-        <motion.div
-          className="lk-photo-wrap hidden lg:flex flex-col relative overflow-hidden"
-          style={{ width: "46%", minHeight: "100dvh", background: T.black }}
+        <motion.aside
+          className="hidden lg:flex flex-col relative overflow-hidden"
+          style={{ 
+            width: "45%", 
+            background: `linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%)`,
+            borderRight: `1px solid ${F.border}`
+          }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
-          {/* Photo — dark overlay with blue tint */}
+          {/* Subtle gradient overlay */}
           <div style={{
-            position: "absolute", inset: 0, zIndex: 0,
-            backgroundImage: `url('${PHOTO}')`,
-            backgroundSize: "cover", backgroundPosition: "center",
-          }} />
-          {/* Blue-tinted dark overlay */}
-          <div style={{
-            position: "absolute", inset: 0, zIndex: 1,
-            background: "linear-gradient(135deg, rgba(10,14,23,0.95) 0%, rgba(17,24,39,0.85) 50%, rgba(29,78,216,0.15) 100%)",
-          }} />
-          {/* Bottom black fade */}
-          <div style={{
-            position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 2, height: "55%",
-            background: "linear-gradient(to top, rgba(0,0,0,1) 0%, transparent 100%)",
-          }} />
-          {/* Right edge separator with blue glow */}
-          <div style={{
-            position: "absolute", top: "10%", right: 0, bottom: "10%", width: 1, zIndex: 5,
-            background: `linear-gradient(to bottom, transparent, ${T.blue}66, transparent)`,
-            boxShadow: `0 0 20px ${T.blueGlow}`,
+            position: "absolute", inset: 0,
+            background: `radial-gradient(600px circle at 20% 30%, rgba(0,120,212,0.08), transparent 40%),
+                         radial-gradient(400px circle at 80% 70%, rgba(0,120,212,0.05), transparent 50%)`
           }} />
 
-          {/* ── Left content ── */}
+          {/* Content */}
           <motion.div
-            className="relative flex flex-col h-full px-12 py-11"
-            style={{ zIndex: 6 }}
-            variants={stagger.container}
+            className="relative flex flex-col h-full p-10"
+            variants={staggerContainer}
             initial="initial"
             animate="animate"
           >
-            {/* Brand */}
-            <motion.div variants={stagger.item} className="flex items-center gap-3">
-              <div
-                className="lk-display flex items-center justify-center"
-                style={{
-                  width: 40, height: 40, borderRadius: 8,
-                  background: T.blue, color: T.white,
-                  fontSize: "0.78rem", letterSpacing: "0.04em",
-                  boxShadow: `0 4px 14px ${T.blueGlow}`,
-                }}
-              >
+            {/* Logo */}
+            <motion.div variants={fadeInUp} className="flex items-center gap-3 mb-auto">
+              <div style={{
+                width: 36, height: 36, borderRadius: 4,
+                background: F.primary,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: F.textOnPrimary,
+                fontWeight: 700, fontSize: "0.85rem",
+                boxShadow: `0 2px 8px ${F.primaryGlow}`
+              }}>
                 LK
               </div>
-              <span className="lk-mono" style={{ color: T.white, fontSize: "1rem", letterSpacing: "0.06em" }}>
-                LISTKEEPING
+              <span style={{ 
+                color: F.text, 
+                fontSize: "1.1rem", 
+                fontWeight: 600,
+                letterSpacing: "0.02em"
+              }}>
+                ListKeeping
               </span>
             </motion.div>
 
-            <div style={{ flex: 1 }} />
-
-            {/* Tag */}
-            <motion.p
-              variants={stagger.item}
-              className="lk-mono"
-              style={{ fontSize: 9, letterSpacing: "0.25em", color: T.blue, textTransform: "uppercase", marginBottom: 18 }}
-            >
-              // inventory management system
-            </motion.p>
-
-            {/* Hero heading */}
-            <motion.h1
-              variants={stagger.item}
-              className="lk-display"
-              style={{
-                fontSize: "clamp(3.2rem, 4.8vw, 5rem)",
-                color: T.white,
-                lineHeight: "0.95",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              FULL<br />STOCK<br />
-              <span style={{ color: T.blue, textShadow: `0 0 30px ${T.blueGlow}` }}>CONTROL.</span>
-            </motion.h1>
-
-            {/* Subtext */}
-            <motion.p
-              variants={stagger.item}
-              style={{
-                fontSize: 13, color: T.muted, lineHeight: 1.7,
-                maxWidth: 265, marginTop: 20,
-                fontWeight: 400,
-              }}
-            >
-              Real-time inventory tracking across all your branches,
-              warehouses, and distribution points.
-            </motion.p>
+            {/* Hero */}
+            <motion.div variants={fadeInUp} style={{ marginTop: "auto", marginBottom: 32 }}>
+              <p className="font-mono" style={{ 
+                fontSize: "0.7rem", 
+                letterSpacing: "0.18em", 
+                color: F.primary, 
+                textTransform: "uppercase",
+                marginBottom: 16
+              }}>
+                Inventory Management
+              </p>
+              <h1 style={{
+                fontSize: "clamp(2.5rem, 4vw, 3.8rem)",
+                color: F.text,
+                lineHeight: 1.1,
+                fontWeight: 600,
+                letterSpacing: "-0.02em"
+              }}>
+                Full stock<br />
+                <span style={{ color: F.primary }}>control.</span>
+              </h1>
+              <p style={{
+                fontSize: "1rem",
+                color: F.textSecondary,
+                lineHeight: 1.6,
+                marginTop: 20,
+                maxWidth: 380
+              }}>
+                Real-time inventory tracking across all your branches, 
+                warehouses, and distribution points — powered by Microsoft-grade security.
+              </p>
+            </motion.div>
 
             {/* Features */}
-            <motion.ul
-              variants={stagger.item}
-              style={{ listStyle: "none", padding: 0, marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}
-            >
-              {FEATURES.map((f) => (
-                <li key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: T.muted }}>
-                  <span style={{ width: 4, height: 4, borderRadius: "50%", background: T.blue, flexShrink: 0, boxShadow: `0 0 8px ${T.blueGlow}` }} />
-                  {f}
+            <motion.ul variants={fadeInUp} style={{ 
+              listStyle: "none", padding: 0, 
+              display: "flex", flexDirection: "column", gap: 12,
+              marginBottom: 28
+            }}>
+              {FEATURES.map((feature, i) => (
+                <li key={i} style={{ 
+                  display: "flex", alignItems: "flex-start", gap: 10,
+                  fontSize: "0.9rem", color: F.textSecondary
+                }}>
+                  <span style={{ 
+                    width: 5, height: 5, borderRadius: "50%", 
+                    background: F.primary, marginTop: 7, flexShrink: 0,
+                    boxShadow: `0 0 0 2px ${F.primaryGlow}`
+                  }} />
+                  {feature}
                 </li>
               ))}
             </motion.ul>
 
-            {/* Divider */}
-            <motion.div
-              variants={stagger.item}
-              style={{ height: 1, background: T.border, margin: "28px 0 24px" }}
-            />
-
             {/* Stats */}
-            <motion.div
-              variants={stagger.item}
-              style={{ display: "flex", gap: 32 }}
-            >
-              {STATS.map((s) => (
-                <div key={s.value}>
-                  <div className="lk-display" style={{ fontSize: "1.9rem", color: T.blue, lineHeight: 1, textShadow: `0 0 20px ${T.blueGlow}` }}>
-                    {s.value}
+            <motion.div variants={fadeInUp} style={{ 
+              display: "flex", gap: 28, padding: "16px 0",
+              borderTop: `1px solid ${F.border}`
+            }}>
+              {STATS.map((stat) => (
+                <div key={stat.value}>
+                  <div style={{ 
+                    fontSize: "1.6rem", 
+                    fontWeight: 600, 
+                    color: F.text,
+                    lineHeight: 1
+                  }}>
+                    {stat.value}
                   </div>
-                  <div className="lk-mono" style={{ fontSize: 9, color: T.faint, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4 }}>
-                    {s.label}
+                  <div style={{ 
+                    fontSize: "0.75rem", 
+                    color: F.textTertiary,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    marginTop: 4
+                  }}>
+                    {stat.label}
                   </div>
                 </div>
               ))}
             </motion.div>
 
-            <motion.p
-              variants={stagger.item}
-              className="lk-mono"
-              style={{ fontSize: 10, color: T.faint, marginTop: 24 }}
-            >
-              © {new Date().getFullYear()} ListKeeping
+            {/* Footer */}
+            <motion.p variants={fadeInUp} className="font-mono" style={{ 
+              fontSize: "0.7rem", 
+              color: F.textTertiary,
+              marginTop: "auto"
+            }}>
+              © {new Date().getFullYear()} ListKeeping · Enterprise Edition
             </motion.p>
           </motion.div>
-        </motion.div>
+        </motion.aside>
 
         {/* ════════════════════════════════════════════════════════════
-            MOBILE — Top photo strip
+            RIGHT PANEL — Sign In Form
         ════════════════════════════════════════════════════════════ */}
-        <div
-          className="lk-photo-wrap lg:hidden relative overflow-hidden"
-          style={{ height: 180, flexShrink: 0, background: T.black }}
-        >
-          <div style={{
-            position: "absolute", inset: 0,
-            backgroundImage: `url('${PHOTO}')`,
-            backgroundSize: "cover", backgroundPosition: "center 30%",
-          }} />
-          <div style={{
-            position: "absolute", inset: 0, zIndex: 1,
-            background: "linear-gradient(to bottom, rgba(10,14,23,0.7), rgba(0,0,0,0.95))",
-          }} />
-          <div className="relative flex items-end h-full px-6 pb-5" style={{ zIndex: 2 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
-                className="lk-display flex items-center justify-center"
-                style={{ width: 34, height: 34, borderRadius: 7, background: T.blue, color: T.white, fontSize: "0.72rem", boxShadow: `0 3px 10px ${T.blueGlow}` }}
-              >
-                LK
-              </div>
-              <span className="lk-mono" style={{ color: T.white, fontSize: "0.9rem", letterSpacing: "0.06em" }}>
-                LISTKEEPING
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════
-            RIGHT PANEL — Form
-        ════════════════════════════════════════════════════════════ */}
-        <div
-          className="lk-form-panel flex-1 flex flex-col items-center justify-center overflow-y-auto"
-          style={{
-            background: T.black,
-            padding: "clamp(32px, 5vw, 80px) clamp(20px, 5vw, 72px)",
-          }}
-        >
+        <main className="flex-1 flex items-center justify-center p-6 sm:p-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.18 }}
-            style={{ width: "100%", maxWidth: 400 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{ width: "100%", maxWidth: 420 }}
           >
-            {/* Heading */}
-            <div style={{ marginBottom: 36 }}>
-              <p
-                className="lk-mono"
-                style={{ fontSize: 9, letterSpacing: "0.2em", color: T.blue, marginBottom: 12, textTransform: "uppercase" }}
-              >
-                // welcome back
-              </p>
-              <h2
-                className="lk-display"
-                style={{ fontSize: "3rem", color: T.white, letterSpacing: "-0.01em", lineHeight: 1 }}
-              >
-                SIGN IN
-              </h2>
-              <p style={{ fontSize: 14, color: T.muted, marginTop: 10, fontWeight: 400 }}>
-                Access your inventory dashboard.
-              </p>
-            </div>
-
-            {/* Error */}
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginBottom: 20 }}
-                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: 9,
-                    padding: "12px 14px", borderRadius: 10,
-                    background: T.errorBg, border: `1px solid ${T.errorBdr}`,
-                    color: T.error, fontSize: 13,
-                  }}
-                >
-                  <ErrorCircleRegular style={{ width: 15, height: 15, flexShrink: 0, marginTop: 1 }} />
-                  <span style={{ fontWeight: 500 }}>{error}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ── Form ── */}
-            <form onSubmit={handleLogin} noValidate style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-
-              {/* Email */}
-              <div>
-                <label
-                  htmlFor="lk-email"
-                  className="lk-mono"
-                  style={{ display: "block", fontSize: 10, letterSpacing: "0.14em", color: T.muted, marginBottom: 8, textTransform: "uppercase" }}
-                >
-                  Email Address
-                </label>
-                <div style={inputStyle("email")}>
-                  <MailRegular style={{ width: 15, height: 15, flexShrink: 0, color: focused === "email" ? T.blue : T.faint, transition: "color 0.15s ease" }} />
-                  <input
-                    id="lk-email"
-                    type="email"
-                    className="lk-input"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onFocus={() => setFocused("email")}
-                    onBlur={() => setFocused(null)}
-                    placeholder="you@company.com"
-                    autoComplete="email"
-                    required
-                    disabled={loading}
-                  />
-                </div>
+            {/* Card Container with Mica effect */}
+            <div className="fluent-mica" style={{
+              borderRadius: 8,
+              padding: "28px 32px",
+              boxShadow: F.elevation2
+            }}>
+              {/* Header */}
+              <div style={{ marginBottom: 28 }}>
+                <p className="font-mono" style={{ 
+                  fontSize: "0.7rem", 
+                  letterSpacing: "0.16em", 
+                  color: F.primary, 
+                  textTransform: "uppercase",
+                  marginBottom: 12
+                }}>
+                  Welcome back
+                </p>
+                <h2 style={{ 
+                  fontSize: "1.75rem", 
+                  color: F.text, 
+                  fontWeight: 600,
+                  lineHeight: 1.2
+                }}>
+                  Sign in to your account
+                </h2>
+                <p className="text-secondary" style={{ 
+                  fontSize: "0.95rem", 
+                  marginTop: 8 
+                }}>
+                  Access your inventory dashboard and manage stock in real-time.
+                </p>
               </div>
 
-              {/* Password */}
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <label
-                    htmlFor="lk-password"
-                    className="lk-mono"
-                    style={{ fontSize: 10, letterSpacing: "0.14em", color: T.muted, textTransform: "uppercase" }}
+              {/* Error Message */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    className="fluent-error"
                   >
-                    Password
+                    <ErrorCircleRegular style={{ 
+                      width: 16, height: 16, 
+                      flexShrink: 0, marginTop: 2 
+                    }} />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Form */}
+              <form onSubmit={handleLogin} noValidate style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                
+                {/* Email Field */}
+                <div>
+                  <label htmlFor="email" style={{ 
+                    display: "block", 
+                    fontSize: "0.85rem", 
+                    color: F.textSecondary, 
+                    marginBottom: 6,
+                    fontWeight: 500
+                  }}>
+                    Email address
                   </label>
-                  <Link href="/forgetpwd" className="lk-link" style={{ fontSize: 12 }}>
-                    Forgot password?
-                  </Link>
+                  <div style={{ position: "relative" }}>
+                    <MailRegular style={{ 
+                      position: "absolute", left: 12, top: "50%", 
+                      transform: "translateY(-50%)",
+                      width: 16, height: 16,
+                      color: focused === "email" ? F.primary : F.textTertiary,
+                      transition: "color 0.2s ease",
+                      pointerEvents: "none"
+                    }} />
+                    <input
+                      id="email"
+                      type="email"
+                      className="fluent-input"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setFocused("email")}
+                      onBlur={() => setFocused(null)}
+                      placeholder="you@company.com"
+                      autoComplete="email"
+                      required
+                      disabled={loading}
+                      style={{ paddingLeft: 36 }}
+                    />
+                  </div>
                 </div>
-                <div style={inputStyle("password")}>
-                  <LockClosedRegular style={{ width: 15, height: 15, flexShrink: 0, color: focused === "password" ? T.blue : T.faint, transition: "color 0.15s ease" }} />
-                  <input
-                    id="lk-password"
-                    type={showPwd ? "text" : "password"}
-                    className="lk-input"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onFocus={() => setFocused("password")}
-                    onBlur={() => setFocused(null)}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    required
-                    disabled={loading}
-                  />
+
+                {/* Password Field */}
+                <div>
+                  <div style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "space-between", 
+                    marginBottom: 6 
+                  }}>
+                    <label htmlFor="password" style={{ 
+                      fontSize: "0.85rem", 
+                      color: F.textSecondary,
+                      fontWeight: 500
+                    }}>
+                      Password
+                    </label>
+                    <Link href="/forgetpwd" className="fluent-link" style={{ fontSize: "0.85rem" }}>
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <LockClosedRegular style={{ 
+                      position: "absolute", left: 12, top: "50%", 
+                      transform: "translateY(-50%)",
+                      width: 16, height: 16,
+                      color: focused === "password" ? F.primary : F.textTertiary,
+                      transition: "color 0.2s ease",
+                      pointerEvents: "none"
+                    }} />
+                    <input
+                      id="password"
+                      type={showPwd ? "text" : "password"}
+                      className="fluent-input"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setFocused("password")}
+                      onBlur={() => setFocused(null)}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      required
+                      disabled={loading}
+                      style={{ paddingLeft: 36, paddingRight: 40 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPwd((v) => !v)}
+                      disabled={loading}
+                      aria-label={showPwd ? "Hide password" : "Show password"}
+                      className="fluent-reveal"
+                      style={{
+                        position: "absolute", right: 8, top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none", border: "none",
+                        padding: 6, borderRadius: 4,
+                        color: F.textTertiary, cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center"
+                      }}
+                    >
+                      {showPwd 
+                        ? <EyeOffRegular style={{ width: 16, height: 16 }} />
+                        : <EyeRegular style={{ width: 16, height: 16 }} />
+                      }
+                    </button>
+                  </div>
+                </div>
+
+                {/* Remember Me */}
+                <label style={{ 
+                  display: "flex", alignItems: "center", gap: 10, 
+                  cursor: "pointer", userSelect: "none",
+                  fontSize: "0.9rem", color: F.textSecondary
+                }}>
                   <button
                     type="button"
-                    className="lk-icon-btn"
-                    onClick={() => setShowPwd((v) => !v)}
+                    role="checkbox"
+                    aria-checked={rememberMe}
+                    onClick={() => !loading && setRememberMe(v => !v)}
                     disabled={loading}
-                    aria-label={showPwd ? "Hide password" : "Show password"}
+                    className="fluent-checkbox"
                   >
-                    {showPwd
-                      ? <EyeOffRegular style={{ width: 15, height: 15 }} />
-                      : <EyeRegular style={{ width: 15, height: 15 }} />}
+                    {rememberMe 
+                      ? <CheckmarkRegular style={{ width: 14, height: 14, color: F.textOnPrimary }} />
+                      : null
+                    }
                   </button>
-                </div>
-              </div>
+                  <span>Keep me signed in</span>
+                </label>
 
-              {/* Remember me */}
-              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={rememberMe}
-                  onClick={() => setRememberMe((v) => !v)}
-                  disabled={loading}
-                  className="lk-checkbox"
-                  style={{
-                    border: rememberMe ? "none" : `1.5px solid ${T.border}`,
-                    background: rememberMe ? T.blue : T.surface2,
-                  }}
+                {/* Submit Button */}
+                <motion.button
+                  type="submit"
+                  disabled={!canSubmit}
+                  whileTap={canSubmit ? { scale: 0.995 } : {}}
+                  className="fluent-btn"
+                  style={{ marginTop: 8 }}
                 >
-                  {rememberMe && <CheckmarkRegular style={{ width: 11, height: 11, color: T.white }} />}
-                </button>
-                <span style={{ fontSize: 13, color: T.muted, fontWeight: 400 }}>
-                  Keep me signed in for 30 days
+                  {loading ? (
+                    <>
+                      <span className="fluent-spinner" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Sign in
+                      <ArrowRightRegular style={{ width: 16, height: 16 }} />
+                    </>
+                  )}
+                </motion.button>
+              </form>
+
+              {/* Divider */}
+              <div className="fluent-divider" />
+
+              {/* Register Link */}
+              <p style={{ textAlign: "center", fontSize: "0.9rem", color: F.textSecondary }}>
+                Don't have an account?{" "}
+                <Link href="/register" className="fluent-link">
+                  Create one now
+                </Link>
+              </p>
+
+              {/* Security Badge */}
+              <div style={{ 
+                display: "flex", alignItems: "center", justifyContent: "center", 
+                gap: 6, marginTop: 20, padding: "8px 12px",
+                background: F.surfaceAlt, borderRadius: 4,
+                border: `1px solid ${F.border}`
+              }}>
+                <ShieldRegular style={{ width: 14, height: 14, color: F.textTertiary }} />
+                <span className="font-mono" style={{ 
+                  fontSize: "0.7rem", color: F.textTertiary,
+                  letterSpacing: "0.05em"
+                }}>
+                  CSRF PROTECTED · AES-256 ENCRYPTED
                 </span>
-              </label>
-
-              {/* Submit */}
-              <motion.button
-                type="submit"
-                disabled={!canSubmit}
-                whileTap={canSubmit ? { scale: 0.975 } : {}}
-                className={`lk-btn ${canSubmit ? "lk-btn-active" : "lk-btn-disabled"}`}
-                style={{ marginTop: 4 }}
-              >
-                {loading ? (
-                  <>
-                    <span className="lk-spinner" />
-                    Signing in…
-                  </>
-                ) : (
-                  <>
-                    Sign in to Dashboard
-                    <ArrowRightRegular style={{ width: 16, height: 16 }} />
-                  </>
-                )}
-              </motion.button>
-            </form>
-
-            {/* Divider */}
-            <div className="lk-divider" />
-
-            {/* Register */}
-            <p style={{ textAlign: "center", fontSize: 14, color: T.muted }}>
-              New to ListKeeping?{" "}
-              <Link href="/register" className="lk-link-white">
-                Create an account
-              </Link>
-            </p>
-
-            {/* Security */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 18 }}>
-              <ShieldRegular style={{ width: 12, height: 12, flexShrink: 0, color: T.faint }} />
-              <span className="lk-mono" style={{ fontSize: 9, color: T.faint, letterSpacing: "0.08em" }}>
-                CSRF-PROTECTED · ENCRYPTED · ROLE-BASED ACCESS
-              </span>
+              </div>
             </div>
 
-            {/* Legal */}
-            <p style={{ textAlign: "center", fontSize: 11, color: T.faint, marginTop: 14, lineHeight: 1.6 }}>
-              By signing in you agree to our{" "}
-              <Link href="/terms" className="lk-link-muted">Terms</Link>
-              {" & "}
-              <Link href="/privacy" className="lk-link-muted">Privacy Policy</Link>
+            {/* Legal Footer */}
+            <p style={{ 
+              textAlign: "center", 
+              fontSize: "0.8rem", 
+              color: F.textTertiary, 
+              marginTop: 20,
+              lineHeight: 1.5
+            }}>
+              By signing in, you agree to our{" "}
+              <Link href="/terms" className="fluent-link">Terms of Service</Link>
+              {" "}and{" "}
+              <Link href="/privacy" className="fluent-link">Privacy Policy</Link>.
             </p>
           </motion.div>
-        </div>
+        </main>
       </div>
     </>
   );
