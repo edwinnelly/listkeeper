@@ -193,7 +193,7 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 };
 
 // ==============================================
-// Sub-components — Updated with Black Text
+// Sub-components — (unchanged, kept for completeness)
 // ==============================================
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => {
@@ -684,7 +684,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({ isOpen, onClose, pr
 };
 
 // ==============================================
-// Main Component — Black Text Updates
+// Main Component — Updated with total_value from API
 // ==============================================
 
 const ManageProducts = ({ user }: { user?: User }) => {
@@ -714,6 +714,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
   const [locationName, setLocationName] = useState<string>("");
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalInventoryValue, setTotalInventoryValue] = useState<number>(0); // NEW: store pagination.total_value
 
   const debouncedSearch = useDebounce(filters.search, 300);
 
@@ -739,6 +740,8 @@ const ManageProducts = ({ user }: { user?: User }) => {
         apiGet(`/product-locations/${id}`, { params: queryParams }, false),
         apiGet("/product-categories", {}, false),
       ]);
+
+      console.log(productsRes.data);
       const pagination = productsRes?.data?.pagination;
       const newProducts = productsRes?.data?.data ?? [];
       const newLocationName = productsRes?.data?.location_name ?? "";
@@ -751,6 +754,8 @@ const ManageProducts = ({ user }: { user?: User }) => {
       setLocationName(newLocationName);
       setTotalItems(pagination?.total ?? 0);
       setTotalPages(pagination?.last_page ?? 1);
+      // NEW: extract total_value from pagination
+      setTotalInventoryValue(parseFloat(pagination?.total_value ?? "0"));
       const serverPage = pagination?.current_page;
       if (serverPage && serverPage !== currentPage) setCurrentPage(serverPage);
       setCategories(newCategories);
@@ -838,7 +843,8 @@ const ManageProducts = ({ user }: { user?: User }) => {
           <StatCard title="Active" value={statistics.activeProducts} icon={CheckCircle} color="emerald" />
           <StatCard title="Low Stock" value={statistics.lowStockCount} icon={AlertCircle} color="amber" />
           <StatCard title="Out of Stock" value={statistics.outOfStockCount} icon={XCircle} color="rose" />
-          <StatCard title="Inventory Value" value={formatCurrency(statistics.totalValue)} icon={DollarSign} color="gray" />
+          {/* UPDATED: use totalInventoryValue from API */}
+          <StatCard title="Inventory Value" value={formatCurrency(totalInventoryValue)} icon={DollarSign} color="gray" />
           <StatCard title="Profit Margin" value={`${statistics.profitMargin.toFixed(1)}%`} icon={TrendingUp} color="gray" />
         </div>
 
