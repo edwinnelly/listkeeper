@@ -799,7 +799,7 @@ const ManageUsers = () => {
                   </thead>
                   <tbody>
                     {currentItems.map((user, index) => (
-                      <tr key={user.id} className="hover:bg-[#1e3a5f]/[0.015] transition-colors group border-b border-gray-100 last:border-0">
+                      <tr key={user.id} className="hover:bg-[#080e16]/[0.015] transition-colors group border-b border-gray-100 last:border-0">
                         <td className="px-5 py-3.5 text-xs text-gray-400 font-medium tabular-nums">{startIndex + index + 1}</td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">

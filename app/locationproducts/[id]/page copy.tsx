@@ -329,7 +329,7 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 /** Small card for showing a statistic. */
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => {
   const colorClasses: Record<string, string> = {
-    primary: "bg-[#1e3a5f]/10 text-[#1e3a5f]",
+    primary: "bg-[#080e16]/10 text-[#080e16]",
     emerald: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
     rose: "bg-rose-50 text-rose-700",
@@ -364,7 +364,7 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
     className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-      active ? "bg-[#1e3a5f] text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+      active ? "bg-[#080e16] text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"
     }`}
   >
     {label}
@@ -384,7 +384,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon: Icon,
         (action.href ? (
           <Link
             href={action.href}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#080e16] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/20"
           >
             <Plus className="h-4 w-4" />
             {action.label}
@@ -392,7 +392,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon: Icon,
         ) : (
           <button
             onClick={action.onClick}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#080e16] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/20"
           >
             <Plus className="h-4 w-4" />
             {action.label}
@@ -407,8 +407,8 @@ const LoadingState: React.FC = () => (
   <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
     <div className="flex flex-col items-center justify-center">
       <div className="relative">
-        <div className="w-16 h-16 border-4 border-[#1e3a5f]/20 border-t-[#1e3a5f] rounded-full animate-spin"></div>
-        <Package className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-[#1e3a5f]/60" />
+        <div className="w-16 h-16 border-4 border-[#080e16]/20 border-t-[#080e16] rounded-full animate-spin"></div>
+        <Package className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-[#080e16]/60" />
       </div>
       <p className="mt-4 text-stone-600 font-medium">Loading products...</p>
       <p className="text-stone-400 text-sm mt-1">Please wait a moment</p>
@@ -475,12 +475,12 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, alt, className = "w-10
   const imageUrl = getImageUrl(src);
   return (
     <div
-      className={`${className} bg-gradient-to-br from-[#1e3a5f]/10 to-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/20 overflow-hidden relative`}
+      className={`${className} bg-gradient-to-br from-[#080e16]/10 to-[#080e16]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#080e16]/20 overflow-hidden relative`}
     >
       {src && !error && imageUrl ? (
         <Image src={imageUrl} alt={alt} fill className="object-cover" sizes="40px" onError={() => setError(true)} />
       ) : (
-        <Package className="h-5 w-5 text-[#1e3a5f]" />
+        <Package className="h-5 w-5 text-[#080e16]" />
       )}
     </div>
   );
@@ -573,7 +573,7 @@ const Pagination: React.FC<PaginationProps> = ({
               onItemsPerPageChange(Number(e.target.value));
               onPageChange(1);
             }}
-            className="px-2 py-1.5 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
+            className="px-2 py-1.5 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none"
           >
             {[10, 25, 50, 100].map((value) => (
               <option key={value} value={value}>{value}</option>
@@ -604,7 +604,7 @@ const Pagination: React.FC<PaginationProps> = ({
                   onClick={() => onPageChange(page as number)}
                   className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                     currentPage === page
-                      ? "bg-[#1e3a5f] text-white"
+                      ? "bg-[#080e16] text-white"
                       : "text-stone-700 hover:bg-stone-100 border border-stone-300"
                   }`}
                 >
@@ -681,10 +681,10 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
             <div className="fixed inset-0 z-10" onClick={() => onToggleOpen(null)} />
             <div className="absolute right-6 z-40 w-48 bg-white border border-stone-200 rounded-xl shadow-lg shadow-stone-200/50 animate-fadeIn">
               <button onClick={() => { onView(product); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition first:rounded-t-xl border-b border-stone-100">
-                <Eye className="h-4 w-4 text-[#1e3a5f]" /> View Details
+                <Eye className="h-4 w-4 text-[#080e16]" /> View Details
               </button>
               <button onClick={() => { onEdit(product.encrypted_id); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100">
-                <Edit className="h-4 w-4 text-[#1e3a5f]" /> Update Stock
+                <Edit className="h-4 w-4 text-[#080e16]" /> Update Stock
               </button>
               <button onClick={() => { onHistory(product.encrypted_pid); onToggleOpen(null); }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition border-b border-stone-100">
                 <History className="h-4 w-4 text-stone-600" /> History
@@ -742,14 +742,14 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-lg font-bold text-[#1e3a5f]">{formatCurrency(toNumber(product.price))}</span>
+              <span className="text-lg font-bold text-[#080e16]">{formatCurrency(toNumber(product.price))}</span>
               <ProfitTrend product={product} />
             </div>
             <StockBadge product={product} />
           </div>
           <div className="grid grid-cols-3 gap-2 pt-2">
-            <button onClick={() => onView(product)} className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="View Details"><Eye className="h-4 w-4" /></button>
-            <button onClick={() => onEdit(product.id)} className="p-2 text-stone-600 hover:text-[#1e3a5f] hover:bg-[#1e3a5f]/5 rounded-lg transition-colors flex items-center justify-center" title="Adjust Stock"><Edit className="h-4 w-4" /></button>
+            <button onClick={() => onView(product)} className="p-2 text-stone-600 hover:text-[#080e16] hover:bg-[#080e16]/5 rounded-lg transition-colors flex items-center justify-center" title="View Details"><Eye className="h-4 w-4" /></button>
+            <button onClick={() => onEdit(product.id)} className="p-2 text-stone-600 hover:text-[#080e16] hover:bg-[#080e16]/5 rounded-lg transition-colors flex items-center justify-center" title="Adjust Stock"><Edit className="h-4 w-4" /></button>
             <button onClick={() => onDelete(product)} className="p-2 text-stone-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center" title="Delete Product"><Trash2 className="h-4 w-4" /></button>
           </div>
         </div>
@@ -771,10 +771,10 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
       <div className="absolute right-0 top-0 h-full w-96 bg-white shadow-2xl animate-slideIn">
         <div className="p-4 border-b border-stone-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Filter size={20} className="text-[#1e3a5f]" />
+            <Filter size={20} className="text-[#080e16]" />
             <h3 className="font-semibold text-stone-900">Filters</h3>
             {activeFilterCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-[#1e3a5f] text-white rounded-full">{activeFilterCount}</span>
+              <span className="ml-2 px-2 py-0.5 text-xs bg-[#080e16] text-white rounded-full">{activeFilterCount}</span>
             )}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-lg transition"><X size={20} /></button>
@@ -787,7 +787,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
             <select
               value={filters.status}
               onChange={(e) => onFilterChange("status", e.target.value as FilterState["status"])}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
+              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -801,7 +801,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
             <select
               value={filters.category}
               onChange={(e) => onFilterChange("category", e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
+              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition"
             >
               <option value="all">All Categories</option>
               {categories.length === 0 ? (
@@ -820,7 +820,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
             <select
               value={filters.stock}
               onChange={(e) => onFilterChange("stock", e.target.value as FilterState["stock"])}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
+              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition"
             >
               <option value="all">All Stock</option>
               <option value="in_stock">In Stock</option>
@@ -835,7 +835,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
             <select
               value={filters.sortBy}
               onChange={(e) => onFilterChange("sortBy", e.target.value as FilterState["sortBy"])}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition"
+              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition"
             >
               <option value="name">Name</option>
               <option value="price">Price</option>
@@ -852,7 +852,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
                 onClick={() => onFilterChange("sortOrder", "asc")}
                 className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
                   filters.sortOrder === "asc"
-                    ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
+                    ? "bg-[#080e16] text-white border-[#080e16]"
                     : "bg-white text-stone-700 border-stone-300 hover:bg-stone-50"
                 }`}
               >
@@ -862,7 +862,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
                 onClick={() => onFilterChange("sortOrder", "desc")}
                 className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${
                   filters.sortOrder === "desc"
-                    ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
+                    ? "bg-[#080e16] text-white border-[#080e16]"
                     : "bg-white text-stone-700 border-stone-300 hover:bg-stone-50"
                 }`}
               >
@@ -880,7 +880,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
             {activeFilterCount > 0 && (
               <button
                 onClick={onClearFilters}
-                className="text-sm text-[#1e3a5f] hover:text-[#2c4c6e] font-medium inline-flex items-center gap-1"
+                className="text-sm text-[#080e16] hover:text-[#2c4c6e] font-medium inline-flex items-center gap-1"
               >
                 <FilterX size={14} />
                 Clear all
@@ -889,7 +889,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-full px-4 py-3 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2c4c6e] transition-colors font-medium"
+            className="w-full px-4 py-3 bg-[#080e16] text-white rounded-lg hover:bg-[#2c4c6e] transition-colors font-medium"
           >
             Apply Filters
           </button>
@@ -947,7 +947,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
               <div>
                 <h3 className="text-sm font-medium text-stone-500 mb-3 flex items-center gap-2"><DollarSign className="h-4 w-4" /> Pricing</h3>
                 <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between"><span className="text-sm text-stone-600">Regular Price</span><span className="text-lg font-bold text-[#1e3a5f]">{formatCurrency(toNumber(product.price))}</span></div>
+                  <div className="flex justify-between"><span className="text-sm text-stone-600">Regular Price</span><span className="text-lg font-bold text-[#080e16]">{formatCurrency(toNumber(product.price))}</span></div>
                   <div className="flex justify-between"><span className="text-sm text-stone-600">Cost Price</span><span className="text-sm text-stone-900">{formatCurrency(toNumber(product.cost_price))}</span></div>
                   {product.is_on_sale && product.sale_price && <div className="flex justify-between"><span className="text-sm text-stone-600">Sale Price</span><span className="text-sm font-semibold text-rose-600">{formatCurrency(toNumber(product.sale_price))}</span></div>}
                 </div>
@@ -983,10 +983,10 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
             </div>
           </div>
           {toNumber(product.price) > 0 && toNumber(product.cost_price) > 0 && (
-            <div className="mt-8 bg-gradient-to-r from-[#1e3a5f]/5 to-transparent border border-[#1e3a5f]/20 rounded-xl p-6">
+            <div className="mt-8 bg-gradient-to-r from-[#080e16]/5 to-transparent border border-[#080e16]/20 rounded-xl p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#1e3a5f]/10 rounded-lg flex items-center justify-center"><BarChart3 className="h-5 w-5 text-[#1e3a5f]" /></div>
+                  <div className="w-10 h-10 bg-[#080e16]/10 rounded-lg flex items-center justify-center"><BarChart3 className="h-5 w-5 text-[#080e16]" /></div>
                   <div>
                     <h4 className="font-semibold text-stone-900">Profit Analysis</h4>
                     <p className="text-sm text-stone-600">Based on current pricing and cost</p>
@@ -994,7 +994,7 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                   <div><p className="text-xs text-stone-500">Profit per Unit</p><p className="text-lg font-bold text-emerald-700">{formatCurrency(toNumber(product.price) - toNumber(product.cost_price))}</p></div>
-                  <div><p className="text-xs text-stone-500">Profit Margin</p><p className="text-lg font-bold text-[#1e3a5f]">{(((toNumber(product.price) - toNumber(product.cost_price)) / toNumber(product.cost_price)) * 100).toFixed(1)}%</p></div>
+                  <div><p className="text-xs text-stone-500">Profit Margin</p><p className="text-lg font-bold text-[#080e16]">{(((toNumber(product.price) - toNumber(product.cost_price)) / toNumber(product.cost_price)) * 100).toFixed(1)}%</p></div>
                   <div className="col-span-2 sm:col-span-1"><p className="text-xs text-stone-500">Total Stock Value</p><p className="text-lg font-bold text-stone-900">{formatCurrency(toNumber(product.price) * toNumber(product.stock_quantity))}</p></div>
                 </div>
               </div>
@@ -1243,7 +1243,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
               <button onClick={handleRefresh} className="p-2.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors border border-stone-200">
                 <RefreshCw className="h-5 w-5" />
               </button>
-              <Link href="/addproductlocations" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#1e3a5f]/20">
+              <Link href="/addproductlocations" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#080e16]/20">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add Product</span>
               </Link>
@@ -1273,7 +1273,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
               value={filters.search}
               onChange={(e) => handleFilterChange("search", e.target.value)}
               placeholder="Search products by name, SKU, description..."
-              className="w-full pl-10 pr-4 py-3 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition placeholder-stone-400"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition placeholder-stone-400"
             />
           </div>
           <button
@@ -1283,7 +1283,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
             <Filter className="h-5 w-5 text-stone-600" />
             <span className="text-sm font-medium text-stone-700">Filters</span>
             {activeFilterCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#1e3a5f] text-white text-xs rounded-full flex items-center justify-center">
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#080e16] text-white text-xs rounded-full flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}

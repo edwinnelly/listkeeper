@@ -231,14 +231,14 @@ const ProductCard = memo(
       onClick={onSelect}
       className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
         isSelected
-          ? "border-[#1e3a5f] bg-[#1e3a5f]/5 ring-2 ring-[#1e3a5f]/20 shadow-md"
+          ? "border-[#080e16] bg-[#080e16]/5 ring-2 ring-[#080e16]/20 shadow-md"
           : "border-gray-200 hover:border-gray-300 hover:shadow-sm bg-white"
       }`}
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex items-start gap-3">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-            isSelected ? "bg-[#1e3a5f]" : "bg-gray-100"
+            isSelected ? "bg-[#080e16]" : "bg-gray-100"
           }`}>
             <Package className={`h-5 w-5 ${isSelected ? "text-white" : "text-gray-500"}`} />
           </div>
@@ -248,7 +248,7 @@ const ProductCard = memo(
           </div>
         </div>
         <div className="text-left sm:text-right pl-13 sm:pl-0">
-          <p className="font-bold text-[#1e3a5f] text-lg">
+          <p className="font-bold text-[#080e16] text-lg">
             {formatCurrency(product.cost_price, currencySymbol)}
           </p>
           <p className="text-xs text-gray-500">Stock: {product.current_stock}</p>
@@ -325,7 +325,7 @@ const ProductSearchModal: React.FC<{
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="bg-[#1e3a5f] px-6 py-5">
+              <div className="bg-[#080e16] px-6 py-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-white">Add Products</h2>
@@ -351,7 +351,7 @@ const ProductSearchModal: React.FC<{
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search by product name or SKU..."
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-sm transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-sm transition-all"
                     autoFocus
                   />
                 </div>
@@ -361,7 +361,7 @@ const ProductSearchModal: React.FC<{
               <div className="flex-1 overflow-y-auto p-6">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#1e3a5f]" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[#080e16]" />
                   </div>
                 ) : filteredProducts.length === 0 ? (
                   <div className="text-center py-12">
@@ -403,14 +403,14 @@ const ProductSearchModal: React.FC<{
                         onChange={(e) =>
                           setQuantity(Math.max(1, parseInt(e.target.value) || 1))
                         }
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-lg font-medium"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-lg font-medium"
                       />
                     </div>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleAddProduct}
-                      className="px-8 py-3 bg-[#1e3a5f] text-white rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/25 font-semibold"
+                      className="px-8 py-3 bg-[#080e16] text-white rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/25 font-semibold"
                     >
                       Add to Order
                     </motion.button>
@@ -443,8 +443,8 @@ const OrderItemRow: React.FC<{
     >
       {/* Product Info */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-10 h-10 rounded-lg bg-[#1e3a5f]/10 flex items-center justify-center flex-shrink-0">
-          <Package className="h-5 w-5 text-[#1e3a5f]" />
+        <div className="w-10 h-10 rounded-lg bg-[#080e16]/10 flex items-center justify-center flex-shrink-0">
+          <Package className="h-5 w-5 text-[#080e16]" />
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-gray-900 truncate">
@@ -465,7 +465,7 @@ const OrderItemRow: React.FC<{
             min="1"
             value={item.quantity}
             onChange={(e) => onUpdate(index, "quantity", Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-center"
+            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-center"
           />
         </div>
         <span className="text-gray-400 hidden sm:block">×</span>
@@ -477,7 +477,7 @@ const OrderItemRow: React.FC<{
             min="0"
             value={item.unit_cost}
             onChange={(e) => onUpdate(index, "unit_cost", Math.max(0, parseFloat(e.target.value) || 0))}
-            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
+            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none"
           />
         </div>
       </div>
@@ -486,7 +486,7 @@ const OrderItemRow: React.FC<{
       <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto sm:min-w-[120px]">
         <div className="sm:text-right">
           <p className="text-sm text-gray-500">Total</p>
-          <p className="text-lg font-bold text-[#1e3a5f]">
+          <p className="text-lg font-bold text-[#080e16]">
             {formatCurrency(item.total, currencySymbol)}
           </p>
         </div>
@@ -653,7 +653,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1e3a5f]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#080e16]" />
       </div>
     );
   }
@@ -692,7 +692,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1e3a5f] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#080e16] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -717,7 +717,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
           >
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#080e16] flex items-center justify-center">
                   <ShoppingCart className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -733,14 +733,14 @@ if (user?.user_roles?.purchase_create !== "yes") {
                 <div className="space-y-4">
                   <div>
                     <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <Building2 className="h-4 w-4 text-[#1e3a5f]" />
+                      <Building2 className="h-4 w-4 text-[#080e16]" />
                       Supplier <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <select
                         value={formData.supplier_id}
                         onChange={(e) => updateField("supplier_id", e.target.value)}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-sm appearance-none bg-white transition-all ${
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-sm appearance-none bg-white transition-all ${
                           errors.supplier_id ? "border-red-300 bg-red-50" : "border-gray-200"
                         }`}
                       >
@@ -764,27 +764,27 @@ if (user?.user_roles?.purchase_create !== "yes") {
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-3 p-4 bg-[#1e3a5f]/5 rounded-xl border border-[#1e3a5f]/20"
+                        className="mt-3 p-4 bg-[#080e16]/5 rounded-xl border border-[#080e16]/20"
                       >
-                        <p className="text-xs font-semibold text-[#1e3a5f] uppercase tracking-wider mb-3">
+                        <p className="text-xs font-semibold text-[#080e16] uppercase tracking-wider mb-3">
                           Supplier Information
                         </p>
                         <div className="space-y-2">
                           {selectedSupplier.contact_person && (
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <User className="h-4 w-4 text-[#1e3a5f]/60" />
+                              <User className="h-4 w-4 text-[#080e16]/60" />
                               {selectedSupplier.contact_person}
                             </div>
                           )}
                           {selectedSupplier.email && (
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Mail className="h-4 w-4 text-[#1e3a5f]/60" />
+                              <Mail className="h-4 w-4 text-[#080e16]/60" />
                               {selectedSupplier.email}
                             </div>
                           )}
                           {selectedSupplier.phone && (
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Phone className="h-4 w-4 text-[#1e3a5f]/60" />
+                              <Phone className="h-4 w-4 text-[#080e16]/60" />
                               {selectedSupplier.phone}
                             </div>
                           )}
@@ -798,14 +798,14 @@ if (user?.user_roles?.purchase_create !== "yes") {
                 <div className="space-y-4">
                   <div>
                     <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <Warehouse className="h-4 w-4 text-[#1e3a5f]" />
+                      <Warehouse className="h-4 w-4 text-[#080e16]" />
                       Location <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <select
                         value={formData.location_id}
                         onChange={(e) => updateField("location_id", e.target.value)}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-sm appearance-none bg-white transition-all ${
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-sm appearance-none bg-white transition-all ${
                           errors.location_id ? "border-red-300 bg-red-50" : "border-gray-200"
                         }`}
                       >
@@ -830,19 +830,19 @@ if (user?.user_roles?.purchase_create !== "yes") {
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-3 p-4 bg-[#1e3a5f]/5 rounded-xl border border-[#1e3a5f]/20"
+                        className="mt-3 p-4 bg-[#080e16]/5 rounded-xl border border-[#080e16]/20"
                       >
-                        <p className="text-xs font-semibold text-[#1e3a5f] uppercase tracking-wider mb-3">
+                        <p className="text-xs font-semibold text-[#080e16] uppercase tracking-wider mb-3">
                           Location Details
                         </p>
                         <div className="space-y-2">
                           <div className="flex items-start gap-2 text-sm text-gray-700">
-                            <MapPin className="h-4 w-4 text-[#1e3a5f]/60 mt-0.5 flex-shrink-0" />
+                            <MapPin className="h-4 w-4 text-[#080e16]/60 mt-0.5 flex-shrink-0" />
                             <span>{getFullAddress(selectedLocation)}</span>
                           </div>
                           {selectedLocation.phone && (
                             <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Phone className="h-4 w-4 text-[#1e3a5f]/60" />
+                              <Phone className="h-4 w-4 text-[#080e16]/60" />
                               {selectedLocation.phone}
                             </div>
                           )}
@@ -854,26 +854,26 @@ if (user?.user_roles?.purchase_create !== "yes") {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                        <Calendar className="h-4 w-4 text-[#1e3a5f]" />
+                        <Calendar className="h-4 w-4 text-[#080e16]" />
                         Order Date <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
                         value={formData.order_date}
                         onChange={(e) => updateField("order_date", e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-sm transition-all"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-sm transition-all"
                       />
                     </div>
                     <div>
                       <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                        <Clock className="h-4 w-4 text-[#1e3a5f]" />
+                        <Clock className="h-4 w-4 text-[#080e16]" />
                         Expected Delivery
                       </label>
                       <input
                         type="date"
                         value={formData.expected_delivery_date}
                         onChange={(e) => updateField("expected_delivery_date", e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none text-sm transition-all"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-sm transition-all"
                       />
                     </div>
                   </div>
@@ -892,7 +892,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#080e16] flex items-center justify-center">
                     <Package className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -907,7 +907,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
                   whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={() => setShowProductModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1e3a5f] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/25"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#080e16] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/25"
                 >
                   <Plus className="h-4 w-4" />
                   Add Product
@@ -928,7 +928,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
                     whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={() => setShowProductModal(true)}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#1e3a5f] text-white rounded-xl hover:bg-[#2c4c6e] transition-colors font-medium shadow-lg shadow-[#1e3a5f]/25"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#080e16] text-white rounded-xl hover:bg-[#2c4c6e] transition-colors font-medium shadow-lg shadow-[#080e16]/25"
                   >
                     <Plus className="h-4 w-4" />
                     Add Your First Product
@@ -960,7 +960,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-3xl font-bold text-[#1e3a5f]">
+                        <p className="text-3xl font-bold text-[#080e16]">
                           {formatCurrency(subtotal, currencySymbol)}
                         </p>
                       </div>
@@ -980,7 +980,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
           >
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#1e3a5f] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#080e16] flex items-center justify-center">
                   <StickyNote className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -995,7 +995,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
                 onChange={(e) => updateField("notes", e.target.value)}
                 rows={4}
                 placeholder="Add any additional notes, instructions, or comments for this purchase order..."
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none resize-none text-sm transition-all"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none resize-none text-sm transition-all"
               />
             </div>
           </motion.div>
@@ -1007,7 +1007,7 @@ if (user?.user_roles?.purchase_create !== "yes") {
               whileTap={{ scale: 0.99 }}
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full py-4 bg-[#1e3a5f] text-white font-semibold rounded-2xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 bg-[#080e16] text-white font-semibold rounded-2xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>

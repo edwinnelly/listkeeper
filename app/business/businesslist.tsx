@@ -274,7 +274,7 @@ const BusinessRow: React.FC<{
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <tr className="hover:bg-[#1e3a5f]/[0.015] transition-colors group border-b border-gray-100 last:border-0">
+    <tr className="hover:bg-[#080e16]/[0.015] transition-colors group border-b border-gray-100 last:border-0">
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-3">
           {biz.logo ? (

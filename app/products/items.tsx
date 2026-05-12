@@ -197,7 +197,7 @@ const ProductImage: React.FC<{
 }> = ({ src, alt, className = "w-10 h-10" }) => {
   const [error, setError] = useState(false);
   return (
-    <div className={`${className} bg-[#1e3a5f]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#1e3a5f]/10 overflow-hidden relative`}>
+    <div className={`${className} bg-[#080e16]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#080e16]/10 overflow-hidden relative`}>
       {src && !error ? (
         <Image
           src={`http://localhost:8000/storage/${src}`}
@@ -221,18 +221,18 @@ const EmptyState: React.FC<{
 }> = ({ title, description, icon: Icon, action }) => (
   <div className="bg-white rounded-2xl border border-stone-100 shadow-sm py-20">
     <div className="flex flex-col items-center text-center max-w-sm mx-auto">
-      <div className="w-16 h-16 bg-[#1e3a5f]/5 rounded-2xl flex items-center justify-center mb-5 border border-[#1e3a5f]/10">
+      <div className="w-16 h-16 bg-[#080e16]/5 rounded-2xl flex items-center justify-center mb-5 border border-[#080e16]/10">
         <Icon className="h-8 w-8 text-[#09121d]/40" />
       </div>
       <h3 className="text-base font-semibold text-stone-800 mb-1.5">{title}</h3>
       <p className="text-sm text-stone-400 mb-6 leading-relaxed">{description}</p>
       {action && (
         action.href ? (
-          <Link href={action.href} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1e3a5f] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20">
+          <Link href={action.href} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#080e16] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/20">
             <Plus className="h-4 w-4" /> {action.label}
           </Link>
         ) : (
-          <button onClick={action.onClick} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1e3a5f] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#1e3a5f]/20">
+          <button onClick={action.onClick} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#080e16] text-white text-sm font-semibold rounded-xl hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/20">
             <Plus className="h-4 w-4" /> {action.label}
           </button>
         )
@@ -245,8 +245,8 @@ const LoadingState: React.FC = () => (
   <div className="bg-white rounded-2xl border border-stone-100 shadow-sm py-20">
     <div className="flex flex-col items-center justify-center">
       <div className="relative w-14 h-14 mb-5">
-        <div className="w-14 h-14 rounded-full border-[3px] border-[#1e3a5f]/10" />
-        <div className="absolute inset-0 w-14 h-14 rounded-full border-[3px] border-[#1e3a5f] border-t-transparent animate-spin" />
+        <div className="w-14 h-14 rounded-full border-[3px] border-[#080e16]/10" />
+        <div className="absolute inset-0 w-14 h-14 rounded-full border-[3px] border-[#080e16] border-t-transparent animate-spin" />
         <Package className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 text-[#09121d]/50" />
       </div>
       <p className="text-sm font-semibold text-stone-700">Loading products</p>
@@ -335,7 +335,7 @@ const Pagination: React.FC<{
           <select
             value={itemsPerPage}
             onChange={(e) => { onItemsPerPageChange(Number(e.target.value)); onPageChange(1); }}
-            className="px-2 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus:ring-2 focus:ring-[#1e3a5f]/10 focus:border-[#1e3a5f] outline-none font-medium"
+            className="px-2 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus:ring-2 focus:ring-[#080e16]/10 focus:border-[#080e16] outline-none font-medium"
           >
             {[10, 25, 50, 100].map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
@@ -364,7 +364,7 @@ const Pagination: React.FC<{
                   onClick={() => onPageChange(page as number)}
                   className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
                     currentPage === page
-                      ? "bg-[#1e3a5f] text-white shadow-sm shadow-[#1e3a5f]/30"
+                      ? "bg-[#080e16] text-white shadow-sm shadow-[#080e16]/30"
                       : "text-stone-600 hover:bg-stone-100 border border-stone-200"
                   }`}
                 >
@@ -397,7 +397,7 @@ const ProductTableRow: React.FC<{
   isOpen: boolean; onToggleOpen: (id: number | null) => void;
   formatCurrency: (amount: number) => string;
 }> = ({ product, index, startIndex, onView, onEdit, onDelete, isOpen, onToggleOpen, formatCurrency }) => (
-  <tr className="hover:bg-[#1e3a5f]/[0.02] transition-colors group border-b border-stone-100 last:border-0">
+  <tr className="hover:bg-[#080e16]/[0.02] transition-colors group border-b border-stone-100 last:border-0">
     <td className="px-5 py-3.5 text-xs text-stone-400 font-medium tabular-nums w-10">
       {startIndex + index + 1}
     </td>
@@ -528,8 +528,8 @@ const ProductGridCard: React.FC<{
       </div>
       <div className="grid grid-cols-3 gap-1.5 pt-3 border-t border-stone-100">
         {[
-          { label: "View", icon: Eye, action: () => onView(product), cls: "hover:text-[#09121d] hover:bg-[#1e3a5f]/5" },
-          { label: "Edit", icon: Edit, action: () => onEdit(product), cls: "hover:text-[#09121d] hover:bg-[#1e3a5f]/5" },
+          { label: "View", icon: Eye, action: () => onView(product), cls: "hover:text-[#09121d] hover:bg-[#080e16]/5" },
+          { label: "Edit", icon: Edit, action: () => onEdit(product), cls: "hover:text-[#09121d] hover:bg-[#080e16]/5" },
           { label: "Delete", icon: Trash2, action: () => onDelete(product), cls: "hover:text-rose-600 hover:bg-rose-50" },
         ].map(({ label, icon: Icon, action, cls }) => (
           <button key={label} onClick={action} title={label}
@@ -553,7 +553,7 @@ const FilterDrawer: React.FC<{
 }> = ({ isOpen, onClose, filters, categories, totalItems, onFilterChange, onClearFilters, activeFilterCount }) => {
   if (!isOpen) return null;
 
-  const selectCls = "w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1e3a5f]/10 focus:border-[#1e3a5f] outline-none transition text-stone-700";
+  const selectCls = "w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#080e16]/10 focus:border-[#080e16] outline-none transition text-stone-700";
 
   return (
     <div className="fixed inset-0 z-50">
@@ -561,7 +561,7 @@ const FilterDrawer: React.FC<{
       <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl flex flex-col">
         <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-[#1e3a5f]/5 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#080e16]/5 rounded-lg flex items-center justify-center">
               <SlidersHorizontal className="h-4 w-4 text-[#09121d]" />
             </div>
             <div>
@@ -614,7 +614,7 @@ const FilterDrawer: React.FC<{
                   onClick={() => onFilterChange("sortOrder", order as "asc" | "desc")}
                   className={`py-2.5 text-sm font-semibold rounded-xl border transition-all ${
                     filters.sortOrder === order
-                      ? "bg-[#1e3a5f] text-white border-[#1e3a5f] shadow-sm shadow-[#1e3a5f]/20"
+                      ? "bg-[#080e16] text-white border-[#080e16] shadow-sm shadow-[#080e16]/20"
                       : "bg-white text-stone-600 border-stone-200 hover:border-stone-300"
                   }`}
                 >
@@ -638,7 +638,7 @@ const FilterDrawer: React.FC<{
           </div>
           <button
             onClick={onClose}
-            className="w-full py-3 bg-[#1e3a5f] text-white text-sm font-bold rounded-xl hover:bg-[#2c4c6e] transition-colors shadow-sm shadow-[#1e3a5f]/20"
+            className="w-full py-3 bg-[#080e16] text-white text-sm font-bold rounded-xl hover:bg-[#2c4c6e] transition-colors shadow-sm shadow-[#080e16]/20"
           >
             Apply Filters
           </button>
@@ -667,7 +667,7 @@ const ViewProductModal: React.FC<{
   const Section = ({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-6 h-6 bg-[#1e3a5f]/5 rounded-lg flex items-center justify-center">
+        <div className="w-6 h-6 bg-[#080e16]/5 rounded-lg flex items-center justify-center">
           <Icon className="h-3.5 w-3.5 text-[#09121d]/60" />
         </div>
         <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest">{title}</h3>
@@ -752,7 +752,7 @@ const ViewProductModal: React.FC<{
 
           {/* Profit Card */}
           {toNumber(product.price) > 0 && toNumber(product.cost_price) > 0 && (
-            <div className="mt-6 bg-gradient-to-br from-[#1e3a5f] to-[#2c4c6e] rounded-2xl p-5 text-white">
+            <div className="mt-6 bg-gradient-to-br from-[#080e16] to-[#2c4c6e] rounded-2xl p-5 text-white">
               <div className="flex items-center gap-2 mb-4">
                 <BarChart3 className="h-4 w-4 text-white/60" />
                 <span className="text-xs font-bold uppercase tracking-widest text-white/60">Profit Analysis</span>
@@ -781,7 +781,7 @@ const ViewProductModal: React.FC<{
               Close
             </button>
             <button onClick={() => { onEdit(product); onClose(); }}
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1e3a5f] rounded-xl hover:bg-[#2c4c6e] transition-all inline-flex items-center gap-2 shadow-lg shadow-[#1e3a5f]/20">
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-[#080e16] rounded-xl hover:bg-[#2c4c6e] transition-all inline-flex items-center gap-2 shadow-lg shadow-[#080e16]/20">
               <Edit className="h-4 w-4" /> Edit Product
             </button>
           </div>
@@ -934,7 +934,7 @@ const ManageProducts = ({ user }: { user: User }) => {
                 <RefreshCw className="h-4 w-4" />
               </button>
               <Link href="/newproduct"
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#091521] text-white text-sm font-bold rounded-xl hover:bg-[#0d1722] transition-all shadow-md shadow-[#1e3a5f]/20">
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#091521] text-white text-sm font-bold rounded-xl hover:bg-[#0d1722] transition-all shadow-md shadow-[#080e16]/20">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add Product</span>
               </Link>
@@ -947,7 +947,7 @@ const ManageProducts = ({ user }: { user: User }) => {
         {/* Stat Row */}
         <div className="mb-5">
           <div className="inline-flex items-center gap-3 bg-white border border-stone-100 rounded-2xl px-5 py-3.5 shadow-sm">
-            <div className="w-9 h-9 bg-[#1e3a5f]/5 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-[#080e16]/5 rounded-xl flex items-center justify-center">
               <Package className="h-4 w-4 text-[#09121d]" />
             </div>
             <div>
@@ -966,7 +966,7 @@ const ManageProducts = ({ user }: { user: User }) => {
               value={filters.search}
               onChange={(e) => handleFilterChange("search", e.target.value)}
               placeholder="Search by name, SKU, barcode..."
-              className="w-full pl-11 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/10 focus:border-[#1e3a5f] outline-none transition text-sm placeholder-stone-400 shadow-sm"
+              className="w-full pl-11 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/10 focus:border-[#080e16] outline-none transition text-sm placeholder-stone-400 shadow-sm"
             />
             {filters.search && (
               <button onClick={() => handleFilterChange("search", "")}
@@ -982,7 +982,7 @@ const ManageProducts = ({ user }: { user: User }) => {
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden sm:inline">Filters</span>
             {activeFilterCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1e3a5f] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#080e16] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}
@@ -999,7 +999,7 @@ const ManageProducts = ({ user }: { user: User }) => {
                 onClick={() => handleFilterChange("status", val)}
                 className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all border ${
                   isActive
-                    ? "bg-[#1e3a5f] text-white border-[#1e3a5f] shadow-sm"
+                    ? "bg-[#080e16] text-white border-[#080e16] shadow-sm"
                     : "bg-white text-stone-600 border-stone-200 hover:border-stone-300 hover:bg-stone-50"
                 }`}>
                 {label}

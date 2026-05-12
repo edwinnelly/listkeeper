@@ -237,7 +237,7 @@ const ModernHeader: React.FC<{
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="bg-gradient-to-r from-[#101828] to-[#1e3a5f] text-white shadow-xl sticky top-0 z-30"
+      className="bg-gradient-to-r from-[#101828] to-[#080e16] text-white shadow-xl sticky top-0 z-30"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
@@ -368,7 +368,7 @@ const ModernCategoryPills: React.FC<{
             onClick={() => onSelectCategory(null)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-medium text-sm transition-all ${
               selectedCategory === null
-                ? "bg-[#1e3a5f] text-white shadow-lg shadow-[#1e3a5f]/30"
+                ? "bg-[#080e16] text-white shadow-lg shadow-[#080e16]/30"
                 : "bg-white text-stone-700 hover:bg-stone-100 border border-stone-200"
             }`}
           >
@@ -442,7 +442,7 @@ const ModernProductCard: React.FC<{
           ? "opacity-50 cursor-not-allowed border-rose-200"
           : isLowStock
             ? "border-amber-200 hover:shadow-lg hover:border-amber-300"
-            : "border-stone-200 hover:shadow-lg hover:border-[#1e3a5f]/30"
+            : "border-stone-200 hover:shadow-lg hover:border-[#080e16]/30"
       } transition-all duration-300`}
     >
       {/* Badges - Smaller and repositioned */}
@@ -500,7 +500,7 @@ const ModernProductCard: React.FC<{
                 exit={{ scale: 0 }}
                 className="bg-white rounded-full p-2 shadow-xl"
               >
-                <Plus className="h-4 w-4 text-[#1e3a5f]" />
+                <Plus className="h-4 w-4 text-[#080e16]" />
               </motion.div>
             </motion.div>
           )}
@@ -528,7 +528,7 @@ const ModernProductCard: React.FC<{
         <div className="flex items-end justify-between">
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-base font-bold text-[#1e3a5f]">
+              <span className="text-base font-bold text-[#080e16]">
                 {formatCurrency(price)}
               </span>
               {originalPrice && (
@@ -624,7 +624,7 @@ const ModernCartItem: React.FC<{
           {/* Price and Quantity */}
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-baseline gap-1">
-              <span className="font-semibold text-[#1e3a5f]">
+              <span className="font-semibold text-[#080e16]">
                 {formatCurrency(item.subtotal)}
               </span>
               <span className="text-xs text-stone-400">
@@ -683,7 +683,7 @@ const ModernCartItem: React.FC<{
                   onChange={(e) => setNote(e.target.value)}
                   onBlur={() => onAddNote(item.id, note)}
                   placeholder="Add special instructions..."
-                  className="w-full mt-2 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
+                  className="w-full mt-2 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none"
                 />
               </motion.div>
             )}
@@ -736,7 +736,7 @@ const CustomerSelectorModal: React.FC<{
           className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#1e3a5f] to-[#0B2A4A] text-white p-6">
+          <div className="bg-gradient-to-r from-[#080e16] to-[#0B2A4A] text-white p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -797,7 +797,7 @@ const CustomerSelectorModal: React.FC<{
                   }}
                   className="w-full p-4 mb-3 bg-white hover:bg-stone-50 rounded-xl border border-stone-200 flex items-center gap-4 transition-all"
                 >
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#1e3a5f] to-[#0B2A4A] text-white rounded-xl flex items-center justify-center font-semibold text-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#080e16] to-[#0B2A4A] text-white rounded-xl flex items-center justify-center font-semibold text-lg">
                     {getCustomerInitials(customer)}
                   </div>
                   <div className="flex-1 text-left">
@@ -858,7 +858,7 @@ const ModernCustomerCard: React.FC<{
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="relative bg-gradient-to-br from-[#1e3a5f] to-[#0B2A4A] text-white rounded-2xl p-4 shadow-xl overflow-hidden group"
+      className="relative bg-gradient-to-br from-[#080e16] to-[#0B2A4A] text-white rounded-2xl p-4 shadow-xl overflow-hidden group"
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
@@ -1079,7 +1079,7 @@ const ModernCartSummary: React.FC<{
               onClick={() => onDiscountTypeChange("percentage")}
               className={`px-2 py-1 text-xs rounded-lg transition-colors ${
                 discountType === "percentage"
-                  ? "bg-[#1e3a5f] text-white"
+                  ? "bg-[#080e16] text-white"
                   : "bg-stone-100 text-stone-600 hover:bg-stone-200"
               }`}
             >
@@ -1089,7 +1089,7 @@ const ModernCartSummary: React.FC<{
               onClick={() => onDiscountTypeChange("fixed")}
               className={`px-2 py-1 text-xs rounded-lg transition-colors ${
                 discountType === "fixed"
-                  ? "bg-[#1e3a5f] text-white"
+                  ? "bg-[#080e16] text-white"
                   : "bg-stone-100 text-stone-600 hover:bg-stone-200"
               }`}
             >
@@ -1105,7 +1105,7 @@ const ModernCartSummary: React.FC<{
             min="0"
             max={discountType === "percentage" ? 100 : subtotal}
             step={discountType === "percentage" ? 1 : 0.01}
-            className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
+            className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none"
             placeholder={`Enter discount ${discountType === "percentage" ? "percentage" : "amount"}`}
           />
           {discount > 0 && (
@@ -1132,7 +1132,7 @@ const ModernCartSummary: React.FC<{
       {/* Total */}
       <div className="flex justify-between text-lg font-bold pt-3 border-t border-stone-200">
         <span className="text-stone-900">Total</span>
-        <span className="text-[#1e3a5f]">{formatCurrency(total)}</span>
+        <span className="text-[#080e16]">{formatCurrency(total)}</span>
       </div>
 
       {/* Quick Discount Buttons */}
@@ -1196,7 +1196,7 @@ const ModernPaymentModal: React.FC<{
           className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#1e3a5f] to-[#0B2A4A] text-white p-6">
+          <div className="bg-gradient-to-r from-[#080e16] to-[#0B2A4A] text-white p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Complete Payment</h2>
               <button
@@ -1246,7 +1246,7 @@ const ModernPaymentModal: React.FC<{
                     onChange={(e) => setAmountPaid(e.target.value)}
                     min={total}
                     step="0.01"
-                    className="w-full pl-8 pr-4 py-3 text-lg border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
+                    className="w-full pl-8 pr-4 py-3 text-lg border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none"
                     autoFocus
                   />
                 </div>
@@ -1284,7 +1284,7 @@ const ModernPaymentModal: React.FC<{
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
                   placeholder="Enter reference number"
-                  className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none"
+                  className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none"
                 />
               </motion.div>
             )}
@@ -1315,7 +1315,7 @@ const ModernPaymentModal: React.FC<{
                     reference,
                   );
                 }}
-                className="flex-1 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#1e3a5f] to-[#0B2A4A] rounded-xl hover:from-[#0B2A4A] hover:to-[#1e3a5f] transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-[#1e3a5f]/30"
+                className="flex-1 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#080e16] to-[#0B2A4A] rounded-xl hover:from-[#0B2A4A] hover:to-[#080e16] transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-[#080e16]/30"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -1407,7 +1407,7 @@ Thank you for your business!
           <div className="p-6" id="receipt-content">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-stone-900">RECEIPT</h2>
-              <div className="w-16 h-0.5 bg-gradient-to-r from-[#1e3a5f] to-transparent mx-auto my-2" />
+              <div className="w-16 h-0.5 bg-gradient-to-r from-[#080e16] to-transparent mx-auto my-2" />
               <p className="text-sm text-stone-500">#{transaction.id}</p>
             </div>
 
@@ -1497,7 +1497,7 @@ Thank you for your business!
                 </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-dashed border-stone-200">
                   <span className="text-stone-900">Total:</span>
-                  <span className="text-[#1e3a5f]">
+                  <span className="text-[#080e16]">
                     {formatCurrency(transaction.total)}
                   </span>
                 </div>
@@ -1541,7 +1541,7 @@ Thank you for your business!
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onClose}
-              className="flex-1 px-4 py-3 text-sm font-medium text-white bg-[#1e3a5f] rounded-xl hover:bg-[#0B2A4A] transition-colors"
+              className="flex-1 px-4 py-3 text-sm font-medium text-white bg-[#080e16] rounded-xl hover:bg-[#0B2A4A] transition-colors"
             >
               Close
             </motion.button>
@@ -1889,7 +1889,7 @@ const fetchData = React.useCallback(async () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search products by name, SKU, or scan barcode..."
-                  className="w-full pl-12 pr-4 py-4 bg-white border border-stone-200 rounded-2xl focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] outline-none transition shadow-sm"
+                  className="w-full pl-12 pr-4 py-4 bg-white border border-stone-200 rounded-2xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition shadow-sm"
                 />
                 {searchQuery && (
                   <button
@@ -1923,7 +1923,7 @@ const fetchData = React.useCallback(async () => {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 >
-                  <Loader2 className="h-12 w-12 text-[#1e3a5f]" />
+                  <Loader2 className="h-12 w-12 text-[#080e16]" />
                 </motion.div>
                 <p className="mt-4 text-stone-500">Loading products...</p>
               </div>
@@ -1943,7 +1943,7 @@ const fetchData = React.useCallback(async () => {
                       onClick={() => setViewMode("grid")}
                       className={`p-2 rounded-lg transition-colors ${
                         viewMode === "grid"
-                          ? "bg-[#1e3a5f] text-white"
+                          ? "bg-[#080e16] text-white"
                           : "text-stone-400 hover:text-stone-600"
                       }`}
                     >
@@ -1953,7 +1953,7 @@ const fetchData = React.useCallback(async () => {
                       onClick={() => setViewMode("list")}
                       className={`p-2 rounded-lg transition-colors ${
                         viewMode === "list"
-                          ? "bg-[#1e3a5f] text-white"
+                          ? "bg-[#080e16] text-white"
                           : "text-stone-400 hover:text-stone-600"
                       }`}
                     >
@@ -2020,7 +2020,7 @@ const fetchData = React.useCallback(async () => {
           >
             <div className="bg-white rounded-3xl border border-stone-200 shadow-xl sticky top-24 overflow-hidden">
               {/* Cart Header */}
-              <div className="p-6 border-b border-stone-200 bg-gradient-to-r from-[#1e3a5f] to-[#0B2A4A] text-white">
+              <div className="p-6 border-b border-stone-200 bg-gradient-to-r from-[#080e16] to-[#0B2A4A] text-white">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5" />
@@ -2120,7 +2120,7 @@ const fetchData = React.useCallback(async () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setPaymentModalOpen(true)}
                     disabled={cart.length === 0}
-                    className="flex-1 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#1e3a5f] to-[#0B2A4A] rounded-xl hover:from-[#0B2A4A] hover:to-[#1e3a5f] transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 shadow-lg shadow-[#1e3a5f]/30"
+                    className="flex-1 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#080e16] to-[#0B2A4A] rounded-xl hover:from-[#0B2A4A] hover:to-[#080e16] transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 shadow-lg shadow-[#080e16]/30"
                   >
                     <CreditCard className="h-4 w-4" />
                     Checkout

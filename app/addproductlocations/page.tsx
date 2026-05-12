@@ -2,6 +2,8 @@
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet, apiPost } from "@/lib/axios";
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+
 import {
   ArrowLeft,
   Package,
@@ -499,6 +501,8 @@ const AddToLocations = ({ user }: { user: User }) => {
     [user]
   );
 
+  const router = useRouter();
+
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<Record<number, boolean>>({});
   const [productQuantities, setProductQuantities] = useState<Record<number, number>>({});
@@ -671,12 +675,13 @@ const AddToLocations = ({ user }: { user: User }) => {
           <div className="flex items-center justify-between gap-4">
             {/* Left */}
             <div className="flex items-center gap-3">
-              <Link
-                href="/products"
-                className="p-2 text-neutral-400 hover:text-gray hover:bg-neutral-100 rounded-xl transition border border-transparent hover:border-neutral-200"
-              >
-                <ArrowLeft className="h-4.5 w-4.5" />
-              </Link>
+             <button
+  onClick={() => router.back()}
+  className="inline-flex items-center gap-2 p-2 text-neutral-400 hover:text-gray hover:bg-neutral-100 rounded-xl transition border border-transparent hover:border-neutral-200"
+>
+  <ArrowLeft size={18} />
+  
+</button>
               <div>
                 <h1 className="text-base font-extrabold text-gray leading-tight">
                   Add to Location
