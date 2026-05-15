@@ -57,6 +57,7 @@ export const api = axios.create({
 const sanctumApi = axios.create({
   baseURL:
     process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+    // "https://snowviewssl.net",
     "http://localhost:8000",
   withCredentials: true,
   timeout: 60000,

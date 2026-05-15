@@ -2,6 +2,7 @@
 
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet } from "@/lib/axios";
+
 import React, {
   useState,
   useEffect,
@@ -31,7 +32,7 @@ import {
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import ShortTextWithTooltip from "../../component/shorten_len";
+import ShortTextWithTooltip from "../../../component/shorten_len";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -327,11 +328,10 @@ const Pagination: React.FC<{
                 ) : (
                   <button
                     onClick={() => onPageChange(page as number)}
-                    className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                      currentPage === page
-                        ? "bg-[#080e16] text-white"
-                        : "text-stone-700 hover:bg-stone-100 border border-stone-300"
-                    }`}
+                    className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === page
+                      ? "bg-[#080e16] text-white"
+                      : "text-stone-700 hover:bg-stone-100 border border-stone-300"
+                      }`}
                   >
                     {page}
                   </button>
@@ -659,11 +659,10 @@ const DateRangeFilter: React.FC<{
     <div className="relative">
       <button
         onClick={handleToggle}
-        className={`flex items-center gap-2 px-4 py-3 border rounded-xl transition-all ${
-          startDate || endDate
-            ? "bg-[#080e16] text-white border-[#080e16]"
-            : "bg-white border-stone-300 text-stone-700 hover:border-stone-400"
-        }`}
+        className={`flex items-center gap-2 px-4 py-3 border rounded-xl transition-all ${startDate || endDate
+          ? "bg-[#080e16] text-white border-[#080e16]"
+          : "bg-white border-stone-300 text-stone-700 hover:border-stone-400"
+          }`}
       >
         <Calendar className="h-5 w-5" />
         <span className="text-sm font-medium">
@@ -762,7 +761,9 @@ interface User {
 const ProductHistory = ({ user }: { user?: User }) => {
   const params = useParams();
   const id = params.id as string;
+  const locid = params.locid as string;
   const router = useRouter();
+
 
   // Memoized currency formatter based on user's business currency
   const currencySymbol = useMemo(
@@ -788,7 +789,8 @@ const ProductHistory = ({ user }: { user?: User }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [locationName, setLocationName] = useState<string>("");
 
-  // ---- Data Fetching (optimized with useCallback) ----
+
+
   const loadData = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
@@ -801,11 +803,10 @@ const ProductHistory = ({ user }: { user?: User }) => {
       if (startDate) requestParams.start_date = startDate.toISOString().split("T")[0];
       if (endDate) requestParams.end_date = endDate.toISOString().split("T")[0];
 
-      const response = await apiGet(
-        `/product_history/${id}`,
-        { params: requestParams },
-        false
-      );
+      const response = await apiGet(`/product_history/${id}/${locid}`, {
+        params: requestParams
+      }, false);
+
       const resData = response?.data;
 
       if (resData?.success) {
@@ -816,13 +817,20 @@ const ProductHistory = ({ user }: { user?: User }) => {
       } else {
         toast.error(resData?.message || "Failed to load data");
       }
-    } catch (error) {
-      console.error("Failed to load data:", error);
-      toast.error("Failed to load product history");
+    } catch (error: any) {
+
+      if (error?.response?.status === 403) {
+        toast.error(error?.userMessage || "You don't have permission to view this data");
+        router.push('/errors');
+        return;
+      }
+
+      const message = error?.userMessage || "Failed to load product history";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
-  }, [id, currentPage, itemsPerPage, startDate, endDate]);
+  }, [id, currentPage, itemsPerPage, startDate, endDate, locid, router]);
 
   useEffect(() => {
     loadData();
