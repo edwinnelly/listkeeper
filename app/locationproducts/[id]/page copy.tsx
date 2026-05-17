@@ -1,7 +1,7 @@
 "use client";
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet } from "@/lib/axios";
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 import { createPortal } from "react-dom";
 import {
   Edit,
@@ -305,9 +305,14 @@ interface DropdownPortalProps {
   children: React.ReactNode;
 }
 
-const DropdownPortal: React.FC<DropdownPortalProps> = ({ isOpen, triggerRef, onClose, children }) => {
+const DropdownPortal: React.FC<DropdownPortalProps> = memo(({ isOpen, triggerRef, onClose, children }) => {
   const [position, setPosition] = useState({ top: 0, right: 0 });
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     if (isOpen && triggerRef.current) {
@@ -319,13 +324,12 @@ const DropdownPortal: React.FC<DropdownPortalProps> = ({ isOpen, triggerRef, onC
     }
   }, [isOpen, triggerRef]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   return createPortal(
     <>
       <div className="fixed inset-0 z-[9998]" onClick={onClose} />
       <div
-        ref={dropdownRef}
         style={{
           position: 'fixed',
           top: `${position.top}px`,
@@ -339,13 +343,15 @@ const DropdownPortal: React.FC<DropdownPortalProps> = ({ isOpen, triggerRef, onC
     </>,
     document.body
   );
-};
+});
+
+DropdownPortal.displayName = 'DropdownPortal';
 
 // ==============================================
 // Sub-components
 // ==============================================
 
-const StatCard: React.FC<StatCardProps> = ({
+const StatCard: React.FC<StatCardProps> = memo(({
   title,
   value,
   icon: Icon,
@@ -381,9 +387,11 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
     </div>
   );
-};
+});
 
-const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
+StatCard.displayName = 'StatCard';
+
+const FilterChip: React.FC<FilterChipProps> = memo(({ label, active, onClick }) => (
   <button
     onClick={onClick}
     className={`px-3 py-1.5 text-sm rounded-full transition-colors ${active
@@ -393,9 +401,11 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, active, onClick }) => (
   >
     {label}
   </button>
-);
+));
 
-const EmptyState: React.FC<EmptyStateProps> = ({
+FilterChip.displayName = 'FilterChip';
+
+const EmptyState: React.FC<EmptyStateProps> = memo(({
   title,
   description,
   icon: Icon,
@@ -427,9 +437,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       ))}
     </div>
   </div>
-);
+));
 
-const LoadingState: React.FC = () => (
+EmptyState.displayName = 'EmptyState';
+
+const LoadingState: React.FC = memo(() => (
   <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
     <div className="flex flex-col items-center justify-center">
       <div className="relative">
@@ -440,9 +452,11 @@ const LoadingState: React.FC = () => (
       <p className="text-black/40 text-sm mt-1">Please wait a moment</p>
     </div>
   </div>
-);
+));
 
-const DeleteModal: React.FC<DeleteModalProps> = ({
+LoadingState.displayName = 'LoadingState';
+
+const DeleteModal: React.FC<DeleteModalProps> = memo(({
   isOpen,
   onClose,
   onConfirm,
@@ -499,9 +513,11 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
       </div>
     </div>
   );
-};
+});
 
-const ProductImage: React.FC<ProductImageProps> = ({
+DeleteModal.displayName = 'DeleteModal';
+
+const ProductImage: React.FC<ProductImageProps> = memo(({
   src,
   alt,
   className = "w-10 h-10"
@@ -520,15 +536,18 @@ const ProductImage: React.FC<ProductImageProps> = ({
           className="object-cover"
           sizes="40px"
           onError={() => setError(true)}
+          loading="lazy"
         />
       ) : (
         <Package className="h-5 w-5 text-[#080e16]" />
       )}
     </div>
   );
-};
+});
 
-const StockBadge: React.FC<StockBadgeProps> = ({ product }) => {
+ProductImage.displayName = 'ProductImage';
+
+const StockBadge: React.FC<StockBadgeProps> = memo(({ product }) => {
   const stockQuantity = toNumber(product.stock_quantity);
   const lowStockThreshold = toNumber(product.low_stock_threshold) || 5;
 
@@ -556,9 +575,11 @@ const StockBadge: React.FC<StockBadgeProps> = ({ product }) => {
       {status.label} ({formatNumber(stockQuantity)})
     </div>
   );
-};
+});
 
-const ProfitTrend: React.FC<ProfitTrendProps> = ({ product }) => {
+StockBadge.displayName = 'StockBadge';
+
+const ProfitTrend: React.FC<ProfitTrendProps> = memo(({ product }) => {
   const price = toNumber(product.price);
   const costPrice = toNumber(product.cost_price);
   if (!price || !costPrice) return null;
@@ -578,9 +599,11 @@ const ProfitTrend: React.FC<ProfitTrendProps> = ({ product }) => {
       {margin.toFixed(0)}%
     </span>
   );
-};
+});
 
-const Pagination: React.FC<PaginationProps> = ({
+ProfitTrend.displayName = 'ProfitTrend';
+
+const Pagination: React.FC<PaginationProps> = memo(({
   currentPage,
   totalPages,
   totalItems,
@@ -590,7 +613,7 @@ const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   onItemsPerPageChange,
 }) => {
-  const getPageNumbers = () => {
+  const getPageNumbers = useCallback(() => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
     if (totalPages <= maxVisible) {
@@ -607,7 +630,7 @@ const Pagination: React.FC<PaginationProps> = ({
       if (totalPages > 1) pages.push(totalPages);
     }
     return pages;
-  };
+  }, [currentPage, totalPages]);
 
   if (totalPages <= 1) return null;
 
@@ -687,9 +710,11 @@ const Pagination: React.FC<PaginationProps> = ({
       </div>
     </div>
   );
-};
+});
 
-const ProductTableRow: React.FC<ProductTableRowProps> = ({
+Pagination.displayName = 'Pagination';
+
+const ProductTableRow: React.FC<ProductTableRowProps> = memo(({
   product,
   index,
   startIndex,
@@ -705,6 +730,26 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   const productSku = product.product?.sku || product.sku || "";
   const productImage = product.product?.image || product.image || null;
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleView = useCallback(() => {
+    onView(product);
+    onToggleOpen(null);
+  }, [onView, product, onToggleOpen]);
+
+  const handleEdit = useCallback(() => {
+    onEdit(product.encrypted_id);
+    onToggleOpen(null);
+  }, [onEdit, product.encrypted_id, onToggleOpen]);
+
+  const handleHistory = useCallback(() => {
+    onHistory(product.encrypted_pid, product.encrypted_location_id);
+    onToggleOpen(null);
+  }, [onHistory, product.encrypted_pid, product.encrypted_location_id, onToggleOpen]);
+
+  const handleDelete = useCallback(() => {
+    onDelete(product);
+    onToggleOpen(null);
+  }, [onDelete, product, onToggleOpen]);
 
   return (
     <tr className="hover:bg-stone-50/50 transition-colors group">
@@ -770,48 +815,72 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           onClose={() => onToggleOpen(null)}
         >
           <button
-            onClick={() => {
-              onView(product);
-              onToggleOpen(null);
-            }}
+            onClick={handleView}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition first:rounded-t-xl border-b border-stone-100"
           >
             <Eye className="h-4 w-4 text-[#080e16]" /> View Details
           </button>
+
           <button
-            onClick={() => {
-              onEdit(product.encrypted_id);
-              onToggleOpen(null);
-            }}
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <Edit className="h-4 w-4 text-[#080e16]" /> Transfers Stock
+          </button>
+
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <Edit className="h-4 w-4 text-[#080e16]" /> Purchases Stock
+          </button>
+
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <Edit className="h-4 w-4 text-[#080e16]" /> Returns Stock
+          </button>
+
+           <button
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <Edit className="h-4 w-4 text-[#080e16]" /> Price Changes
+          </button>
+
+
+            <button
+            onClick={handleEdit}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
           >
             <Edit className="h-4 w-4 text-[#080e16]" /> Update Stock
           </button>
+
           <button
-            onClick={() => {
-              onHistory(product.encrypted_pid, product.encrypted_location_id);
-              onToggleOpen(null);
-            }}
+            onClick={handleHistory}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
           >
             <History className="h-4 w-4 text-black/70" /> History
           </button>
+
           <button
-            onClick={() => {
-              onDelete(product);
-              onToggleOpen(null);
-            }}
+            onClick={handleDelete}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition last:rounded-b-xl"
           >
             <Trash2 className="h-4 w-4" /> Archive Products
           </button>
+
+
         </DropdownPortal>
       </td>
     </tr>
   );
-};
+});
 
-const ProductGridCard: React.FC<ProductGridCardProps> = ({
+ProductTableRow.displayName = 'ProductTableRow';
+
+const ProductGridCard: React.FC<ProductGridCardProps> = memo(({
   product,
   onView,
   onEdit,
@@ -835,6 +904,7 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                loading="lazy"
               />
             ) : (
               <Package className="h-12 w-12 text-black/40" />
@@ -902,9 +972,11 @@ const ProductGridCard: React.FC<ProductGridCardProps> = ({
       </div>
     </div>
   );
-};
+});
 
-const FilterDrawer: React.FC<FilterDrawerProps> = ({
+ProductGridCard.displayName = 'ProductGridCard';
+
+const FilterDrawer: React.FC<FilterDrawerProps> = memo(({
   isOpen,
   onClose,
   filters,
@@ -1068,9 +1140,11 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
       </div>
     </div>
   );
-};
+});
 
-const ViewProductModal: React.FC<ViewProductModalProps> = ({
+FilterDrawer.displayName = 'FilterDrawer';
+
+const ViewProductModal: React.FC<ViewProductModalProps> = memo(({
   isOpen,
   onClose,
   product,
@@ -1340,7 +1414,9 @@ const ViewProductModal: React.FC<ViewProductModalProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ViewProductModal.displayName = 'ViewProductModal';
 
 // ==============================================
 // Main Component
@@ -1351,7 +1427,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
   const params = useParams();
   const id = params.id as string;
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = useCallback((amount: number): string => {
     const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -1361,7 +1437,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
     })
       .format(amount)
       .replace(/^\$/, currencySymbol);
-  };
+  }, [user]);
 
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -1418,7 +1494,6 @@ const ManageProducts = ({ user }: { user?: User }) => {
         apiGet("/product-categories", {}, false),
       ]);
 
-      console.log(productsRes.data);
       const pagination = productsRes?.data?.pagination;
       const newProducts = productsRes?.data?.data ?? [];
       const newLocationName = productsRes?.data?.location_name ?? "";
@@ -1456,11 +1531,11 @@ const ManageProducts = ({ user }: { user?: User }) => {
     loadData();
   }, [loadData]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     await loadData();
-  };
+  }, [loadData]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (isSubmitting || !selectedProduct) return;
     setIsSubmitting(true);
     try {
@@ -1470,17 +1545,17 @@ const ManageProducts = ({ user }: { user?: User }) => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, selectedProduct]);
 
-  const handleFilterChange = <K extends keyof FilterState>(
+  const handleFilterChange = useCallback(<K extends keyof FilterState>(
     key: K,
     value: FilterState[K]
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilters({
       search: "",
       status: "all",
@@ -1491,7 +1566,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
       sortOrder: "asc",
     });
     setCurrentPage(1);
-  };
+  }, []);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -1544,10 +1619,10 @@ const ManageProducts = ({ user }: { user?: User }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + products.length, totalItems);
 
-  const handleHistory = (encryptedPid: string | null, locationId: string | null) => {
+  const handleHistory = useCallback((encryptedPid: string | null, locationId: string | null) => {
     if (!encryptedPid || !locationId) return;
     router.push(`/locationprodhist/${encryptedPid}/${locationId}`);
-  };
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -1775,7 +1850,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
                 <thead className="bg-stone-50 text-black/70 border-b border-stone-200">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider w-12">
-                      #
+                      SN
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                       <button

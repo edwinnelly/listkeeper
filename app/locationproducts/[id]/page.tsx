@@ -41,6 +41,9 @@ import {
   FilterX,
   Calendar,
   Scale,
+  ArrowLeftRight,
+  ShoppingCart,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -820,18 +823,49 @@ const ProductTableRow: React.FC<ProductTableRowProps> = memo(({
           >
             <Eye className="h-4 w-4 text-[#080e16]" /> View Details
           </button>
+
           <button
             onClick={handleEdit}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
           >
-            <Edit className="h-4 w-4 text-[#080e16]" /> Update Stock
+            <ArrowLeftRight className="h-4 w-4 text-[#080e16]" /> Transfers Stock
           </button>
+
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <ShoppingCart className="h-4 w-4 text-[#080e16]" /> Purchases Stock
+          </button>
+
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <RotateCcw className="h-4 w-4 text-[#080e16]" /> Returns Stock
+          </button>
+
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <DollarSign className="h-4 w-4 text-[#080e16]" /> Price Changes
+          </button>
+
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
+          >
+            <Package className="h-4 w-4 text-[#080e16]" /> Update Stock
+          </button>
+
           <button
             onClick={handleHistory}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
           >
             <History className="h-4 w-4 text-black/70" /> History
           </button>
+
           <button
             onClick={handleDelete}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition last:rounded-b-xl"
