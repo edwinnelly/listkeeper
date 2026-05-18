@@ -1,1692 +1,1099 @@
 "use client";
+
 import { withAuth } from "@/hoc/withAuth";
-import { apiGet } from "@/lib/axios";
-import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
-import { createPortal } from "react-dom";
+import { apiGet, apiPost } from "@/lib/axios";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import {
-  Edit,
-  Trash2,
-  Search,
-  MoreVertical,
-  X,
-  AlertTriangle,
   ArrowLeft,
-  Loader2,
-  RefreshCw,
-  Eye,
-  CheckCircle,
-  XCircle,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Package,
-  Tag,
-  DollarSign,
-  Hash,
-  BarChart3,
-  Star,
-  AlertCircle,
-  History,
-  Grid3x3,
-  List,
-  Filter,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Layers,
-  Box,
   Plus,
-  ArrowUpDown,
-  FilterX,
-  Calendar,
-  Scale,
-  ArrowLeftRight,
+  Trash2,
+  Save,
+  X,
+  Loader2,
+  Package,
+  Search,
+  AlertCircle,
+  MapPin,
   ShoppingCart,
-  RotateCcw,
+  Calendar,
+  Warehouse,
+  ArrowRightLeft,
+  ChevronDown,
+  Hash,
+  StickyNote,
+  Building2,
+  Database,
+  Store,
+  RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
-import ShortTextWithTooltip from "../../component/shorten_len";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ==============================================
-// TypeScript Interfaces
+// Type Definitions
 // ==============================================
+
 interface Product {
-  id: number;
-  owner_id: number;
-  location_id: number;
-  business_key: string;
-  encrypted_pid: string | null;
-  encrypted_location_id: string | null;
-  name: string;
-  location_name: string;
+  pid: number;
+  product_name: string;
   sku: string;
-  description: string | null;
-  slug: string | null;
-  dimensions: string | null;
-  category_id: number;
-  sub_category_id: number;
-  child_sub_category_id: number;
-  unit_id: string;
-  price: string | number | null;
-  cost_price: string | number | null;
-  sale_price: string | number | null;
-  stock_quantity: string | number | null;
-  low_stock_threshold: string | number | null;
-  discount_percentage: string | number | null;
-  discount_start_date: string | null;
-  discount_end_date: string | null;
-  manufactured_at: string | null;
-  expires_at: string | null;
-  weight: string | number | null;
-  length: string | null;
-  width: string | null;
-  height: string | null;
-  supplier_id: number | null;
-  is_active: boolean;
-  is_featured: boolean;
-  is_on_sale: boolean;
-  is_out_of_stock: boolean;
-  image: string | null;
-  additional_info: Record<string, unknown> | null;
-  created_at: string;
-  updated_at: string;
-  encrypted_id: string | null;
-  product?: {
-    name: string;
-    image: string;
-    sku: string;
-    description?: string;
-    dimensions?: string;
-    weight?: string | number;
-    length?: string | null;
-    width?: string | null;
-    height?: string | null;
-    unit?: { symbol: string };
-  };
-  category?: { id: number; name: string };
-  unit?: { id: number; name: string; symbol: string };
-  supplier?: { id: number; vid: number; name: string };
-  business?: { business_key: string; business_name: string };
+  cost_price: number;
+  current_stock: number;
+  barcode?: string;
+  category?: string;
+  image?: string | null;
 }
 
-interface Category {
+interface ProductLocation {
+  id: number;
+  location_id: number;
+  product_id: number;
+  cost_price: number;
+  sale_price: number;
+  stock_quantity: number;
+  encrypted_id: string;
+  encrypted_location_id: string;
+  encrypted_pid: string;
+  location_name: string;
+  is_out_of_stock: boolean;
+  product: {
+    id: number;
+    name: string;
+    sku: string;
+    description: string;
+    barcode: string;
+    is_active: boolean;
+    image: string | null;
+  };
+  category: {
+    id: number;
+    name: string;
+  };
+}
+
+interface DatabaseProduct {
   id: number;
   name: string;
-}
-
-interface FilterState {
-  search: string;
-  status: "all" | "active" | "inactive";
-  category: string;
-  stock: "all" | "in_stock" | "low_stock" | "out_of_stock";
-  priceRange: [number, number];
-  sortBy: "name" | "price" | "stock" | "created";
-  sortOrder: "asc" | "desc";
-}
-
-interface StockStatus {
-  label: string;
-  color: "success" | "warning" | "error";
-  icon: React.ElementType;
-}
-
-interface Statistics {
-  totalProducts: number;
-  activeProducts: number;
-  totalValue: number;
-  totalCost: number;
-  potentialProfit: number;
-  profitMargin: number;
-  lowStockCount: number;
-  outOfStockCount: number;
-}
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  color: "primary" | "emerald" | "amber" | "rose" | "gray";
-  trend?: { value: number; label: string };
-}
-
-interface FilterChipProps {
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-}
-
-interface EmptyStateProps {
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  action?: {
-    label: string;
-    onClick?: () => void;
-    href?: string;
+  sku: string;
+  barcode?: string;
+  description?: string;
+  cost_price?: number;
+  image?: string | null;
+  category?: {
+    id: number;
+    name: string;
   };
+  is_active?: boolean;
 }
 
-interface DeleteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  productName: string;
-  isSubmitting: boolean;
+interface TransferItem {
+  product_id: number;
+  product?: Product;
+  stock_quantity: number;
+  unit_cost: number;
+  total: number;
+  available_stock: number;
 }
 
-interface ProductImageProps {
-  src?: string | null;
-  alt: string;
-  className?: string;
-}
-
-interface StockBadgeProps {
-  product: Product;
-}
-
-interface ProfitTrendProps {
-  product: Product;
-}
-
-interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  startIndex: number;
-  endIndex: number;
-  itemsPerPage: number;
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (items: number) => void;
-}
-
-interface ProductTableRowProps {
-  product: Product;
-  index: number;
-  startIndex: number;
-  onView: (product: Product) => void;
-  onEdit: (id: string | null) => void;
-  onDelete: (product: Product) => void;
-  onHistory: (encryptedPid: string | null, locationId: string | null) => void;
-  onTransfers: (encryptedPid: string | null, locationId: string | null) => void;
-  isOpen: boolean;
-  onToggleOpen: (id: number | null) => void;
-  formatCurrency: (amount: number) => string;
-}
-
-interface ProductGridCardProps {
-  product: Product;
-  onView: (product: Product) => void;
-  onEdit: (id: number) => void;
-  onDelete: (product: Product) => void;
-  formatCurrency: (amount: number) => string;
-}
-
-interface FilterDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  filters: FilterState;
-  categories: Category[];
-  totalItems: number;
-  onFilterChange: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
-  onClearFilters: () => void;
-  activeFilterCount: number;
-}
-
-interface ViewProductModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  product: Product | null;
-  onEdit: (id: string | null) => void;
-  onHistory: (encryptedPid: string | null, locationId: string | null) => void;
-  formatCurrency: (amount: number) => string;
-}
-
-interface ApiError {
-  userMessage?: string;
-  response?: {
-    data?: {
-      message?: string;
-      errors?: Record<string, string[]>;
-    };
-    status?: number;
-  };
+interface FormData {
+  from_location_id: string;
+  to_location_id: string;
+  transfer_date: string;
+  expected_delivery_date: string;
+  notes: string;
+  reference_number: string;
+  items: TransferItem[];
 }
 
 interface User {
-  businesses_one?: Array<{ currency?: string }>;
+  businesses_one?: Array<{
+    currency?: string;
+    name?: string;
+  }>;
+  user_roles?: {
+    transfer_create?: string;
+    [key: string]: string | undefined;
+  };
 }
+
+interface Location {
+  id: number;
+  encrypted_id: string;
+  location_name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  head_office?: string;
+  location_status?: string;
+  phone?: string;
+  postal_code?: string;
+}
+
+// ==============================================
+// Constants
+// ==============================================
+
+const CURRENCY_LOCALE = "en-US";
+const DEFAULT_CURRENCY = "USD";
+
+type SearchTab = "location" | "database";
 
 // ==============================================
 // Utility Functions
 // ==============================================
-const toNumber = (value: string | number | null | undefined): number => {
-  if (value === null || value === undefined) return 0;
-  if (typeof value === "number") return value;
-  const parsed = parseFloat(value);
-  return isNaN(parsed) ? 0 : parsed;
+
+const formatDateForInput = (date: Date): string => date.toISOString().split("T")[0];
+
+const formatCurrency = (amount: number, symbol: string = "$"): string => {
+  return new Intl.NumberFormat(CURRENCY_LOCALE, {
+    style: "currency",
+    currency: DEFAULT_CURRENCY,
+    minimumFractionDigits: 2,
+  })
+    .format(amount)
+    .replace(/^\$/, symbol);
 };
 
-const formatDate = (dateString: string | null): string => {
-  if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+const extractDataFromResponse = <T,>(response: any, paths: string[]): T[] => {
+  for (const path of paths) {
+    const data = path.split(".").reduce((obj, key) => obj?.[key], response);
+    if (Array.isArray(data)) return data;
+  }
+  return [];
+};
+
+const getFullAddress = (location: Location): string => {
+  const parts = [
+    location.address,
+    location.city,
+    location.state,
+    location.country,
+    location.postal_code,
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : "No address available";
+};
+
+const mapProductLocationToProduct = (pl: ProductLocation): Product => ({
+  pid: pl.product_id,
+  product_name: pl.product.name,
+  sku: pl.product.sku,
+  cost_price: pl.cost_price,
+  current_stock: pl.stock_quantity,
+  barcode: pl.product.barcode,
+  category: pl.category?.name,
+  image: pl.product.image,
+});
+
+const mapDatabaseProductToProduct = (dp: DatabaseProduct): Product => ({
+  pid: dp.id,
+  product_name: dp.name,
+  sku: dp.sku,
+  cost_price: dp.cost_price || 0,
+  current_stock: 0,
+  barcode: dp.barcode,
+  category: dp.category?.name,
+  image: dp.image,
+});
+
+// ==============================================
+// Custom Hooks
+// ==============================================
+
+const useFormData = (initialData: Partial<FormData> = {}) => {
+  const [formData, setFormData] = useState<FormData>({
+    from_location_id: "",
+    to_location_id: "",
+    transfer_date: formatDateForInput(new Date()),
+    expected_delivery_date: "",
+    notes: "",
+    reference_number: "",
+    items: [],
+    ...initialData,
   });
-};
 
-const formatNumber = (value: string | number | null | undefined): string => {
-  const num = toNumber(value);
-  return new Intl.NumberFormat("en-US").format(num);
-};
-
-const getImageUrl = (src: string | null): string => {
-  if (!src) return "";
-  return `http://localhost:8000/storage/${src}`;
-};
-
-const useDebounce = <T,>(value: T, delay: number): T => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debouncedValue;
-};
-
-// ==============================================
-// Dropdown Portal Component
-// ==============================================
-
-interface DropdownPortalProps {
-  isOpen: boolean;
-  triggerRef: React.RefObject<HTMLButtonElement | null>;
-  onClose: () => void;
-  children: React.ReactNode;
-}
-
-const DropdownPortal: React.FC<DropdownPortalProps> = memo(({ isOpen, triggerRef, onClose, children }) => {
-  const [position, setPosition] = useState({ top: 0, right: 0 });
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
+  const updateField = useCallback((field: keyof FormData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + 4,
-        right: window.innerWidth - rect.right,
+  const addItem = useCallback((product: Product, transferQuantity: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          product_id: product.pid,
+          product,
+          stock_quantity: transferQuantity,
+          unit_cost: product.cost_price,
+          total: product.cost_price * transferQuantity,
+          available_stock: product.current_stock,
+        },
+      ],
+    }));
+  }, []);
+
+  const updateItem = useCallback(
+    (index: number, field: keyof TransferItem, value: any) => {
+      setFormData((prev) => {
+        const updatedItems = [...prev.items];
+        updatedItems[index] = { ...updatedItems[index], [field]: value };
+        if (field === "stock_quantity" || field === "unit_cost") {
+          const item = updatedItems[index];
+          updatedItems[index].total = item.stock_quantity * item.unit_cost;
+        }
+        return { ...prev, items: updatedItems };
       });
-    }
-  }, [isOpen, triggerRef]);
+    },
+    []
+  );
 
-  if (!isOpen || !mounted) return null;
+  const removeItem = useCallback((index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index),
+    }));
+  }, []);
 
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-[9998]" onClick={onClose} />
-      <div
-        style={{
-          position: 'fixed',
-          top: `${position.top}px`,
-          right: `${position.right}px`,
-          zIndex: 9999,
-        }}
-        className="w-48 bg-white border border-stone-200 rounded-xl shadow-lg shadow-stone-200/50"
+  return { formData, updateField, addItem, updateItem, removeItem };
+};
+
+// ==============================================
+// Components
+// ==============================================
+
+const ProductCard = memo(
+  ({
+    product,
+    isSelected,
+    onSelect,
+    currencySymbol,
+    maxQuantity,
+    showStock = true,
+  }: {
+    product: Product;
+    isSelected: boolean;
+    onSelect: () => void;
+    currencySymbol: string;
+    maxQuantity?: number;
+    showStock?: boolean;
+  }) => {
+    const isOutOfStock = showStock && maxQuantity !== undefined && maxQuantity <= 0;
+    
+    return (
+      <motion.button
+        whileHover={{ scale: isOutOfStock ? 1 : 1.01 }}
+        whileTap={{ scale: isOutOfStock ? 1 : 0.99 }}
+        onClick={onSelect}
+        disabled={isOutOfStock}
+        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+          isOutOfStock
+            ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+            : isSelected
+            ? "border-[#166534] bg-[#166534]/5 ring-2 ring-[#166534]/20 shadow-md"
+            : "border-gray-200 hover:border-gray-300 hover:shadow-sm bg-white"
+        }`}
       >
-        {children}
-      </div>
-    </>,
-    document.body
-  );
-});
-
-DropdownPortal.displayName = 'DropdownPortal';
-
-// ==============================================
-// Sub-components
-// ==============================================
-
-const StatCard: React.FC<StatCardProps> = memo(({
-  title,
-  value,
-  icon: Icon,
-  color,
-  trend
-}) => {
-  const colorClasses: Record<string, string> = {
-    primary: "bg-[#080e16]/10 text-[#080e16]",
-    emerald: "bg-emerald-50 text-emerald-700",
-    amber: "bg-amber-50 text-amber-700",
-    rose: "bg-rose-50 text-rose-700",
-    gray: "bg-gray-50 text-gray-700",
-  };
-
-  return (
-    <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all group">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium text-black/60">{title}</p>
-          <p className="text-normal font-bold text-black mt-0.5">{value}</p>
-          {trend && (
-            <p className="text-xs text-black/50 mt-0.5">
-              <span className={trend.value > 0 ? "text-emerald-600" : "text-rose-600"}>
-                {trend.value > 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
-              </span>{" "}
-              {trend.label}
-            </p>
-          )}
-        </div>
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-    </div>
-  );
-});
-
-StatCard.displayName = 'StatCard';
-
-const FilterChip: React.FC<FilterChipProps> = memo(({ label, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`px-3 py-1.5 text-sm rounded-full transition-colors ${active
-        ? "bg-[#080e16] text-white"
-        : "bg-stone-100 text-black hover:bg-stone-200"
-      }`}
-  >
-    {label}
-  </button>
-));
-
-FilterChip.displayName = 'FilterChip';
-
-const EmptyState: React.FC<EmptyStateProps> = memo(({
-  title,
-  description,
-  icon: Icon,
-  action
-}) => (
-  <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
-    <div className="flex flex-col items-center text-center max-w-md mx-auto">
-      <div className="w-20 h-20 bg-stone-100 rounded-2xl flex items-center justify-center mb-4">
-        <Icon className="h-10 w-10 text-black/40" />
-      </div>
-      <h3 className="text-lg font-semibold text-black mb-2">{title}</h3>
-      <p className="text-black/60 text-sm mb-6">{description}</p>
-      {action && (action.href ? (
-        <Link
-          href={action.href}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#080e16] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/20"
-        >
-          <Plus className="h-4 w-4" />
-          {action.label}
-        </Link>
-      ) : (
-        <button
-          onClick={action.onClick}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#080e16] text-white rounded-lg hover:bg-[#2c4c6e] transition-all shadow-lg shadow-[#080e16]/20"
-        >
-          <Plus className="h-4 w-4" />
-          {action.label}
-        </button>
-      ))}
-    </div>
-  </div>
-));
-
-EmptyState.displayName = 'EmptyState';
-
-const LoadingState: React.FC = memo(() => (
-  <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-12">
-    <div className="flex flex-col items-center justify-center">
-      <div className="relative">
-        <div className="w-16 h-16 border-4 border-[#080e16]/20 border-t-[#080e16] rounded-full animate-spin"></div>
-        <Package className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-[#080e16]/60" />
-      </div>
-      <p className="mt-4 text-black/70 font-medium">Loading products...</p>
-      <p className="text-black/40 text-sm mt-1">Please wait a moment</p>
-    </div>
-  </div>
-));
-
-LoadingState.displayName = 'LoadingState';
-
-const DeleteModal: React.FC<DeleteModalProps> = memo(({
-  isOpen,
-  onClose,
-  onConfirm,
-  productName,
-  isSubmitting
-}) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
-        <div className="p-6">
-          <div className="flex flex-col items-center text-center space-y-4">
-            <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-rose-50 border border-rose-200">
-              <AlertTriangle className="w-7 h-7 text-rose-600" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="flex items-start gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              isSelected ? "bg-[#166534]" : "bg-gray-100"
+            }`}>
+              {product.image ? (
+                <img src={product.image} alt="" className="w-10 h-10 rounded-lg object-cover" />
+              ) : (
+                <Package className={`h-5 w-5 ${isSelected ? "text-white" : "text-gray-500"}`} />
+              )}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-black mb-2">
-                Archive / Deactivate products
-              </h2>
-              <p className="text-black/70 text-sm leading-relaxed">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-black">{productName}</span>?
-                This action cannot be undone.
+              <p className="font-semibold text-gray-900">{product.product_name}</p>
+              <p className="text-xs text-gray-500">
+                SKU: {product.sku}
+                {product.category && ` | ${product.category}`}
               </p>
-            </div>
-            <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3 w-full">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3 rounded-lg border border-stone-300 bg-white text-black font-medium hover:bg-stone-50 transition disabled:opacity-50 order-2 sm:order-1"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={onConfirm}
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-rose-600 to-rose-700 text-white font-medium flex items-center justify-center gap-2 hover:from-rose-700 hover:to-rose-800 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-rose-500/25 order-1 sm:order-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4" /> Archive / Deactivate products
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-DeleteModal.displayName = 'DeleteModal';
-
-const ProductImage: React.FC<ProductImageProps> = memo(({
-  src,
-  alt,
-  className = "w-10 h-10"
-}) => {
-  const [error, setError] = useState(false);
-  const imageUrl = getImageUrl(src);
-  return (
-    <div
-      className={`${className} bg-gradient-to-br from-[#080e16]/10 to-[#080e16]/5 rounded-xl flex items-center justify-center flex-shrink-0 border border-[#080e16]/20 overflow-hidden relative`}
-    >
-      {src && !error && imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={alt}
-          fill
-          className="object-cover"
-          sizes="40px"
-          onError={() => setError(true)}
-          loading="lazy"
-        />
-      ) : (
-        <Package className="h-5 w-5 text-[#080e16]" />
-      )}
-    </div>
-  );
-});
-
-ProductImage.displayName = 'ProductImage';
-
-const StockBadge: React.FC<StockBadgeProps> = memo(({ product }) => {
-  const stockQuantity = toNumber(product.stock_quantity);
-  const lowStockThreshold = toNumber(product.low_stock_threshold) || 5;
-
-  const getStatus = (): StockStatus => {
-    if (product.is_out_of_stock || stockQuantity <= 0)
-      return { label: "Out of Stock", color: "error", icon: XCircle };
-    if (stockQuantity <= lowStockThreshold)
-      return { label: "Low Stock", color: "warning", icon: AlertCircle };
-    return { label: "In Stock", color: "success", icon: CheckCircle };
-  };
-
-  const status = getStatus();
-  const Icon = status.icon;
-  const colorClasses = {
-    success: "text-emerald-800 bg-emerald-50 border-emerald-200",
-    warning: "text-amber-800 bg-amber-50 border-amber-200",
-    error: "text-rose-800 bg-rose-50 border-rose-200",
-  };
-
-  return (
-    <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClasses[status.color]}`}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {status.label} ({formatNumber(stockQuantity)})
-    </div>
-  );
-});
-
-StockBadge.displayName = 'StockBadge';
-
-const ProfitTrend: React.FC<ProfitTrendProps> = memo(({ product }) => {
-  const price = toNumber(product.price);
-  const costPrice = toNumber(product.cost_price);
-  if (!price || !costPrice) return null;
-  const margin = ((price - costPrice) / costPrice) * 100;
-  let Icon = Minus;
-  let color = "text-amber-600";
-  if (margin > 20) {
-    Icon = TrendingUp;
-    color = "text-emerald-600";
-  } else if (margin < 10) {
-    Icon = TrendingDown;
-    color = "text-rose-600";
-  }
-  return (
-    <span className={`ml-2 inline-flex items-center gap-0.5 text-xs ${color}`}>
-      <Icon className="h-3 w-3" />
-      {margin.toFixed(0)}%
-    </span>
-  );
-});
-
-ProfitTrend.displayName = 'ProfitTrend';
-
-const Pagination: React.FC<PaginationProps> = memo(({
-  currentPage,
-  totalPages,
-  totalItems,
-  startIndex,
-  endIndex,
-  itemsPerPage,
-  onPageChange,
-  onItemsPerPageChange,
-}) => {
-  const getPageNumbers = useCallback(() => {
-    const pages: (number | string)[] = [];
-    const maxVisible = 5;
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(totalPages - 1, currentPage + 1);
-      if (currentPage <= 3) end = Math.min(4, totalPages - 1);
-      if (currentPage >= totalPages - 2) start = Math.max(totalPages - 3, 2);
-      if (start > 2) pages.push("...");
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (end < totalPages - 1) pages.push("...");
-      if (totalPages > 1) pages.push(totalPages);
-    }
-    return pages;
-  }, [currentPage, totalPages]);
-
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="px-6 py-4 border-t border-stone-200 bg-stone-50/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-black/70">Show</span>
-          <select
-            value={itemsPerPage}
-            onChange={(e) => {
-              onItemsPerPageChange(Number(e.target.value));
-              onPageChange(1);
-            }}
-            className="px-2 py-1.5 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none text-black"
-          >
-            {[10, 25, 50, 100].map((value) => (
-              <option key={value} value={value} className="text-black">
-                {value}
-              </option>
-            ))}
-          </select>
-          <span className="text-sm text-black/70">per page</span>
-        </div>
-        <span className="text-sm text-black/70">
-          Showing {startIndex + 1}-{endIndex} of {totalItems}
-        </span>
-      </div>
-      <div className="flex items-center justify-center sm:justify-end gap-2">
-        <button
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronsLeft className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <div className="flex items-center gap-1">
-          {getPageNumbers().map((page, index) => (
-            <React.Fragment key={index}>
-              {page === "..." ? (
-                <span className="px-3 py-2 text-black/40">...</span>
-              ) : (
-                <button
-                  onClick={() => onPageChange(page as number)}
-                  className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                      ? "bg-[#080e16] text-white"
-                      : "text-black hover:bg-stone-100 border border-stone-300"
-                    }`}
-                >
-                  {page}
-                </button>
+              {product.barcode && (
+                <p className="text-xs text-gray-400">Barcode: {product.barcode}</p>
               )}
-            </React.Fragment>
-          ))}
-        </div>
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-lg border border-stone-300 text-black/70 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
-});
-
-Pagination.displayName = 'Pagination';
-
-const ProductTableRow: React.FC<ProductTableRowProps> = memo(({
-  product,
-  index,
-  startIndex,
-  onView,
-  onEdit,
-  onDelete,
-  onHistory,
-  onTransfers,
-  isOpen,
-  onToggleOpen,
-  formatCurrency,
-}) => {
-  const productName = product.product?.name || product.name || "";
-  const productSku = product.product?.sku || product.sku || "";
-  const productImage = product.product?.image || product.image || null;
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  const handleView = useCallback(() => {
-    onView(product);
-    onToggleOpen(null);
-  }, [onView, product, onToggleOpen]);
-
-  const handleEdit = useCallback(() => {
-    onEdit(product.encrypted_id);
-    onToggleOpen(null);
-  }, [onEdit, product.encrypted_id, onToggleOpen]);
-
-  const handleHistory = useCallback(() => {
-    onHistory(product.encrypted_pid, product.encrypted_location_id);
-    onToggleOpen(null);
-  }, [onHistory, product.encrypted_pid, product.encrypted_location_id, onToggleOpen]);
-
-  const handleTransfers = useCallback(() => {
-    onTransfers(product.encrypted_pid, product.encrypted_location_id);
-    onToggleOpen(null);
-  }, [onTransfers, product.encrypted_pid, product.encrypted_location_id, onToggleOpen]);
-
-  const handleDelete = useCallback(() => {
-    onDelete(product);
-    onToggleOpen(null);
-  }, [onDelete, product, onToggleOpen]);
-
-  return (
-    <tr className="hover:bg-stone-50/50 transition-colors group">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-black/50">
-        {startIndex + index + 1}
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          <ProductImage src={productImage} alt={productName} />
-          <div>
-            <div className="font-medium text-black">
-              <ShortTextWithTooltip text={productName} max={30} />
-            </div>
-            <div className="text-xs text-black/50 flex items-center gap-1 mt-0.5">
-              <Hash className="h-3 w-3" />
-              {productSku}
             </div>
           </div>
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-        <code className="text-xs bg-stone-100 px-2 py-1 rounded font-mono text-black/80">
-          {productSku}
-        </code>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-        <span className="text-black/80">
-          {product.category?.name || "Uncategorized"}
-        </span>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex flex-col">
-          <span className="font-semibold text-black">
-            {formatCurrency(toNumber(product.price))}
-          </span>
-          <ProfitTrend product={product} />
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <StockBadge product={product} />
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-        <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${product.is_active
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-stone-100 text-black/70 border border-stone-200"
-            }`}
-        >
-          {product.is_active ? "Active" : "Inactive"}
-        </span>
-      </td>
-      <td className="px-6 py-4 text-center">
-        <button
-          ref={buttonRef}
-          onClick={() => onToggleOpen(isOpen ? null : product.id)}
-          className="p-2 rounded-lg hover:bg-stone-100 transition text-black/40 hover:text-black/70"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
-        <DropdownPortal
-          isOpen={isOpen}
-          triggerRef={buttonRef}
-          onClose={() => onToggleOpen(null)}
-        >
-          <button
-            onClick={handleView}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition first:rounded-t-xl border-b border-stone-100"
-          >
-            <Eye className="h-4 w-4 text-[#080e16]" /> View Details
-          </button>
-
-          <button
-            onClick={handleTransfers}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
-          >
-            <ArrowLeftRight className="h-4 w-4 text-[#080e16]" /> Transfers Stock
-          </button>
-
-          <button
-            onClick={handleEdit}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
-          >
-            <ShoppingCart className="h-4 w-4 text-[#080e16]" /> Purchases Stock
-          </button>
-
-          <button
-            onClick={handleEdit}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
-          >
-            <RotateCcw className="h-4 w-4 text-[#080e16]" /> Returns Stock
-          </button>
-
-          <button
-            onClick={handleEdit}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
-          >
-            <DollarSign className="h-4 w-4 text-[#080e16]" /> Price Changes
-          </button>
-
-          <button
-            onClick={handleEdit}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
-          >
-            <Package className="h-4 w-4 text-[#080e16]" /> Update Stock
-          </button>
-
-          <button
-            onClick={handleHistory}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
-          >
-            <History className="h-4 w-4 text-black/70" /> History
-          </button>
-
-          <button
-            onClick={handleDelete}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition last:rounded-b-xl"
-          >
-            <Trash2 className="h-4 w-4" /> Archive Products
-          </button>
-        </DropdownPortal>
-      </td>
-    </tr>
-  );
-});
-
-ProductTableRow.displayName = 'ProductTableRow';
-
-const ProductGridCard: React.FC<ProductGridCardProps> = memo(({
-  product,
-  onView,
-  onEdit,
-  onDelete,
-  formatCurrency,
-}) => {
-  const productName = product.product?.name || product.name || "";
-  const productSku = product.product?.sku || product.sku || "";
-  const productImage = product.product?.image || product.image || null;
-  const categoryName = product.category?.name || "Uncategorized";
-
-  return (
-    <div className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all group">
-      <div className="p-5">
-        <div className="relative mb-4">
-          <div className="aspect-square bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden relative">
-            {productImage ? (
-              <Image
-                src={getImageUrl(productImage)}
-                alt={productName}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                loading="lazy"
-              />
-            ) : (
-              <Package className="h-12 w-12 text-black/40" />
-            )}
-          </div>
-          <div className="absolute top-2 right-2 flex gap-1">
-            {product.is_featured && (
-              <span className="bg-amber-500 text-white p-1.5 rounded-lg">
-                <Star className="h-3 w-3" />
-              </span>
-            )}
-            {product.is_on_sale && (
-              <span className="bg-rose-500 text-white p-1.5 rounded-lg">
-                <Tag className="h-3 w-3" />
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <h3 className="font-semibold text-black">
-              <ShortTextWithTooltip text={productName} max={25} />
-            </h3>
-            <p className="text-xs text-black/50 mt-0.5">SKU: {productSku}</p>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-black/70">
-            <Layers className="h-3 w-3" />
-            <span>
-              <ShortTextWithTooltip text={categoryName} max={11} />
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-lg font-bold text-[#080e16]">
-                {formatCurrency(toNumber(product.price))}
-              </span>
-              <ProfitTrend product={product} />
-            </div>
-            <StockBadge product={product} />
-          </div>
-          <div className="grid grid-cols-3 gap-2 pt-2">
-            <button
-              onClick={() => onView(product)}
-              className="p-2 text-black/70 hover:text-[#080e16] hover:bg-[#080e16]/5 rounded-lg transition-colors flex items-center justify-center"
-              title="View Details"
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onEdit(product.id)}
-              className="p-2 text-black/70 hover:text-[#080e16] hover:bg-[#080e16]/5 rounded-lg transition-colors flex items-center justify-center"
-              title="Adjust Stock"
-            >
-              <Edit className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onDelete(product)}
-              className="p-2 text-black/70 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center"
-              title="Delete Product"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-ProductGridCard.displayName = 'ProductGridCard';
-
-const FilterDrawer: React.FC<FilterDrawerProps> = memo(({
-  isOpen,
-  onClose,
-  filters,
-  categories,
-  totalItems,
-  onFilterChange,
-  onClearFilters,
-  activeFilterCount,
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="absolute right-0 top-0 h-full w-96 bg-white shadow-2xl animate-slideIn">
-        <div className="p-4 border-b border-stone-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Filter size={20} className="text-[#080e16]" />
-            <h3 className="font-semibold text-black">Filters</h3>
-            {activeFilterCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 text-xs bg-[#080e16] text-white rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-stone-100 rounded-lg transition text-black/70"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        <div className="overflow-y-auto h-[calc(100vh-140px)] p-4 space-y-4">
-          <div>
-            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) =>
-                onFilterChange("status", e.target.value as FilterState["status"])
-              }
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition text-black"
-            >
-              <option value="all" className="text-black">All Status</option>
-              <option value="active" className="text-black">Active</option>
-              <option value="inactive" className="text-black">Inactive</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">
-              Category
-            </label>
-            <select
-              value={filters.category}
-              onChange={(e) => onFilterChange("category", e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition text-black"
-            >
-              <option value="all" className="text-black">All Categories</option>
-              {categories.length === 0 ? (
-                <option disabled className="text-black/50">
-                  Loading categories…
-                </option>
-              ) : (
-                categories.map((category) => (
-                  <option
-                    key={category.id}
-                    value={category.id.toString()}
-                    className="text-black"
-                  >
-                    {category.name}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">
-              Stock Level
-            </label>
-            <select
-              value={filters.stock}
-              onChange={(e) =>
-                onFilterChange("stock", e.target.value as FilterState["stock"])
-              }
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition text-black"
-            >
-              <option value="all" className="text-black">All Stock</option>
-              <option value="in_stock" className="text-black">In Stock</option>
-              <option value="low_stock" className="text-black">Low Stock</option>
-              <option value="out_of_stock" className="text-black">Out of Stock</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">
-              Sort By
-            </label>
-            <select
-              value={filters.sortBy}
-              onChange={(e) =>
-                onFilterChange("sortBy", e.target.value as FilterState["sortBy"])
-              }
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition text-black"
-            >
-              <option value="name" className="text-black">Name</option>
-              <option value="price" className="text-black">Price</option>
-              <option value="stock" className="text-black">Stock</option>
-              <option value="created" className="text-black">Date Added</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-black/50 uppercase tracking-wider mb-2 block">
-              Order
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onFilterChange("sortOrder", "asc")}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${filters.sortOrder === "asc"
-                    ? "bg-[#080e16] text-white border-[#080e16]"
-                    : "bg-white text-black border-stone-300 hover:bg-stone-50"
-                  }`}
-              >
-                Asc
-              </button>
-              <button
-                onClick={() => onFilterChange("sortOrder", "desc")}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${filters.sortOrder === "desc"
-                    ? "bg-[#080e16] text-white border-[#080e16]"
-                    : "bg-white text-black border-stone-300 hover:bg-stone-50"
-                  }`}
-              >
-                Desc
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-stone-200 bg-stone-50/50">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-black/70">
-              <span className="font-semibold text-black">{totalItems}</span> products found
+          <div className="text-left sm:text-right pl-13 sm:pl-0">
+            <p className="font-bold text-[#166534] text-lg">
+              {formatCurrency(product.cost_price, currencySymbol)}
             </p>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={onClearFilters}
-                className="text-sm text-[#080e16] hover:text-[#2c4c6e] font-medium inline-flex items-center gap-1"
-              >
-                <FilterX size={14} /> Clear all
-              </button>
+            {showStock && (
+              <p className={`text-xs ${
+                isOutOfStock
+                  ? "text-red-500 font-medium"
+                  : maxQuantity !== undefined && maxQuantity < 10
+                  ? "text-orange-500 font-medium"
+                  : "text-gray-500"
+              }`}>
+                {isOutOfStock
+                  ? "Out of Stock"
+                  : `Stock: ${maxQuantity !== undefined ? maxQuantity : product.current_stock}`}
+              </p>
+            )}
+            {!showStock && (
+              <p className="text-xs text-blue-500 font-medium">
+                Select location for stock info
+              </p>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-3 bg-[#080e16] text-white rounded-lg hover:bg-[#2c4c6e] transition-colors font-medium"
-          >
-            Apply Filters
-          </button>
         </div>
-      </div>
-    </div>
-  );
-});
+      </motion.button>
+    );
+  }
+);
 
-FilterDrawer.displayName = 'FilterDrawer';
+ProductCard.displayName = "ProductCard";
 
-const ViewProductModal: React.FC<ViewProductModalProps> = memo(({
-  isOpen,
-  onClose,
-  product,
-  onEdit,
-  onHistory,
-  formatCurrency,
-}) => {
-  if (!isOpen || !product) return null;
+const ProductSearchModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectProduct: (product: Product, quantity: number) => void;
+  existingProductIds: number[];
+  currencySymbol: string;
+  isLoading: boolean;
+  sourceLocationId: string;
+}> = memo(
+  ({
+    isOpen,
+    onClose,
+    onSelectProduct,
+    existingProductIds,
+    currencySymbol,
+    isLoading: parentLoading,
+    sourceLocationId,
+  }) => {
+    const [activeTab, setActiveTab] = useState<SearchTab>("location");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [transferQuantity, setTransferQuantity] = useState(1);
+    
+    const [productLocations, setProductLocations] = useState<ProductLocation[]>([]);
+    const [isLoadingLocationStock, setIsLoadingLocationStock] = useState(false);
+    
+    const [databaseProducts, setDatabaseProducts] = useState<Product[]>([]);
+    const [isLoadingDatabase, setIsLoadingDatabase] = useState(false);
+    const [databaseSearchTerm, setDatabaseSearchTerm] = useState("");
+    const [hasSearchedDatabase, setHasSearchedDatabase] = useState(false);
 
-  const productName = product.product?.name || product.name || "";
-  const productSku = product.product?.sku || product.sku || "";
-  const productImage = product.product?.image || product.image || null;
-  const productDescription =
-    product.product?.description || product.description || "No description";
-  const productDimensions =
-    product.product?.dimensions || product.dimensions || null;
-  const productWeight = product.product?.weight || product.weight || null;
-  const productLength = product.product?.length || product.length || null;
-  const productWidth = product.product?.width || product.width || null;
-  const productHeight = product.product?.height || product.height || null;
+    useEffect(() => {
+      if (isOpen && sourceLocationId && activeTab === "location") {
+        setSearchTerm("");
+        setSelectedProduct(null);
+        setTransferQuantity(1);
+        fetchProductLocations();
+      }
+    }, [isOpen, sourceLocationId, activeTab]);
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-scaleIn">
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ProductImage
-              src={productImage}
-              alt={productName}
-              className="w-12 h-12"
-            />
-            <div>
-              <h2 className="text-xl font-bold text-black">{productName}</h2>
-              <p className="text-sm text-black/60">SKU: {productSku}</p>
-            </div>
-          </div>
-          <button
+    useEffect(() => {
+      setSelectedProduct(null);
+      setTransferQuantity(1);
+      if (activeTab === "location") {
+        setSearchTerm("");
+      } else {
+        setDatabaseSearchTerm("");
+      }
+    }, [activeTab]);
+
+    const fetchProductLocations = async () => {
+      if (!sourceLocationId) return;
+      
+      setIsLoadingLocationStock(true);
+      try {
+        const response = await apiGet(
+          `/product-locations/${sourceLocationId}`,
+          {},
+          false
+        );
+        
+        const data = response.data?.data || response.data || [];
+        const stockData = Array.isArray(data) ? data : [];
+        
+        setProductLocations(stockData);
+      } catch (error: any) {
+        console.error("Failed to fetch product locations:", error);
+        toast.error("Failed to load products for this location");
+        setProductLocations([]);
+      } finally {
+        setIsLoadingLocationStock(false);
+      }
+    };
+
+    const searchDatabase = async () => {
+      if (!databaseSearchTerm.trim()) {
+        toast.error("Please enter a search term");
+        return;
+      }
+
+      setIsLoadingDatabase(true);
+      setHasSearchedDatabase(true);
+      
+      try {
+        const response = await apiGet(
+          `/products`,
+          { search: databaseSearchTerm },
+          false
+        );
+        
+        const rawProducts = extractDataFromResponse<any>(response, [
+          "data.data.products",
+          "data.data",
+          "data.products",
+          "data",
+        ]);
+        
+        const mappedProducts = rawProducts
+          .filter((p: any) => !existingProductIds.includes(p.id || p.pid))
+          .map(mapDatabaseProductToProduct);
+        
+        setDatabaseProducts(mappedProducts);
+        
+        if (mappedProducts.length === 0) {
+          toast("No products found matching your search", { icon: "🔍" });
+        }
+      } catch (error: any) {
+        console.error("Failed to search database:", error);
+        toast.error("Failed to search products database");
+        setDatabaseProducts([]);
+      } finally {
+        setIsLoadingDatabase(false);
+      }
+    };
+
+    const handleDatabaseKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        searchDatabase();
+      }
+    };
+
+    const locationProducts = useMemo(() => {
+      return productLocations
+        .filter(pl => !existingProductIds.includes(pl.product_id))
+        .map(mapProductLocationToProduct);
+    }, [productLocations, existingProductIds]);
+
+    const filteredLocationProducts = useMemo(() => {
+      const searchLower = searchTerm.toLowerCase();
+      return locationProducts.filter(
+        (product) =>
+          product.product_name?.toLowerCase().includes(searchLower) ||
+          product.sku?.toLowerCase().includes(searchLower) ||
+          product.barcode?.toLowerCase().includes(searchLower)
+      );
+    }, [locationProducts, searchTerm]);
+
+    const handleAddProduct = () => {
+      if (selectedProduct && transferQuantity > 0) {
+        if (activeTab === "location" && transferQuantity > selectedProduct.current_stock) {
+          toast.error(`Insufficient stock. Available: ${selectedProduct.current_stock}`);
+          return;
+        }
+        onSelectProduct(selectedProduct, transferQuantity);
+        onClose();
+      }
+    };
+
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
             onClick={onClose}
-            className="p-2 text-black/50 hover:text-black hover:bg-stone-100 rounded-lg transition"
           >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2">
-                  <Box className="h-4 w-4" /> Basic Information
-                </h3>
-                <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Description</span>
-                    <span className="text-sm text-black text-right max-w-[200px]">
-                      {productDescription}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Category</span>
-                    <span className="text-sm text-black">
-                      {product.category?.name || "Uncategorized"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Unit</span>
-                    <span className="text-sm text-black">
-                      {product.unit?.name || "N/A"}
-                      {product.unit?.symbol && ` (${product.unit.symbol})`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Status</span>
-                    <span
-                      className={`text-sm font-medium ${product.is_active ? "text-emerald-700" : "text-black/70"
-                        }`}
-                    >
-                      {product.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  {product.supplier && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-black/70">Supplier</span>
-                      <span className="text-sm text-black">
-                        {product.supplier.name}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" /> Pricing
-                </h3>
-                <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Regular Price</span>
-                    <span className="text-lg font-bold text-[#080e16]">
-                      {formatCurrency(toNumber(product.price))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Cost Price</span>
-                    <span className="text-sm text-black">
-                      {formatCurrency(toNumber(product.cost_price))}
-                    </span>
-                  </div>
-                  {product.is_on_sale && product.sale_price && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-black/70">Sale Price</span>
-                      <span className="text-sm font-semibold text-rose-600">
-                        {formatCurrency(toNumber(product.sale_price))}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2">
-                  <Package className="h-4 w-4" /> Stock Information
-                </h3>
-                <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-black/70">Stock Status</span>
-                    <StockBadge product={product} />
-                  </div>
-                  {product.low_stock_threshold && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-black/70">
-                        Low Stock Threshold
-                      </span>
-                      <span className="text-sm text-black">
-                        {formatNumber(product.low_stock_threshold)} units
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" /> Important Dates
-                </h3>
-                <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                  {product.manufactured_at && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-black/70">Manufactured</span>
-                      <span className="text-sm text-black">
-                        {formatDate(product.manufactured_at)}
-                      </span>
-                    </div>
-                  )}
-                  {product.expires_at && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-black/70">Expires</span>
-                      <span className="text-sm text-rose-600 font-medium">
-                        {formatDate(product.expires_at)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Created</span>
-                    <span className="text-sm text-black">
-                      {formatDate(product.created_at)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-black/70">Last Updated</span>
-                    <span className="text-sm text-black">
-                      {formatDate(product.updated_at)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {(productDimensions ||
-                productWeight ||
-                productLength ||
-                productWidth ||
-                productHeight) && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-[#166534] px-6 py-5">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-black/60 mb-3 flex items-center gap-2">
-                      <Scale className="h-4 w-4" /> Dimensions & Weight
-                    </h3>
-                    <div className="bg-stone-50 rounded-lg p-4 space-y-3">
-                      {productDimensions && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-black/70">Dimensions</span>
-                          <span className="text-sm text-black">
-                            {productDimensions}
-                          </span>
-                        </div>
-                      )}
-                      {productWeight && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-black/70">Weight</span>
-                          <span className="text-sm text-black">
-                            {formatNumber(productWeight)}{" "}
-                            {product.unit?.symbol || "kg"}
-                          </span>
-                        </div>
-                      )}
-                      {(productLength || productWidth || productHeight) && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-black/70">
-                            Size (L×W×H)
-                          </span>
-                          <span className="text-sm text-black">
-                            {productLength || "0"} × {productWidth || "0"} ×{" "}
-                            {productHeight || "0"}
-                          </span>
-                        </div>
-                      )}
+                    <h2 className="text-xl font-bold text-white">Add Products to Transfer</h2>
+                    <p className="text-green-200 text-sm mt-1">
+                      {activeTab === "location" 
+                        ? `Source location products (${productLocations.length} available)`
+                        : "Search all products in database"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  >
+                    <X className="h-5 w-5 text-white" />
+                  </button>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => setActiveTab("location")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                      activeTab === "location"
+                        ? "bg-white text-[#166534] shadow-md"
+                        : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <Store className="h-4 w-4" />
+                    Location Stock
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("database")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                      activeTab === "database"
+                        ? "bg-white text-[#166534] shadow-md"
+                        : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <Database className="h-4 w-4" />
+                    Search Database
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="p-6 border-b border-gray-200">
+                {activeTab === "location" ? (
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Filter by name, SKU, or barcode..."
+                      className="w-full pl-12 pr-12 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                      autoFocus
+                    />
+                    <button
+                      onClick={fetchProductLocations}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#166534] hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Refresh location stock"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={databaseSearchTerm}
+                        onChange={(e) => setDatabaseSearchTerm(e.target.value)}
+                        onKeyDown={handleDatabaseKeyDown}
+                        placeholder="Search by product name, SKU, or barcode..."
+                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                        autoFocus
+                      />
                     </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={searchDatabase}
+                      disabled={isLoadingDatabase}
+                      className="px-6 py-3 bg-[#166534] text-white rounded-xl hover:bg-[#14532d] transition-all font-semibold text-sm disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {isLoadingDatabase ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                      Search
+                    </motion.button>
                   </div>
                 )}
-            </div>
-          </div>
-          {toNumber(product.price) > 0 && toNumber(product.cost_price) > 0 && (
-            <div className="mt-8 bg-gradient-to-r from-[#080e16]/5 to-transparent border border-[#080e16]/20 rounded-xl p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#080e16]/10 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="h-5 w-5 text-[#080e16]" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-black">Profit Analysis</h4>
-                    <p className="text-sm text-black/70">
-                      Based on current pricing and cost
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-xs text-black/60">Profit per Unit</p>
-                    <p className="text-lg font-bold text-emerald-700">
-                      {formatCurrency(
-                        toNumber(product.price) - toNumber(product.cost_price)
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-black/60">Profit Margin</p>
-                    <p className="text-lg font-bold text-[#080e16]">
-                      {(
-                        ((toNumber(product.price) -
-                          toNumber(product.cost_price)) /
-                          toNumber(product.cost_price)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </p>
-                  </div>
-                  <div className="col-span-2 sm:col-span-1">
-                    <p className="text-xs text-black/60">Total Stock Value</p>
-                    <p className="text-lg font-bold text-black">
-                      {formatCurrency(
-                        toNumber(product.price) *
-                        toNumber(product.stock_quantity)
-                      )}
-                    </p>
-                  </div>
-                </div>
               </div>
-            </div>
+
+              {/* Products List */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {activeTab === "location" ? (
+                  isLoadingLocationStock || parentLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-[#166534]" />
+                    </div>
+                  ) : filteredLocationProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Store className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                      <p className="text-gray-500 text-lg font-medium">
+                        {searchTerm ? "No products match your filter" : "No products available at this location"}
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        {searchTerm 
+                          ? "Try different keywords or switch to Database Search" 
+                          : "Try searching the database for products from other locations"}
+                      </p>
+                      {!searchTerm && (
+                        <button
+                          onClick={() => setActiveTab("database")}
+                          className="mt-4 text-[#166534] font-medium text-sm hover:underline"
+                        >
+                          Search Database instead →
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredLocationProducts.map((product) => (
+                        <ProductCard
+                          key={product.pid}
+                          product={product}
+                          isSelected={selectedProduct?.pid === product.pid}
+                          onSelect={() => {
+                            if (product.current_stock > 0) {
+                              setSelectedProduct(product);
+                              setTransferQuantity(1);
+                            }
+                          }}
+                          currencySymbol={currencySymbol}
+                          maxQuantity={product.current_stock}
+                          showStock={true}
+                        />
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  !hasSearchedDatabase ? (
+                    <div className="text-center py-12">
+                      <Database className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                      <p className="text-gray-500 text-lg font-medium">
+                        Search the product database
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        Enter a product name, SKU, or barcode to search across all locations
+                      </p>
+                    </div>
+                  ) : isLoadingDatabase ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-[#166534]" />
+                    </div>
+                  ) : databaseProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Package className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                      <p className="text-gray-500 text-lg font-medium">
+                        No products found
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        Try different search terms
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500 mb-3">
+                        Found {databaseProducts.length} product{databaseProducts.length !== 1 ? 's' : ''} 
+                        in database. Select one to add to transfer.
+                      </p>
+                      <div className="space-y-3">
+                        {databaseProducts.map((product) => (
+                          <ProductCard
+                            key={product.pid}
+                            product={product}
+                            isSelected={selectedProduct?.pid === product.pid}
+                            onSelect={() => {
+                              setSelectedProduct(product);
+                              setTransferQuantity(1);
+                            }}
+                            currencySymbol={currencySymbol}
+                            showStock={false}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )
+                )}
+              </div>
+
+              {/* Quantity & Add */}
+              {selectedProduct && (
+                <div className="border-t border-gray-200 p-6 bg-gray-50">
+                  {activeTab === "database" && (
+                    <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        ℹ️ This product is from the database. Stock availability will be checked 
+                        against the source location when the transfer is processed.
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-end gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Transfer Quantity
+                        {activeTab === "location" && ` (Available: ${selectedProduct.current_stock})`}
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={activeTab === "location" ? selectedProduct.current_stock : undefined}
+                        value={transferQuantity}
+                        onChange={(e) =>
+                          setTransferQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                        }
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-lg font-medium"
+                      />
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleAddProduct}
+                      className="px-8 py-3 bg-[#166534] text-white rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25 font-semibold"
+                    >
+                      Add to Transfer
+                    </motion.button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+);
+
+ProductSearchModal.displayName = "ProductSearchModal";
+
+const TransferItemRow: React.FC<{
+  item: TransferItem;
+  index: number;
+  onUpdate: (index: number, field: keyof TransferItem, value: any) => void;
+  onRemove: (index: number) => void;
+  currencySymbol: string;
+}> = memo(({ item, index, onUpdate, onRemove, currencySymbol }) => {
+  const isOverStock = item.available_stock > 0 && item.stock_quantity > item.available_stock;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className={`flex flex-col sm:flex-row gap-4 items-start sm:items-center p-5 bg-white rounded-xl border-2 transition-all group ${
+        isOverStock ? "border-red-200 bg-red-50" : "border-gray-100 hover:border-gray-200 hover:shadow-sm"
+      }`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+          isOverStock ? "bg-red-100" : "bg-[#166534]/10"
+        }`}>
+          <Package className={`h-5 w-5 ${isOverStock ? "text-red-600" : "text-[#166534]"}`} />
+        </div>
+        <div className="min-w-0">
+          <p className="font-semibold text-gray-900 truncate">
+            {item.product?.product_name || `Product #${item.product_id}`}
+          </p>
+          <p className="text-xs text-gray-500">
+            SKU: {item.product?.sku || "N/A"} 
+            {item.available_stock > 0 && ` | Available: ${item.available_stock}`}
+          </p>
+          {isOverStock && (
+            <p className="text-xs text-red-600 font-medium mt-1">
+              ⚠️ Transfer quantity exceeds available stock!
+            </p>
           )}
         </div>
       </div>
-    </div>
+
+      <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex-1 sm:flex-none sm:w-28">
+          <label className="text-xs text-gray-500 mb-1 block sm:hidden">Qty</label>
+          <input
+            type="number"
+            min="1"
+            value={item.stock_quantity}
+            onChange={(e) => onUpdate(index, "stock_quantity", Math.max(1, parseInt(e.target.value) || 1))}
+            className={`w-full px-3 py-2 border-2 rounded-lg text-sm focus:ring-2 focus:ring-[#166534]/20 outline-none text-center ${
+              isOverStock ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-[#166534]"
+            }`}
+          />
+        </div>
+        <span className="text-gray-400 hidden sm:block">×</span>
+        <div className="flex-1 sm:flex-none sm:w-36">
+          <label className="text-xs text-gray-500 mb-1 block sm:hidden">Unit Cost</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={item.unit_cost}
+            onChange={(e) => onUpdate(index, "unit_cost", Math.max(0, parseFloat(e.target.value) || 0))}
+            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto sm:min-w-[120px]">
+        <div className="sm:text-right">
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-lg font-bold text-[#166534]">
+            {formatCurrency(item.total, currencySymbol)}
+          </p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => onRemove(index)}
+          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+        >
+          <Trash2 className="h-4 w-4" />
+        </motion.button>
+      </div>
+    </motion.div>
   );
 });
 
-ViewProductModal.displayName = 'ViewProductModal';
+TransferItemRow.displayName = "TransferItemRow";
 
 // ==============================================
 // Main Component
 // ==============================================
 
-const ManageProducts = ({ user }: { user?: User }) => {
+const NewTransferPage = ({ user }: { user: User }) => {
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string;
+  
+  /**
+   * Extract URL parameters:
+   * - params.encryptedPid: The encrypted product ID (specific item to transfer)
+   * - params.locid: The encrypted location ID (source location)
+   * 
+   * URL Pattern: /itemstransfers/[encryptedPid]/[locid]
+   * Example: /itemstransfers/eyJpdiI6.../eyJpdiI6...
+   */
+  const encryptedPid = params?.encryptedPid as string || "";
+  const sourceLocationId = params?.locid as string || "";
+  
+  const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
+  const businessName = user?.businesses_one?.[0]?.name || "Business";
 
-  const formatCurrency = useCallback((amount: number): string => {
-    const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-      .format(amount)
-      .replace(/^\$/, currencySymbol);
-  }, [user]);
-
-  const [filters, setFilters] = useState<FilterState>({
-    search: "",
-    status: "all",
-    category: "all",
-    stock: "all",
-    priceRange: [0, 1000000000],
-    sortBy: "name",
-    sortOrder: "asc",
+  // Initialize form with URL params for source location
+  const { formData, updateField, addItem, updateItem, removeItem } = useFormData({
+    from_location_id: sourceLocationId, // Pre-fill source location from URL
   });
-  const [openRow, setOpenRow] = useState<number | null>(null);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-  const [locationName, setLocationName] = useState<string>("");
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalInventoryValue, setTotalInventoryValue] = useState<number>(0);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [preloadedProduct, setPreloadedProduct] = useState<Product | null>(null);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
 
-  const debouncedSearch = useDebounce(filters.search, 300);
+  const selectedFromLocation = useMemo(
+    () => locations.find((l) => l.encrypted_id === formData.from_location_id) || null,
+    [formData.from_location_id, locations]
+  );
 
-  const buildQueryParams = useCallback(() => {
-    const params: Record<string, string | number> = {
-      page: currentPage,
-      per_page: itemsPerPage,
-    };
-    if (debouncedSearch) params.search = debouncedSearch;
-    if (filters.status !== "all") params.status = filters.status;
-    if (filters.category !== "all") params.category = filters.category;
-    if (filters.stock !== "all") params.stock = filters.stock;
-    if (filters.sortBy !== "name") params.sort_by = filters.sortBy;
-    if (filters.sortOrder !== "asc") params.sort_order = filters.sortOrder;
-    if (filters.priceRange[0] > 0) params.price_min = filters.priceRange[0];
-    if (filters.priceRange[1] < 1000000000)
-      params.price_max = filters.priceRange[1];
-    return params;
-  }, [currentPage, itemsPerPage, debouncedSearch, filters]);
+  const selectedToLocation = useMemo(
+    () => locations.find((l) => l.encrypted_id === formData.to_location_id) || null,
+    [formData.to_location_id, locations]
+  );
 
-  const loadData = useCallback(async () => {
-    if (!id) return;
-    setIsLoading(true);
-    try {
-      const queryParams = buildQueryParams();
-      const [productsRes, categoriesRes] = await Promise.all([
-        apiGet(`/product-locations/${id}`, { params: queryParams }, false),
-        apiGet("/product-categories", {}, false),
-      ]);
+  const subtotal = useMemo(
+    () => formData.items.reduce((sum, item) => sum + item.total, 0),
+    [formData.items]
+  );
 
-      const pagination = productsRes?.data?.pagination;
-      const newProducts = productsRes?.data?.data ?? [];
-      const newLocationName = productsRes?.data?.location_name ?? "";
-      const body = categoriesRes?.data;
-      let newCategories: Category[] = [];
-      if (
-        body?.data?.product_categories &&
-        Array.isArray(body.data.product_categories)
-      )
-        newCategories = body.data.product_categories;
-      else if (
-        body?.product_categories &&
-        Array.isArray(body.product_categories)
-      )
-        newCategories = body.product_categories;
-      else if (Array.isArray(body)) newCategories = body;
-      setProducts(Array.isArray(newProducts) ? newProducts : []);
-      setLocationName(newLocationName);
-      setTotalItems(pagination?.total ?? 0);
-      setTotalPages(pagination?.last_page ?? 1);
-      setTotalInventoryValue(parseFloat(pagination?.total_value ?? "0"));
-      const serverPage = pagination?.current_page;
-      if (serverPage && serverPage !== currentPage) setCurrentPage(serverPage);
-      setCategories(newCategories);
-    } catch (err: unknown) {
-      const error = err as ApiError;
-      console.error("Error loading data:", error);
-      toast.error("Failed to load data");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, buildQueryParams, currentPage]);
+  const itemCount = formData.items.length;
 
+  /**
+   * Fetch the specific product from the URL params
+   * Uses the encrypted product ID and source location ID
+   * 
+   * API: GET /product-locations/{sourceLocationId}
+   * Then finds the matching product by encrypted_pid
+   */
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (encryptedPid && sourceLocationId) {
+      fetchPreloadedProduct();
+    }
+  }, [encryptedPid, sourceLocationId]);
 
-  const handleRefresh = useCallback(async () => {
-    await loadData();
-  }, [loadData]);
-
-  const handleDelete = useCallback(async () => {
-    if (isSubmitting || !selectedProduct) return;
-    setIsSubmitting(true);
+  const fetchPreloadedProduct = async () => {
+    setIsLoadingProduct(true);
     try {
-      toast.error("Product cannot be deleted from this account level.");
-    } catch (err) {
-      // console.error("Delete failed:", err);
+      // Fetch all products at this location
+      const response = await apiGet(
+        `/product-locations/${sourceLocationId}`,
+        {},
+        false
+      );
+      
+      const data = response.data?.data || response.data || [];
+      const stockData = Array.isArray(data) ? data : [];
+      
+      // Find the specific product by encrypted_pid
+      const matchingProduct = stockData.find(
+        (pl: ProductLocation) => pl.encrypted_pid === encryptedPid
+      );
+      
+      if (matchingProduct) {
+        const product = mapProductLocationToProduct(matchingProduct);
+        setPreloadedProduct(product);
+        
+        // Auto-add the product to the transfer with quantity 1
+        if (product.current_stock > 0) {
+          addItem(product, 1);
+        } else {
+          toast.error("This product is out of stock at the selected location");
+        }
+      } else {
+        toast.error("Product not found at this location");
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch preloaded product:", error);
+      toast.error("Failed to load product details");
+    } finally {
+      setIsLoadingProduct(false);
+    }
+  };
+
+  /**
+   * Fetch locations for the destination dropdown
+   */
+  useEffect(() => {
+    const fetchLocations = async () => {
+      setIsLoading(true);
+      try {
+        const locationsRes = await apiGet("/locations", {}, false);
+        
+        setLocations(
+          extractDataFromResponse<Location>(locationsRes, [
+            "data",
+            "data.data",
+            "data.locations",
+          ])
+        );
+      } catch (error) {
+        toast.error("Failed to load locations");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
+  const validateForm = useCallback((): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.to_location_id) newErrors.to_location_id = "Please select destination location";
+    if (formData.from_location_id === formData.to_location_id) {
+      newErrors.to_location_id = "Source and destination cannot be the same";
+    }
+    if (!formData.transfer_date) newErrors.transfer_date = "Please select transfer date";
+    if (formData.items.length === 0) newErrors.items = "Please add at least one product";
+    
+    formData.items.forEach((item, index) => {
+      if (item.available_stock > 0 && item.stock_quantity > item.available_stock) {
+        newErrors[`item_${index}`] = `Insufficient stock for ${item.product?.product_name}`;
+      }
+    });
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) {
+      toast.error("Please fix the errors before submitting");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const payload = {
+      from_location_id: formData.from_location_id,
+      to_location_id: formData.to_location_id,
+      transfer_date: formData.transfer_date,
+      expected_delivery_date: formData.expected_delivery_date || null,
+      notes: formData.notes || null,
+      reference_number: formData.reference_number || null,
+      items: formData.items.map(({ product_id, stock_quantity, unit_cost }) => ({
+        product_id,
+        stock_quantity,
+        unit_cost,
+      })),
+    };
+
+    try {
+      await apiPost("/stock-transfers", payload);
+      toast.success("Stock transfer created successfully!");
+      router.push("/transfers");
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create stock transfer");
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, selectedProduct]);
+  };
 
-  const handleFilterChange = useCallback(<K extends keyof FilterState>(
-    key: K,
-    value: FilterState[K]
-  ) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  }, []);
-
-  const clearFilters = useCallback(() => {
-    setFilters({
-      search: "",
-      status: "all",
-      category: "all",
-      stock: "all",
-      priceRange: [0, 1000000000],
-      sortBy: "name",
-      sortOrder: "asc",
-    });
-    setCurrentPage(1);
-  }, []);
-
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filters.status !== "all") count++;
-    if (filters.category !== "all") count++;
-    if (filters.stock !== "all") count++;
-    if (filters.sortBy !== "name") count++;
-    if (filters.sortOrder !== "asc") count++;
-    if (filters.search) count++;
-    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000000000)
-      count++;
-    return count;
-  }, [filters]);
-
-  const statistics = useMemo((): Statistics => {
-    const currentProducts = products;
-    const totalProducts = totalItems;
-    const activeProducts = currentProducts.filter((p) => p.is_active).length;
-    const totalValue = currentProducts.reduce(
-      (sum, p) => sum + toNumber(p.price) * toNumber(p.stock_quantity),
-      0
+  if (isLoading || isLoadingProduct) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#166534] mx-auto mb-4" />
+          <p className="text-gray-500">
+            {isLoadingProduct ? "Loading product details..." : "Loading..."}
+          </p>
+        </div>
+      </div>
     );
-    const totalCost = currentProducts.reduce(
-      (sum, p) => sum + toNumber(p.cost_price) * toNumber(p.stock_quantity),
-      0
-    );
-    const potentialProfit = totalValue - totalCost;
-    const profitMargin = totalValue > 0 ? (potentialProfit / totalValue) * 100 : 0;
-    const lowStockCount = currentProducts.filter((p) => {
-      const qty = toNumber(p.stock_quantity);
-      const thr = toNumber(p.low_stock_threshold) || 5;
-      return qty <= thr && qty > 0;
-    }).length;
-    const outOfStockCount = currentProducts.filter((p) => {
-      const qty = toNumber(p.stock_quantity);
-      return p.is_out_of_stock || qty <= 0;
-    }).length;
-    return {
-      totalProducts,
-      activeProducts,
-      totalValue,
-      totalCost,
-      potentialProfit,
-      profitMargin,
-      lowStockCount,
-      outOfStockCount,
-    };
-  }, [products, totalItems]);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + products.length, totalItems);
-
-  const handleHistory = useCallback((encryptedPid: string | null, locationId: string | null) => {
-    if (!encryptedPid || !locationId) return;
-    router.push(`/locationprodhist/${encryptedPid}/${locationId}`);
-  }, [router]);
-
-  const handleTransfers = useCallback((encryptedPid: string | null, locationId: string | null) => {
-    if (!encryptedPid || !locationId) return;
-    router.push(`/itemstransfers/${encryptedPid}/${locationId}`);
-  }, [router]);
+  }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-stone-200 mt-[-13px] w-full">
+      <header className="bg-white border-b border-gray-200 top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/locations"
-                className="p-2 text-black/60 hover:text-black hover:bg-stone-100 rounded-lg transition-colors"
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push("/transfers")}
+                className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
               >
                 <ArrowLeft className="h-5 w-5" />
-              </Link>
+              </motion.button>
               <div>
-                <h1 className="text-2xl font-bold text-black">
-                  <ShortTextWithTooltip
-                    text={locationName || "Products"}
-                    max={30}
-                  />
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Transfer Product
                 </h1>
-                <p className="text-sm text-black/70">
-                  Manage your product inventory
+                <p className="text-sm text-gray-500 hidden sm:block">
+                  {preloadedProduct 
+                    ? `Transferring: ${preloadedProduct.product_name}`
+                    : businessName}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() =>
-                  setViewMode(viewMode === "table" ? "grid" : "table")
-                }
-                className="p-2.5 text-black/70 hover:text-black hover:bg-stone-100 rounded-lg transition-colors border border-stone-200"
-              >
-                {viewMode === "table" ? (
-                  <Grid3x3 className="h-5 w-5" />
-                ) : (
-                  <List className="h-5 w-5" />
-                )}
-              </button>
-              <button
-                onClick={handleRefresh}
-                className="p-2.5 text-black/70 hover:text-black hover:bg-stone-100 rounded-lg transition-colors border border-stone-200"
-              >
-                <RefreshCw className="h-5 w-5" />
-              </button>
+            <div className="flex items-center gap-3">
               <Link
-                href="/addproductlocations"
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#080e16]/20"
+                href="/transfers"
+                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
               >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Product</span>
+                Transfer List
               </Link>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#166534] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {isSubmitting ? "Creating..." : "Create Transfer"}
+              </motion.button>
             </div>
           </div>
         </div>
@@ -1694,345 +1101,339 @@ const ManageProducts = ({ user }: { user?: User }) => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Statistics */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          <StatCard
-            title="Total Products"
-            value={statistics.totalProducts}
-            icon={Package}
-            color="primary"
-          />
-          <StatCard
-            title="Active"
-            value={statistics.activeProducts}
-            icon={CheckCircle}
-            color="emerald"
-          />
-          <StatCard
-            title="Low Stock"
-            value={statistics.lowStockCount}
-            icon={AlertCircle}
-            color="amber"
-          />
-          <StatCard
-            title="Out of Stock"
-            value={statistics.outOfStockCount}
-            icon={XCircle}
-            color="rose"
-          />
-          <StatCard
-            title="Inventory Value"
-            value={formatCurrency(totalInventoryValue)}
-            icon={DollarSign}
-            color="gray"
-          />
-          <StatCard
-            title="Profit Margin"
-            value={`${statistics.profitMargin.toFixed(1)}%`}
-            icon={TrendingUp}
-            color="gray"
-          />
-        </div>
-
-        {/* Search and Filter Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40 h-5 w-5" />
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => handleFilterChange("search", e.target.value)}
-              placeholder="Search products by name, SKU, description..."
-              className="w-full pl-10 pr-4 py-3 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-[#080e16]/20 focus:border-[#080e16] outline-none transition placeholder-black/40 text-black"
-            />
-          </div>
-          <button
-            onClick={() => setFilterDrawerOpen(true)}
-            className="relative inline-flex items-center gap-2 px-6 py-3 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition-colors shadow-sm"
+        {/* Preloaded Product Info Banner */}
+        {preloadedProduct && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-[#166534]/10 border border-[#166534]/30 rounded-xl"
           >
-            <Filter className="h-5 w-5 text-black/70" />
-            <span className="text-sm font-medium text-black">Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#080e16] text-white text-xs rounded-full flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Quick Filter Chips */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <FilterChip
-            label="All"
-            active={
-              filters.status === "all" &&
-              filters.stock === "all" &&
-              filters.category === "all"
-            }
-            onClick={clearFilters}
-          />
-          <FilterChip
-            label="Active"
-            active={filters.status === "active"}
-            onClick={() =>
-              handleFilterChange(
-                "status",
-                filters.status === "active" ? "all" : "active"
-              )
-            }
-          />
-          <FilterChip
-            label="In Stock"
-            active={filters.stock === "in_stock"}
-            onClick={() =>
-              handleFilterChange(
-                "stock",
-                filters.stock === "in_stock" ? "all" : "in_stock"
-              )
-            }
-          />
-          <FilterChip
-            label="Low Stock"
-            active={filters.stock === "low_stock"}
-            onClick={() =>
-              handleFilterChange(
-                "stock",
-                filters.stock === "low_stock" ? "all" : "low_stock"
-              )
-            }
-          />
-          <FilterChip
-            label="Out of Stock"
-            active={filters.stock === "out_of_stock"}
-            onClick={() =>
-              handleFilterChange(
-                "stock",
-                filters.stock === "out_of_stock" ? "all" : "out_of_stock"
-              )
-            }
-          />
-        </div>
-
-        {/* Products Count */}
-        <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm text-black/70">
-            Showing{" "}
-            <span className="font-semibold text-black">
-              {startIndex + 1}-{endIndex}
-            </span>{" "}
-            of{" "}
-            <span className="font-semibold text-black">{totalItems}</span>{" "}
-            products
-          </span>
-        </div>
-
-        {/* Loading State */}
-        {isLoading && <LoadingState />}
-
-        {/* Empty State */}
-        {!isLoading && products.length === 0 && (
-          <EmptyState
-            title={
-              filters.search || activeFilterCount > 0
-                ? "No products found"
-                : "No products yet"
-            }
-            description={
-              filters.search || activeFilterCount > 0
-                ? "Try adjusting your search terms or filters"
-                : "Get started by adding your first product to the inventory"
-            }
-            icon={Package}
-            action={
-              filters.search || activeFilterCount > 0
-                ? { label: "Clear Filters", onClick: clearFilters }
-                : {
-                  label: "Add Your First Product",
-                  href: "/addproductlocations",
-                }
-            }
-          />
+            <div className="flex items-center gap-3">
+              <Package className="h-5 w-5 text-[#166534]" />
+              <div>
+                <p className="font-semibold text-[#166534]">
+                  Transferring: {preloadedProduct.product_name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  SKU: {preloadedProduct.sku} | 
+                  Available Stock: {preloadedProduct.current_stock} | 
+                  Cost: {formatCurrency(preloadedProduct.cost_price, currencySymbol)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
         )}
 
-        {/* Table View */}
-        {!isLoading && products.length > 0 && viewMode === "table" && (
-          <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-stone-50 text-black/70 border-b border-stone-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider w-12">
-                      SN
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button
-                        onClick={() => handleFilterChange("sortBy", "name")}
-                        className="flex items-center gap-1 hover:text-black"
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Transfer Details */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+          >
+            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#166534] flex items-center justify-center">
+                  <ArrowRightLeft className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Transfer Details</h2>
+                  <p className="text-sm text-gray-500">Select destination location</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Source Location - Read-only (from URL) */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                      <Warehouse className="h-4 w-4 text-[#166534]" />
+                      Source Location <span className="text-red-500">*</span>
+                    </label>
+                    <div className="px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-sm text-gray-700">
+                      {selectedFromLocation?.location_name || "Loading..."}
+                      {selectedFromLocation?.head_office === "yes" && " (HQ)"}
+                    </div>
+                    {selectedFromLocation && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 p-4 bg-[#166534]/5 rounded-xl border border-[#166534]/20"
                       >
-                        Product{" "}
-                        {filters.sortBy === "name" && (
-                          <ArrowUpDown className="h-3 w-3" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">
-                      SKU
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
-                      Category
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button
-                        onClick={() => handleFilterChange("sortBy", "price")}
-                        className="flex items-center gap-1 hover:text-black"
+                        <p className="text-xs font-semibold text-[#166534] uppercase tracking-wider mb-3">
+                          Source Location Details
+                        </p>
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2 text-sm text-gray-700">
+                            <MapPin className="h-4 w-4 text-[#166534]/60 mt-0.5 flex-shrink-0" />
+                            <span>{getFullAddress(selectedFromLocation)}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Destination Location */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                      <Building2 className="h-4 w-4 text-[#166534]" />
+                      Destination Location <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={formData.to_location_id}
+                        onChange={(e) => updateField("to_location_id", e.target.value)}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm appearance-none bg-white transition-all ${
+                          errors.to_location_id ? "border-red-300 bg-red-50" : "border-gray-200"
+                        }`}
                       >
-                        Price{" "}
-                        {filters.sortBy === "price" && (
-                          <ArrowUpDown className="h-3 w-3" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
-                      <button
-                        onClick={() => handleFilterChange("sortBy", "stock")}
-                        className="flex items-center gap-1 hover:text-black"
+                        <option value="">Select destination location...</option>
+                        {locations
+                          .filter(loc => loc.encrypted_id !== formData.from_location_id)
+                          .map((location) => (
+                            <option key={location.encrypted_id} value={location.encrypted_id}>
+                              {location.location_name}
+                              {location.head_office === "yes" && " (HQ)"}
+                            </option>
+                          ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+                    {errors.to_location_id && (
+                      <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {errors.to_location_id}
+                      </p>
+                    )}
+                    {selectedToLocation && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 p-4 bg-[#166534]/5 rounded-xl border border-[#166534]/20"
                       >
-                        Stock{" "}
-                        {filters.sortBy === "stock" && (
-                          <ArrowUpDown className="h-3 w-3" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider hidden sm:table-cell">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider w-12">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {products.map((product, index) => (
-                    <ProductTableRow
-                      key={product.id}
-                      product={product}
-                      index={index}
-                      startIndex={startIndex}
-                      onView={(product) => {
-                        setSelectedProduct(product);
-                        setViewModalOpen(true);
-                      }}
-                      onEdit={(encrypted_id) =>
-                        router.push(`/updatestock/${encrypted_id}`)
-                      }
-                      onDelete={(product) => {
-                        setSelectedProduct(product);
-                        setDeleteModalOpen(true);
-                      }}
-                      onHistory={handleHistory}
-                      onTransfers={handleTransfers}
-                      isOpen={openRow === product.id}
-                      onToggleOpen={setOpenRow}
-                      formatCurrency={formatCurrency}
+                        <p className="text-xs font-semibold text-[#166534] uppercase tracking-wider mb-3">
+                          Destination Location Details
+                        </p>
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2 text-sm text-gray-700">
+                            <MapPin className="h-4 w-4 text-[#166534]/60 mt-0.5 flex-shrink-0" />
+                            <span>{getFullAddress(selectedToLocation)}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <Calendar className="h-4 w-4 text-[#166534]" />
+                        Transfer Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.transfer_date}
+                        onChange={(e) => updateField("transfer_date", e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <Calendar className="h-4 w-4 text-[#166534]" />
+                        Expected Delivery
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.expected_delivery_date}
+                        onChange={(e) => updateField("expected_delivery_date", e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                      <Hash className="h-4 w-4 text-[#166534]" />
+                      Reference Number
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.reference_number}
+                      onChange={(e) => updateField("reference_number", e.target.value)}
+                      placeholder="Enter reference number (optional)"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
                     />
-                  ))}
-                </tbody>
-              </table>
+                  </div>
+                </div>
+              </div>
             </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              startIndex={startIndex}
-              endIndex={endIndex}
-              itemsPerPage={itemsPerPage}
-              onPageChange={(page) => setCurrentPage(page)}
-              onItemsPerPageChange={(items) => {
-                setItemsPerPage(items);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-        )}
+          </motion.div>
 
-        {/* Grid View */}
-        {!isLoading && products.length > 0 && viewMode === "grid" && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <ProductGridCard
-                  key={product.id}
-                  product={product}
-                  onView={(product) => {
-                    setSelectedProduct(product);
-                    setViewModalOpen(true);
-                  }}
-                  onEdit={(id) => router.push(`/editproduct/${id}`)}
-                  onDelete={(product) => {
-                    setSelectedProduct(product);
-                    setDeleteModalOpen(true);
-                  }}
-                  formatCurrency={formatCurrency}
-                />
-              ))}
+          {/* Transfer Items */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+          >
+            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#166534] flex items-center justify-center">
+                    <Package className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">Transfer Items</h2>
+                    <p className="text-sm text-gray-500">
+                      {itemCount} {itemCount === 1 ? "item" : "items"} added
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="button"
+                  onClick={() => setShowProductModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#166534] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add More Products
+                </motion.button>
+              </div>
             </div>
-            <div className="mt-6">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                startIndex={startIndex}
-                endIndex={endIndex}
-                itemsPerPage={itemsPerPage}
-                onPageChange={(page) => setCurrentPage(page)}
-                onItemsPerPageChange={(items) => {
-                  setItemsPerPage(items);
-                  setCurrentPage(1);
-                }}
+
+            <div className="p-6">
+              {formData.items.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Package className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">No items added</h3>
+                  <p className="text-gray-500 mb-6">
+                    {preloadedProduct 
+                      ? "The preloaded product is out of stock" 
+                      : "Add products to transfer"}
+                  </p>
+                  {preloadedProduct && preloadedProduct.current_stock > 0 && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={() => addItem(preloadedProduct, 1)}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#166534] text-white rounded-xl hover:bg-[#14532d] transition-colors font-medium shadow-lg shadow-[#166534]/25"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add {preloadedProduct.product_name}
+                    </motion.button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <AnimatePresence>
+                    <div className="space-y-3">
+                      {formData.items.map((item, index) => (
+                        <TransferItemRow
+                          key={index}
+                          item={item}
+                          index={index}
+                          onUpdate={updateItem}
+                          onRemove={removeItem}
+                          currencySymbol={currencySymbol}
+                        />
+                      ))}
+                    </div>
+                  </AnimatePresence>
+                  
+                  <div className="mt-6 p-6 bg-gray-50 rounded-2xl border border-gray-200">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Total Transfer Value</p>
+                        <p className="text-xs text-gray-400">
+                          {itemCount} {itemCount === 1 ? "item" : "items"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-[#166534]">
+                          {formatCurrency(subtotal, currencySymbol)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Notes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+          >
+            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#166534] flex items-center justify-center">
+                  <StickyNote className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Additional Notes</h2>
+                  <p className="text-sm text-gray-500">Optional instructions or comments</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <textarea
+                value={formData.notes}
+                onChange={(e) => updateField("notes", e.target.value)}
+                rows={4}
+                placeholder="Add any additional notes or instructions for this stock transfer..."
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none resize-none text-sm transition-all"
               />
             </div>
-          </>
-        )}
+          </motion.div>
+
+          {/* Mobile Submit */}
+          <div className="lg:hidden">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full py-4 bg-[#166534] text-white font-semibold rounded-2xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Creating Stock Transfer...
+                </>
+              ) : (
+                <>
+                  <Save className="h-5 w-5" />
+                  Create Stock Transfer
+                </>
+              )}
+            </motion.button>
+          </div>
+        </form>
       </main>
 
-      {/* Modals & Drawers */}
-      <FilterDrawer
-        isOpen={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={filters}
-        categories={categories}
-        totalItems={totalItems}
-        onFilterChange={handleFilterChange}
-        onClearFilters={clearFilters}
-        activeFilterCount={activeFilterCount}
-      />
-      <DeleteModal
-        isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setSelectedProduct(null);
-        }}
-        onConfirm={handleDelete}
-        productName={
-          selectedProduct?.product?.name || selectedProduct?.name || ""
-        }
-        isSubmitting={isSubmitting}
-      />
-      <ViewProductModal
-        isOpen={viewModalOpen}
-        onClose={() => {
-          setViewModalOpen(false);
-          setSelectedProduct(null);
-        }}
-        product={selectedProduct}
-        onEdit={(encrypted_id) =>
-          router.push(`/updatestock/${encrypted_id}`)
-        }
-        onHistory={handleHistory}
-        formatCurrency={formatCurrency}
+      {/* Product Modal */}
+      <ProductSearchModal
+        isOpen={showProductModal}
+        onClose={() => setShowProductModal(false)}
+        onSelectProduct={addItem}
+        existingProductIds={formData.items.map((item) => item.product_id)}
+        currencySymbol={currencySymbol}
+        isLoading={isLoading}
+        sourceLocationId={formData.from_location_id}
       />
     </div>
   );
 };
 
-export default withAuth(ManageProducts);
+export default withAuth(NewTransferPage);
