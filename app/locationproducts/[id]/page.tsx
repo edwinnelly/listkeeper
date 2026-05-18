@@ -211,6 +211,7 @@ interface ProductTableRowProps {
   onEdit: (id: string | null) => void;
   onDelete: (product: Product) => void;
   onHistory: (encryptedPid: string | null, locationId: string | null) => void;
+  onTransfers: (encryptedPid: string | null, locationId: string | null) => void;
   isOpen: boolean;
   onToggleOpen: (id: number | null) => void;
   formatCurrency: (amount: number) => string;
@@ -725,6 +726,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = memo(({
   onEdit,
   onDelete,
   onHistory,
+  onTransfers,
   isOpen,
   onToggleOpen,
   formatCurrency,
@@ -748,6 +750,11 @@ const ProductTableRow: React.FC<ProductTableRowProps> = memo(({
     onHistory(product.encrypted_pid, product.encrypted_location_id);
     onToggleOpen(null);
   }, [onHistory, product.encrypted_pid, product.encrypted_location_id, onToggleOpen]);
+
+  const handleTransfers = useCallback(() => {
+    onTransfers(product.encrypted_pid, product.encrypted_location_id);
+    onToggleOpen(null);
+  }, [onTransfers, product.encrypted_pid, product.encrypted_location_id, onToggleOpen]);
 
   const handleDelete = useCallback(() => {
     onDelete(product);
@@ -825,7 +832,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = memo(({
           </button>
 
           <button
-            onClick={handleEdit}
+            onClick={handleTransfers}
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-black hover:bg-stone-50 transition border-b border-stone-100"
           >
             <ArrowLeftRight className="h-4 w-4 text-[#080e16]" /> Transfers Stock
@@ -1541,7 +1548,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
     try {
       toast.error("Product cannot be deleted from this account level.");
     } catch (err) {
-      console.error("Delete failed:", err);
+      // console.error("Delete failed:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -1622,6 +1629,11 @@ const ManageProducts = ({ user }: { user?: User }) => {
   const handleHistory = useCallback((encryptedPid: string | null, locationId: string | null) => {
     if (!encryptedPid || !locationId) return;
     router.push(`/locationprodhist/${encryptedPid}/${locationId}`);
+  }, [router]);
+
+  const handleTransfers = useCallback((encryptedPid: string | null, locationId: string | null) => {
+    if (!encryptedPid || !locationId) return;
+    router.push(`/itemstransfers/${encryptedPid}/${locationId}`);
   }, [router]);
 
   return (
@@ -1918,6 +1930,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
                         setDeleteModalOpen(true);
                       }}
                       onHistory={handleHistory}
+                      onTransfers={handleTransfers}
                       isOpen={openRow === product.id}
                       onToggleOpen={setOpenRow}
                       formatCurrency={formatCurrency}

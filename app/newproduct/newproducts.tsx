@@ -667,7 +667,7 @@ const AddProductPage: React.FC = () => {
                         onClick={handleGenerateSKU}
                         className="flex-shrink-0 px-4 py-2.5 bg-gray-900 text-white text-xs font-semibold rounded-xl hover:bg-gray-800 transition-colors flex items-center gap-1.5 whitespace-nowrap"
                       >
-                        <Sparkles size={12} />
+                        <Plus size={12} />
                         Generate
                       </button>
                     </div>
