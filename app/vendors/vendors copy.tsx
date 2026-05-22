@@ -55,7 +55,7 @@ interface Vendor {
   updated_at: string;
   owner_id: number;
   business_key: string;
-  location_id: number;
+  location_id: string; // Changed to string for ULID
   vendor_name: string;
   contact_person: string | null;
   email: string;
@@ -84,7 +84,7 @@ interface Vendor {
     business_name: string;
   };
   location?: {
-    id: number;
+    id: string;
     location_name: string;
   };
 }
@@ -108,7 +108,7 @@ interface VendorFormData {
   bank_account_name: string;
   is_active: boolean;
   notes: string;
-  location_id: number;
+  location_id: string; // Changed from number to string for ULID
   business_key: string;
 }
 
@@ -118,7 +118,7 @@ interface Business {
 }
 
 interface BusinessLocation {
-  id: number;
+  id: string; // Changed to string for ULID
   location_name: string;
   business_key: string;
 }
@@ -211,7 +211,7 @@ const ManageVendors = ({ user }: { user: User }) => {
     bank_account_name: "",
     is_active: true,
     notes: "",
-    location_id: 0,
+    location_id: "", // Changed from 0 to empty string for ULID
     business_key: "",
   });
 
@@ -303,6 +303,7 @@ const ManageVendors = ({ user }: { user: User }) => {
   const fetchLocations = async () => {
     try {
       const res = await apiGet("/locations") as { data: LocationApiResponse };
+      console.log(res.data);
       const locationsArray: BusinessLocation[] = res.data?.data ?? res.data?.locations ?? [];
       setLocations(Array.isArray(locationsArray) ? locationsArray : []);
     } catch {
@@ -334,7 +335,7 @@ const ManageVendors = ({ user }: { user: User }) => {
       bank_account_name: "",
       is_active: true,
       notes: "",
-      location_id: 0,
+      location_id: "",
       business_key: "",
     });
   };
@@ -476,7 +477,6 @@ const ManageVendors = ({ user }: { user: User }) => {
     // Required fields validation
     if (!formData.vendor_name.trim()) errors.push("Vendor name is required");
     if (!formData.email.trim()) errors.push("Email is required");
-    // if (!formData.business_key) errors.push("Business is required");
     if (!formData.location_id) errors.push("Location is required");
 
     // Email format validation
@@ -515,21 +515,20 @@ const ManageVendors = ({ user }: { user: User }) => {
     }
 
     setIsSubmitting(true);
-    let tempId: number | null = null;
+    let tempId: string | null = null;
 
     try {
       const payload = {
         ...form,
-        // Ensure proper data types
-        location_id: Number(form.location_id),
+        location_id: form.location_id, // Now a string, no conversion needed
       };
 
       // OPTIMISTIC UPDATE: Create temporary ID
-      tempId = -Math.abs(Date.now());
+      tempId = `temp_${Date.now()}`;
 
       // Create temporary vendor object
       const optimisticVendor: Vendor = {
-        id: tempId,
+        id: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         owner_id: 0,
@@ -618,7 +617,7 @@ const ManageVendors = ({ user }: { user: User }) => {
     try {
       const payload = {
         ...form,
-        location_id: Number(form.location_id),
+        location_id: form.location_id,
         _method: "PUT", // Laravel method override
       };
 
@@ -718,7 +717,7 @@ const ManageVendors = ({ user }: { user: User }) => {
       bank_account_name: vendor.bank_account_name || "",
       is_active: vendor.is_active,
       notes: vendor.notes || "",
-      location_id: vendor.location_id,
+      location_id: vendor.location_id || "", // Now a string
       business_key: vendor.business_key,
     });
     setSelectedVendor(vendor);
@@ -929,23 +928,6 @@ const ManageVendors = ({ user }: { user: User }) => {
                     <option value="inactive">Inactive</option>
                   </select>
 
-                  {/* Business filter commented out for future use */}
-                  {/* <select
-                    value={businessFilter}
-                    onChange={(e) => setBusinessFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition hover:border-gray-400"
-                  >
-                    <option value="all">All Businesses</option>
-                    {businesses.map((business) => (
-                      <option
-                        key={business.business_key}
-                        value={business.business_key}
-                      >
-                        {business.business_name}
-                      </option>
-                    ))}
-                  </select> */}
-
                   <select
                     value={industryFilter}
                     onChange={(e) => setIndustryFilter(e.target.value)}
@@ -1047,11 +1029,10 @@ const ManageVendors = ({ user }: { user: User }) => {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="font-semibold text-gray-900 truncate group-hover:text-gray-600 transition-colors">
-                                   
-                                     <ShortTextWithTooltip
-                                        text= {vendor.vendor_name}
-                                        max={25}
-                                      />
+                                    <ShortTextWithTooltip
+                                      text={vendor.vendor_name}
+                                      max={25}
+                                    />
                                   </div>
                                   <div className="text-xs text-gray-500 truncate mt-0.5 flex items-center gap-1">
                                     <Briefcase size={12} />
@@ -1090,16 +1071,15 @@ const ManageVendors = ({ user }: { user: User }) => {
                                   <div className="flex items-center gap-1">
                                     <MapPin size={12} />
                                     <ShortTextWithTooltip
-                                        text= {`${vendor.city}, ${vendor.state}`}
-                                        max={30}
-                                      />
-                                   
+                                      text={`${vendor.city}, ${vendor.state}`}
+                                      max={30}
+                                    />
                                   </div>
                                 ) : (
                                   "No location"
                                 )}
                               </div>
-                             </td>
+                            </td>
 
                             {/* Status Badge */}
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -1120,12 +1100,12 @@ const ManageVendors = ({ user }: { user: User }) => {
                                   </>
                                 )}
                               </span>
-                             </td>
+                            </td>
 
                             {/* Created Date */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(vendor.created_at).toLocaleDateString()}
-                             </td>
+                            </td>
 
                             {/* Action Menu */}
                             <td className="px-6 py-4 text-center relative whitespace-nowrap">
@@ -1197,7 +1177,7 @@ const ManageVendors = ({ user }: { user: User }) => {
                                   </div>
                                 </>
                               )}
-                             </td>
+                            </td>
                           </tr>
                         ))
                       ) : (
@@ -1528,19 +1508,16 @@ const ManageVendors = ({ user }: { user: User }) => {
                 <div>
                   <label className={labelClass}>
                     Location <span className="text-red-500">*</span>
-                    <span className="text-gray-400 font-normal text-xs ml-2">
-                      (optional)
-                    </span>
                   </label>
                   <select
                     value={form.location_id}
                     onChange={(e) =>
-                      handleInputChange("location_id", Number(e.target.value))
+                      handleInputChange("location_id", e.target.value)
                     }
                     required
                     className={selectClass}
                   >
-                    {/* <option value="0">Select Location</option> */}
+                    <option value="">Select Location</option>
                     {locations.map((location) => (
                       <option key={location.id} value={location.id}>
                         {location.location_name}
@@ -2025,31 +2002,6 @@ const ManageVendors = ({ user }: { user: User }) => {
                   </div>
 
                   <div className="space-y-5">
-                    {/* Business select commented out for future use */}
-                    {/* <div>
-                      <label className={labelClass}>
-                        Business <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={form.business_key}
-                        onChange={(e) =>
-                          handleInputChange("business_key", e.target.value)
-                        }
-                        required
-                        className={`${selectClass} bg-white`}
-                      >
-                        <option value="">Select Business</option>
-                        {businesses.map((business) => (
-                          <option
-                            key={business.business_key}
-                            value={business.business_key}
-                          >
-                            {business.business_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div> */}
-
                     <div>
                       <label className={labelClass}>
                         Location <span className="text-red-500">*</span>
@@ -2059,13 +2011,13 @@ const ManageVendors = ({ user }: { user: User }) => {
                         onChange={(e) =>
                           handleInputChange(
                             "location_id",
-                            Number(e.target.value),
+                            e.target.value,
                           )
                         }
                         required
                         className={`${selectClass} bg-white`}
                       >
-                        <option value="0">Select Location</option>
+                        <option value="">Select Location</option>
                         {locations.map((location) => (
                           <option key={location.id} value={location.id}>
                             {location.location_name}

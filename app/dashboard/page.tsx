@@ -235,7 +235,7 @@ const ActiveBusinessCard: React.FC<{
         <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/[0.08] flex items-center justify-center flex-shrink-0 overflow-hidden">
           {business.logo ? (
             <img
-             src={`http://localhost:8000/storage/${business.logo}`}
+              src={`http://localhost:8000/storage/${business.logo}`}
               alt={business.business_name}
               className="w-full h-full object-cover"
             />
@@ -409,7 +409,6 @@ const LocationsSection: React.FC<{
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {locations.map((loc, i) => (
-          // ✅ key uses loc.id — always a unique number from DB
           <div key={loc.id}>
             <LocationCard
               location={loc}
@@ -629,6 +628,7 @@ function DashboardPage({ user, loading }: { user: User | null; loading: boolean 
     }
   }, [user?.active_location_key]);
 
+
   const fetchLocations = useCallback(async () => {
     setLocationsLoading(true);
     try {
@@ -685,6 +685,7 @@ function DashboardPage({ user, loading }: { user: User | null; loading: boolean 
   if (user.creator === 'Host' && user.active_business_key === '0') {
     return <NewAccount />;
   }
+  
 
   const createdAt = firstBusiness.created_at
     ? dayjs(firstBusiness.created_at).format('MMMM D, YYYY')

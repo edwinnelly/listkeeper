@@ -13,6 +13,7 @@ import {
   Loader2,
   XCircle,
   ChevronRight,
+  Sparkles,
   BarChart3,
   Truck,
   Layers,
@@ -27,7 +28,7 @@ interface ProductFormData {
   name: string;
   sku: string;
   description: string;
-  category_id: string; // ULID string
+  category_id: number | string;
   products_measurements: string;
   price: string;
   cost_price: string;
@@ -71,14 +72,8 @@ interface FormErrors {
 }
 
 interface Category {
-  id: string; // ULID as string
+  id: number;
   name: string;
-  slug?: string;
-  description?: string;
-  is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
-  product_count?: number;
 }
 
 interface Unit {
@@ -321,41 +316,10 @@ const AddProductPage: React.FC = () => {
   const fetchCategories = async (): Promise<void> => {
     try {
       const res = await apiGet("/product-categories");
-      
-      // Handle the nested response structure
-      const categoriesArray: Category[] = 
-        res.data?.product_categories ?? 
-        res.data?.data?.product_categories ?? 
-        res.data?.data ?? 
-        [];
-      
-      if (Array.isArray(categoriesArray)) {
-        // Map to ensure proper typing
-        const typedCategories: Category[] = categoriesArray.map((cat: { 
-          id: string; 
-          name: string; 
-          slug?: string;
-          description?: string;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-          product_count?: number;
-        }) => ({
-          id: cat.id,
-          name: cat.name,
-          slug: cat.slug,
-          description: cat.description,
-          is_active: cat.is_active,
-          created_at: cat.created_at,
-          updated_at: cat.updated_at,
-          product_count: cat.product_count,
-        }));
-        setCategories(typedCategories);
-      } else {
-        setCategories([]);
-      }
-    } catch (err) {
-      console.error("Failed to fetch categories:", err);
+      const categoriesArray =
+        res.data?.data?.product_categories ?? res.data?.data ?? [];
+      setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
+    } catch {
       setCategories([]);
     }
   };
@@ -425,8 +389,7 @@ const AddProductPage: React.FC = () => {
         if (strValue.trim().length < 3) return "Must be at least 3 characters";
         return undefined;
       case "category_id":
-        // Validate ULID string is not empty
-        if (!strValue || strValue === "") return "Category is required";
+        if (!value || value === "" || value === 0) return "Category is required";
         return undefined;
       case "products_measurements":
         if (!value || value === "") return "Unit is required";
@@ -497,12 +460,7 @@ const AddProductPage: React.FC = () => {
     formData.append("name", form.name.trim());
     formData.append("sku", form.sku.trim());
     if (form.description.trim()) formData.append("description", form.description.trim());
-    
-    // Send category_id as ULID string directly
-    if (form.category_id && form.category_id !== "") {
-      formData.append("category_id", form.category_id);
-    }
-    
+    if (form.category_id) formData.append("category_id", form.category_id.toString());
     if (form.products_measurements) formData.append("products_measurements", form.products_measurements);
     formData.append("price", form.price || "0");
     if (form.cost_price) formData.append("cost_price", form.cost_price);
@@ -523,7 +481,6 @@ const AddProductPage: React.FC = () => {
     formData.append("is_featured", form.is_featured ? "1" : "0");
     formData.append("is_on_sale", form.is_on_sale ? "1" : "0");
     if (imageFile) formData.append("image", imageFile);
-    
     return formData;
   };
 
@@ -538,17 +495,9 @@ const AddProductPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const formData = prepareFormData();
-      
-      // Debug: Log form data
-      console.log("Submitting form data:");
-      for (const pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
-      }
-      
       const response = await apiPost("addproducts", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      
       if (response.success || response.data) {
         toast.success("Product created successfully!", { id: "create-product" });
         setForm({
@@ -567,9 +516,7 @@ const AddProductPage: React.FC = () => {
       }
     } catch (err: unknown) {
       const error = err as ApiError;
-      console.error("Submission error:", error);
       const status = error.response?.status;
-      
       if (status === 422) {
         const errs = error.response?.data?.errors;
         if (errs) {
@@ -596,10 +543,9 @@ const AddProductPage: React.FC = () => {
   const isFormValid: boolean =
     form.name.trim().length > 0 &&
     form.sku.trim().length > 0 &&
-    form.category_id !== "" &&
+    form.category_id !== "" && form.category_id !== 0 &&
     form.products_measurements !== "" &&
-    form.price !== "" && 
-    form.stock_quantity !== "" &&
+    form.price !== "" && form.stock_quantity !== "" &&
     !errors.name && !errors.sku && !errors.category_id &&
     !errors.products_measurements && !errors.price && !errors.stock_quantity;
 
@@ -727,7 +673,6 @@ const AddProductPage: React.FC = () => {
                     </div>
                   </Field>
 
-                  {/* Category with ULID support */}
                   <Field label="Category" required error={errors.category_id}>
                     <select
                       value={form.category_id}
@@ -738,9 +683,7 @@ const AddProductPage: React.FC = () => {
                     >
                       <option value="">Select a category</option>
                       {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
+                        <option key={category.id} value={category.id}>{category.name}</option>
                       ))}
                     </select>
                   </Field>

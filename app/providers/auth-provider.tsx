@@ -81,6 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    *  - On abort: returns early without touching state.
    */
   const fetchUser = useCallback(async (signal?: AbortSignal) => {
+    console.log('🔐 [AuthProvider] fetchUser called');
+    console.log('🔐 [AuthProvider] Request URL: GET /user');
+    console.log('🔐 [AuthProvider] Signal provided:', !!signal);
+    
     // Begin loading; clear any stale error from a previous attempt.
     setLoading(true);
     setError(null);
@@ -88,15 +92,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Axios will attach the signal to the underlying fetch / XHR,
       // so it properly aborts the network request when signalled.
+      console.log('🔐 [AuthProvider] Making API request...');
       const { data } = await api.get<User>('/user', { signal });
+      
+      console.log('🔐 [AuthProvider] API response received:', data);
+      console.log('🔐 [AuthProvider] Response status: success');
+      console.log('🔐 [AuthProvider] User data:', JSON.stringify(data, null, 2));
+      
+      // Log specific user fields
+      if (data) {
+        console.log('🔐 [AuthProvider] User Details:');
+        console.log('  - ID:', data.id);
+        console.log('  - Name:', data.name);
+        console.log('  - Email:', data.email);
+        console.log('  - Creator:', data.creator);
+        console.log('  - active_business_key:', data.active_business_key);
+        console.log('  - active_location_key:', data.active_location_key);
+        console.log('  - business_key:', data.business_key);
+        console.log('  - businesses_one:', data.businesses_one);
+        console.log('  - about_business:', data.about_business);
+        
+        if (data.businesses_one && data.businesses_one.length > 0) {
+          console.log('🔐 [AuthProvider] Businesses:');
+          data.businesses_one.forEach((business, index) => {
+            console.log(`  Business ${index + 1}:`, {
+              id: business.id,
+              business_key: business.business_key,
+              business_name: business.business_name,
+              subscription_type: business.subscription_type,
+              created_at: business.created_at
+            });
+          });
+        } else {
+          console.log('🔐 [AuthProvider] No businesses found in user data');
+        }
+      } else {
+        console.log('🔐 [AuthProvider] User data is null or undefined');
+      }
+      
       setUser(data ?? null);
     } catch (error: any) {
+      console.error('🔐 [AuthProvider] Error fetching user:', error);
+      console.error('🔐 [AuthProvider] Error details:', {
+        code: error?.code,
+        name: error?.name,
+        message: error?.message,
+        response: error?.response,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data
+      });
+      
       // ------------------------------------------------------------------
       // Abort / cancel – the request was intentionally cancelled (e.g. the
       // provider unmounted).  We MUST NOT update state because the component
       // is gone (React will warn about "setState on unmounted component").
       // ------------------------------------------------------------------
       if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
+        console.log('🔐 [AuthProvider] Request was cancelled, returning early');
         return;
       }
 
@@ -105,21 +158,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ------------------------------------------------------------------
 
       if (error?.response?.status === 401) {
+        console.log('🔐 [AuthProvider] 401 Unauthorized - No valid session');
         // Unauthorized – no valid session.  Clear the user so the app
         // redirects to login / shows a sign-in prompt.
         setUser(null);
       } else if (error?.response?.status === 403) {
+        console.log('🔐 [AuthProvider] 403 Forbidden - Session exists but lacks permissions');
         // Forbidden – session exists but lacks required permissions.
         setUser(null);
         setError(new Error('Access forbidden'));
       } else if (error?.response?.status === 429) {
+        console.log('🔐 [AuthProvider] 429 Too Many Requests - Rate limited');
         // Rate-limited – tell the user to back off; keep the current user
         // (if any) so they don't lose their session unnecessarily.
         setError(new Error('Too many requests. Please try again later.'));
       } else if (error?.code === 'ERR_NETWORK') {
+        console.log('🔐 [AuthProvider] Network error - No internet or CORS issue');
         // Network-level failure (no internet, DNS, CORS, etc.).
         setError(new Error('Network error. Please check your connection.'));
       } else {
+        console.log('🔐 [AuthProvider] Unexpected error occurred');
         // Any other unexpected error – wrap it in a generic message but
         // also log the raw error for debugging.
         setError(error instanceof Error ? error : new Error('Authentication failed'));
@@ -127,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       // Whether we succeeded or failed (except abort), loading is done.
+      console.log('🔐 [AuthProvider] fetchUser completed, loading set to false');
       setLoading(false);
     }
   }, []);
@@ -138,13 +197,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * token), then clears local auth state regardless of the API result.
    */
   const logout = useCallback(async () => {
+    console.log('🔐 [AuthProvider] logout called');
     try {
+      console.log('🔐 [AuthProvider] Sending POST /auth/logout');
       await api.post('/auth/logout');
+      console.log('🔐 [AuthProvider] Logout successful');
     } catch (error) {
       // Even if the API call fails (e.g. network down) we still want to
       // clear the local state so the user isn't stuck.
-      console.error('Logout error:', error);
+      console.error('🔐 [AuthProvider] Logout error:', error);
     } finally {
+      console.log('🔐 [AuthProvider] Clearing user state');
       setUser(null);
       setError(null);
     }
@@ -153,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ---- initial fetch on mount ---------------------------------------------
 
   useEffect(() => {
+    console.log('🔐 [AuthProvider] Component mounted, initializing auth check');
     // Create a fresh AbortController whose signal we pass to fetchUser.
     // When the cleanup function runs (unmount / dependency change) we call
     // .abort() which causes axios to cancel the in-flight request.
@@ -163,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Cleanup: abort the request so we don't try to update state after
     // the provider is removed from the tree.
     return () => {
+      console.log('🔐 [AuthProvider] Component unmounting, aborting request');
       abortController.abort();
     };
   }, [fetchUser]); // fetchUser is stable thanks to useCallback([])
@@ -179,9 +244,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     error,
     isAuthenticated: !!user,          // true when user object exists
-    refetchUser: () => fetchUser(),   // public wrapper – no signal (manual call)
+    refetchUser: () => {
+      console.log('🔐 [AuthProvider] Manual refetch triggered');
+      return fetchUser();
+    },   // public wrapper – no signal (manual call)
     logout,
   };
+
+  // Log context value changes
+  useEffect(() => {
+    console.log('🔐 [AuthProvider] Context value updated:');
+    console.log('  - user:', user);
+    console.log('  - loading:', loading);
+    console.log('  - error:', error);
+    console.log('  - isAuthenticated:', !!user);
+  }, [user, loading, error]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -206,12 +283,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  */
 export function useAuth() {
   const context = useContext(AuthContext);
-
+  console.log('🔐 [useAuth] Hook called, context exists:', !!context);
+  
   // Guard: if the context is undefined it means there's no <AuthProvider>
   // ancestor in the React tree – blow up early with a clear message.
   if (!context) {
+    console.error('🔐 [useAuth] Error: useAuth used outside of AuthProvider');
     throw new Error('useAuth must be used within AuthProvider');
   }
+
+  // Log the current auth state when hook is used
+  console.log('🔐 [useAuth] Current auth state:', {
+    isAuthenticated: context.isAuthenticated,
+    hasUser: !!context.user,
+    loading: context.loading,
+    hasError: !!context.error,
+    userDetails: context.user ? {
+      id: context.user.id,
+      name: context.user.name,
+      creator: context.user.creator,
+      active_business_key: context.user.active_business_key
+    } : null
+  });
 
   return context;
 }
