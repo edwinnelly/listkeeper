@@ -1,8 +1,7 @@
 "use client";
 import { withAuth } from "@/hoc/withAuth";
 import { apiGet, apiDelete } from "@/lib/axios";
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { createPortal } from "react-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Edit,
   Trash2,
@@ -389,171 +388,89 @@ const Pagination: React.FC<{
 };
 
 // ==============================================
-// Dropdown Portal Component
-// ==============================================
-const DropdownPortal: React.FC<{
-  position: { top: number; left: number };
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onClose: () => void;
-}> = ({ position, onView, onEdit, onDelete, onClose }) => {
-  useEffect(() => {
-    const handleClickOutside = () => {
-      onClose();
-    };
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-    }, 0);
-    
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [onClose]);
-
-  return createPortal(
-    <div 
-      className="fixed z-[100] w-48 bg-white border border-stone-100 rounded-xl shadow-2xl shadow-stone-900/20 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-      style={{ top: position.top, left: position.left }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {[
-        { 
-          label: "View Details", 
-          icon: Eye, 
-          action: onView,
-          danger: false
-        },
-        { 
-          label: "Edit Product", 
-          icon: Edit, 
-          action: onEdit,
-          danger: false
-        },
-        { 
-          label: "Delete", 
-          icon: Trash2, 
-          action: onDelete,
-          danger: true
-        },
-      ].map(({ label, icon: Icon, action, danger }) => (
-        <button
-          key={label}
-          onClick={(e) => {
-            e.stopPropagation();
-            action();
-          }}
-          className={`flex items-center gap-2.5 w-full px-4 py-2.5 text-sm font-medium transition-colors ${
-            danger
-              ? "text-rose-600 hover:bg-rose-50 border-t border-stone-100"
-              : "text-stone-700 hover:bg-stone-50"
-          }`}
-        >
-          <Icon className={`h-3.5 w-3.5 ${danger ? "text-rose-500" : "text-[#09121d]"}`} />
-          {label}
-        </button>
-      ))}
-    </div>,
-    document.body
-  );
-};
-
-// ==============================================
-// Updated Table Row
+// Table Row
 // ==============================================
 const ProductTableRow: React.FC<{
-  product: Product; 
-  index: number; 
-  startIndex: number;
-  onView: (p: Product) => void; 
-  onEdit: (p: Product) => void; 
-  onDelete: (p: Product) => void;
-  isOpen: boolean; 
-  onToggleOpen: (id: number | null, position?: { top: number; left: number }) => void;
+  product: Product; index: number; startIndex: number;
+  onView: (p: Product) => void; onEdit: (p: Product) => void; onDelete: (p: Product) => void;
+  isOpen: boolean; onToggleOpen: (id: number | null) => void;
   formatCurrency: (amount: number) => string;
-}> = ({ product, index, startIndex, onView, onEdit, onDelete, isOpen, onToggleOpen, formatCurrency }) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  const handleToggle = useCallback(() => {
-    if (isOpen) {
-      onToggleOpen(null);
-    } else {
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (rect) {
-        const viewportWidth = window.innerWidth;
-        const dropdownWidth = 192; // w-48 = 192px
-        let left = rect.left - dropdownWidth + rect.width;
-        
-        // Ensure dropdown doesn't go off-screen
-        if (left < 8) left = 8;
-        if (left + dropdownWidth > viewportWidth - 8) {
-          left = viewportWidth - dropdownWidth - 8;
-        }
-        
-        const position = {
-          top: rect.bottom + 4,
-          left: left,
-        };
-        onToggleOpen(product.id, position);
-      }
-    }
-  }, [isOpen, product.id, onToggleOpen]);
-
-  return (
-    <tr className="hover:bg-[#080e16]/[0.02] transition-colors group border-b border-stone-100 last:border-0">
-      <td className="px-5 py-3.5 text-xs text-stone-400 font-medium tabular-nums w-10">
-        {startIndex + index + 1}
-      </td>
-      <td className="px-5 py-3.5">
-        <div className="flex items-center gap-3">
-          <ProductImage src={product.image} alt={product.name} />
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-stone-800 truncate">
-              <ShortTextWithTooltip text={product.name} max={30} />
-            </div>
-            <div className="flex items-center gap-1 mt-0.5">
-              <Hash className="h-2.5 w-2.5 text-stone-400" />
-              <span className="text-[11px] text-stone-400 font-mono">{product.sku}</span>
-            </div>
+}> = ({ product, index, startIndex, onView, onEdit, onDelete, isOpen, onToggleOpen, formatCurrency }) => (
+  <tr className="hover:bg-[#080e16]/[0.02] transition-colors group border-b border-stone-100 last:border-0">
+    <td className="px-5 py-3.5 text-xs text-stone-400 font-medium tabular-nums w-10">
+      {startIndex + index + 1}
+    </td>
+    <td className="px-5 py-3.5">
+      <div className="flex items-center gap-3">
+        <ProductImage src={product.image} alt={product.name} />
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-stone-800 truncate">
+            <ShortTextWithTooltip text={product.name} max={30} />
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
+            <Hash className="h-2.5 w-2.5 text-stone-400" />
+            <span className="text-[11px] text-stone-400 font-mono">{product.sku}</span>
           </div>
         </div>
-      </td>
-      <td className="px-5 py-3.5">
-        <code className="text-[11px] bg-stone-100 text-stone-600 px-2 py-1 rounded-lg font-mono border border-stone-200">
-          {product.barcode || product.sku}
-        </code>
-      </td>
-      <td className="px-5 py-3.5 hidden lg:table-cell">
-        <span className="text-sm text-stone-600">
-          {product.category?.name || "—"}
+      </div>
+    </td>
+    <td className="px-5 py-3.5">
+      <code className="text-[11px] bg-stone-100 text-stone-600 px-2 py-1 rounded-lg font-mono border border-stone-200">
+        {product.barcode || product.sku}
+      </code>
+    </td>
+    <td className="px-5 py-3.5 hidden lg:table-cell">
+      <span className="text-sm text-stone-600">
+        {product.category?.name || "—"}
+      </span>
+    </td>
+    <td className="px-5 py-3.5">
+      <div className="flex items-center">
+        <span className="text-sm font-bold text-stone-900">
+          {formatCurrency(toNumber(product.price))}
         </span>
-      </td>
-      <td className="px-5 py-3.5">
-        <div className="flex items-center">
-          <span className="text-sm font-bold text-stone-900">
-            {formatCurrency(toNumber(product.price))}
-          </span>
-          <ProfitTrend product={product} />
-        </div>
-      </td>
-      <td className="px-5 py-3.5 hidden sm:table-cell">
-        <Badge variant={product.is_active ? "active" : "inactive"}>
-          {product.is_active ? "Active" : "Inactive"}
-        </Badge>
-      </td>
-      <td className="px-5 py-3.5">
-        <button
-          ref={buttonRef}
-          onClick={handleToggle}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
-      </td>
-    </tr>
-  );
-};
+        <ProfitTrend product={product} />
+      </div>
+    </td>
+    <td className="px-5 py-3.5 hidden sm:table-cell">
+      <Badge variant={product.is_active ? "active" : "inactive"}>
+        {product.is_active ? "Active" : "Inactive"}
+      </Badge>
+    </td>
+    <td className="px-5 py-3.5 relative">
+      <button
+        onClick={() => onToggleOpen(isOpen ? null : product.id)}
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => onToggleOpen(null)} />
+          <div className="absolute right-4 top-full mt-1 z-40 w-44 bg-white border border-stone-100 rounded-xl shadow-xl shadow-stone-900/10 overflow-hidden">
+            {[
+              { label: "View Details", icon: Eye, cls: "text-[#09121d]", action: () => { onView(product); onToggleOpen(null); } },
+              { label: "Edit Product", icon: Edit, cls: "text-stone-500", action: () => { onEdit(product); onToggleOpen(null); } },
+              { label: "Delete", icon: Trash2, cls: "text-rose-500", action: () => { onDelete(product); onToggleOpen(null); }, danger: true },
+            ].map(({ label, icon: Icon, cls, action, danger }) => (
+              <button
+                key={label}
+                onClick={action}
+                className={`flex items-center gap-2.5 w-full px-4 py-2.5 text-sm font-medium transition-colors ${danger
+                  ? "text-rose-600 hover:bg-rose-50 border-t border-stone-100"
+                  : "text-stone-700 hover:bg-stone-50"
+                  }`}
+              >
+                <Icon className={`h-3.5 w-3.5 ${cls}`} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </td>
+  </tr>
+);
 
 // ==============================================
 // Grid Card
@@ -889,7 +806,6 @@ const ManageProducts = ({ user }: { user: User }) => {
     search: "", status: "all", category: "all", sortBy: "name", sortOrder: "asc",
   });
   const [openRow, setOpenRow] = useState<number | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -955,6 +871,7 @@ const ManageProducts = ({ user }: { user: User }) => {
   const handleItemsPerPageChange = useCallback((items: number) => { setItemsPerPage(items); fetchProducts(1, items); }, [fetchProducts]);
   const handleRefresh = () => {
     fetchProducts(serverPagination.current_page, serverPagination.per_page);
+    // toast.success("Refreshed");
   };
 
   const handleDelete = async () => {
@@ -1137,23 +1054,12 @@ const ManageProducts = ({ user }: { user: User }) => {
                   {products.map((product, index) => (
                     <ProductTableRow
                       key={product.id}
-                      product={product} 
-                      index={index} 
-                      startIndex={startIndex}
+                      product={product} index={index} startIndex={startIndex}
                       onView={(p) => { setSelectedProduct(p); setViewModalOpen(true); }}
                       onEdit={(p) => router.push(getEditUrl(p))}
                       onDelete={(p) => { setSelectedProduct(p); setDeleteModalOpen(true); }}
                       isOpen={openRow === product.id}
-                      onToggleOpen={(id, position) => {
-                        if (id === null) {
-                          setOpenRow(null);
-                        } else {
-                          setOpenRow(id);
-                          if (position) {
-                            setDropdownPosition(position);
-                          }
-                        }
-                      }}
+                      onToggleOpen={setOpenRow}
                       formatCurrency={formatCurrency}
                     />
                   ))}
@@ -1190,37 +1096,6 @@ const ManageProducts = ({ user }: { user: User }) => {
           </div>
         )}
       </main>
-
-      {/* Dropdown Portal (rendered outside table) */}
-      {openRow !== null && (
-        <DropdownPortal
-          position={dropdownPosition}
-          onView={() => {
-            const product = products.find(p => p.id === openRow);
-            if (product) {
-              setSelectedProduct(product);
-              setViewModalOpen(true);
-            }
-            setOpenRow(null);
-          }}
-          onEdit={() => {
-            const product = products.find(p => p.id === openRow);
-            if (product) {
-              router.push(getEditUrl(product));
-            }
-            setOpenRow(null);
-          }}
-          onDelete={() => {
-            const product = products.find(p => p.id === openRow);
-            if (product) {
-              setSelectedProduct(product);
-              setDeleteModalOpen(true);
-            }
-            setOpenRow(null);
-          }}
-          onClose={() => setOpenRow(null)}
-        />
-      )}
 
       {/* Modals & Drawers */}
       <FilterDrawer isOpen={filterDrawerOpen} onClose={() => setFilterDrawerOpen(false)}

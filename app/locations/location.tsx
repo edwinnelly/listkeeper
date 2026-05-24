@@ -334,7 +334,7 @@ const ActionMenu: React.FC<{
           }}
           className="w-48 bg-white border border-gray-100 rounded-xl shadow-2xl shadow-gray-900/15 overflow-hidden"
         >
-          <Link href={`/locationproducts/${location.encrypted_id}`} onClick={onClose}>
+          <Link href={`/locationproducts/${location.id}`} onClick={onClose}>
             <button className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
               <ArchiveRestore className="h-3.5 w-3.5 text-gray-400" /> Manage Products
             </button>

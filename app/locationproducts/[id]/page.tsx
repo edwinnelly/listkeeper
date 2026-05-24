@@ -1503,6 +1503,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
         apiGet("/product-categories", {}, false),
       ]);
 
+      console.log(productsRes.data);
       const pagination = productsRes?.data?.pagination;
       const newProducts = productsRes?.data?.data ?? [];
       const newLocationName = productsRes?.data?.location_name ?? "";
