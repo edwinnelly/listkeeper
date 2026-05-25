@@ -76,7 +76,7 @@ interface ProductLocation {
   };
 }
 
-/** Represents a single transfer line item (for UI state management) */
+/** Represents a single transfer line item */
 interface TransferItem {
   product_id: number;
   product_name: string;
@@ -100,12 +100,9 @@ interface FormData {
 
 /** Authenticated user object with business settings */
 interface User {
-  name?: string;
-  email?: string;
   businesses_one?: Array<{
     currency?: string;
     name?: string;
-    business_key?: string;
   }>;
 }
 
@@ -315,9 +312,7 @@ interface AddressCardProps {
  */
 const AddressCard: React.FC<AddressCardProps> = ({ address, type }) => {
   const bgColor =
-    type === "source"
-      ? "bg-blue-50 border-blue-100"
-      : "bg-green-50 border-green-100";
+    type === "source" ? "bg-blue-50 border-blue-100" : "bg-green-50 border-green-100";
   const iconColor = type === "source" ? "text-blue-500" : "text-green-500";
 
   return (
@@ -410,14 +405,9 @@ const getStockColorClass = (quantity: number): string => {
 
 /**
  * NewTransferPage component for creating a stock transfer
- * 
  * URL Pattern: /itemstransfers/[encryptedPid]/[locid]
  * - encryptedPid: Encrypted product ID
  * - locid: Encrypted source location ID
- * 
- * This component handles the creation of stock transfers between locations.
- * It fetches product details and available locations, then allows users to
- * specify transfer quantity, costs, and other details before submission.
  */
 const NewTransferPage = ({ user }: { user: User }) => {
   const router = useRouter();
@@ -429,9 +419,6 @@ const NewTransferPage = ({ user }: { user: User }) => {
 
   // Get currency symbol from user's business settings
   const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
-  
-  // Get business key for API requests
-  const businessKey = user?.businesses_one?.[0]?.business_key || "";
 
   // ==============================================
   // State Management
@@ -480,12 +467,11 @@ const NewTransferPage = ({ user }: { user: User }) => {
 
   /**
    * Fetches initial data: locations list and product details
-   * Runs both requests in parallel for better performance
    */
   const fetchInitialData = async () => {
     setIsLoading(true);
     try {
-      // Fetch locations and product data in parallel
+      // Fetch locations and product data in parallel for better performance
       const [locationsRes, productRes] = await Promise.all([
         apiGet("/locations", {}, false),
         apiGet(
@@ -584,18 +570,16 @@ const NewTransferPage = ({ user }: { user: User }) => {
   /** Find selected source location from locations list */
   const selectedFromLocation = useMemo(
     () =>
-      locations.find(
-        (l) => l.id.toString() === formData.from_location_id
-      ) || null,
+      locations.find((l) => l.id.toString() === formData.from_location_id) ||
+      null,
     [formData.from_location_id, locations]
   );
 
   /** Find selected destination location from locations list */
   const selectedToLocation = useMemo(
     () =>
-      locations.find(
-        (l) => l.id.toString() === formData.to_location_id
-      ) || null,
+      locations.find((l) => l.id.toString() === formData.to_location_id) ||
+      null,
     [formData.to_location_id, locations]
   );
 
@@ -611,7 +595,6 @@ const NewTransferPage = ({ user }: { user: User }) => {
 
   /**
    * Validates the form before submission
-   * Checks all required fields and business rules
    * @returns true if form is valid, false otherwise
    */
   const validateForm = useCallback((): boolean => {
@@ -631,7 +614,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
       newErrors.transfer_date = "Please select transfer date";
     }
 
-    // Validate items exist
+    // Validate items
     if (formData.items.length === 0) {
       newErrors.items = "Please add at least one product";
     }
@@ -660,13 +643,6 @@ const NewTransferPage = ({ user }: { user: User }) => {
 
   /**
    * Handles form submission to create a new stock transfer
-   * 
-   * Constructs payload according to Laravel schema:
-   * - Product details are sent as direct fields (not nested in items array)
-   * - Includes business_key for multi-tenant support
-   * - Includes stock_quantity_before for audit trail
-   * - Calculates total as quantity × unit_cost
-   * 
    * @param e - Form submit event
    */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -680,11 +656,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
 
     setIsSubmitting(true);
 
-    // Get the transfer item (schema supports single product per transfer)
-    const transferItem = formData.items[0];
-
-    // Prepare payload matching Laravel schema structure
-    // Note: Schema stores product details directly on stock_transfers table
+    // Prepare payload with only necessary fields
     const payload = {
       from_location_id: formData.from_location_id,
       to_location_id: formData.to_location_id,
@@ -692,19 +664,13 @@ const NewTransferPage = ({ user }: { user: User }) => {
       expected_delivery_date: formData.expected_delivery_date || null,
       notes: formData.notes || null,
       reference_number: formData.reference_number || null,
-      
-      // Product details (stored directly on the transfer record)
-      product_id: transferItem.product_id,
-      stock_quantity: transferItem.stock_quantity,
-      stock_quantity_before: preloadedProduct?.stock_quantity || 0,
-      unit_cost: transferItem.unit_cost,
-      total: transferItem.total, // Calculated: quantity × unit_cost
-      
-      // Business context (from authenticated user)
-      business_key: businessKey,
-      
-      // Optional: User who created the transfer
-      postby: user?.name || null,
+      items: formData.items.map(
+        ({ product_id, stock_quantity, unit_cost }) => ({
+          product_id,
+          stock_quantity,
+          unit_cost,
+        })
+      ),
     };
 
     // Log payload for debugging
@@ -712,21 +678,6 @@ const NewTransferPage = ({ user }: { user: User }) => {
       "🚀 Submitting stock transfer payload:",
       JSON.stringify(payload, null, 2)
     );
-    console.log("📦 Payload details:", {
-      sourceLocation: payload.from_location_id,
-      destinationLocation: payload.to_location_id,
-      transferDate: payload.transfer_date,
-      expectedDelivery: payload.expected_delivery_date,
-      productId: payload.product_id,
-      quantity: payload.stock_quantity,
-      quantityBefore: payload.stock_quantity_before,
-      unitCost: payload.unit_cost,
-      total: payload.total,
-      businessKey: payload.business_key,
-      postBy: payload.postby,
-      hasNotes: !!payload.notes,
-      hasReference: !!payload.reference_number,
-    });
 
     try {
       const response = await apiPost("/stock-transfers", payload);
@@ -741,22 +692,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
         status: error?.response?.status,
         payload,
       });
-      
-      // Handle validation errors from Laravel
       const message =
         error?.response?.data?.message ||
-        error?.response?.data?.error ||
         "Failed to create stock transfer";
-        
-      // If there are validation errors, display them
-      if (error?.response?.data?.errors) {
-        const validationErrors = Object.values(
-          error.response.data.errors
-        ).flat();
-        toast.error(validationErrors.join("\n"));
-      } else {
-        toast.error(message);
-      }
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -1032,7 +971,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
                             loc.id.toString() !== formData.from_location_id
                         )
                         .map((location) => (
-                          <option key={location.id} value={location.id}>
+                          <option
+                            key={location.id}
+                            value={location.id}
+                          >
                             {location.location_name}
                             {location.head_office === "yes" && " (HQ)"}
                           </option>
@@ -1160,7 +1102,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
                             updateItem(
                               0,
                               "stock_quantity",
-                              Math.max(1, parseInt(e.target.value) || 1)
+                              Math.max(
+                                1,
+                                parseInt(e.target.value) || 1
+                              )
                             )
                           }
                           className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#166534]/20 outline-none text-lg font-medium transition-all ${
@@ -1220,7 +1165,8 @@ const NewTransferPage = ({ user }: { user: User }) => {
                                 0,
                                 "stock_quantity",
                                 Math.ceil(
-                                  item.available_stock * (percent / 100)
+                                  item.available_stock *
+                                    (percent / 100)
                                 )
                               )
                             }
@@ -1246,7 +1192,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
                           updateItem(
                             0,
                             "unit_cost",
-                            Math.max(0, parseFloat(e.target.value) || 0)
+                            Math.max(
+                              0,
+                              parseFloat(e.target.value) || 0
+                            )
                           )
                         }
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-lg bg-white"
@@ -1272,7 +1221,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
                           {item.stock_quantity} ×{" "}
-                          {formatCurrency(item.unit_cost, currencySymbol)}
+                          {formatCurrency(
+                            item.unit_cost,
+                            currencySymbol
+                          )}
                         </p>
                       </div>
                     </div>
