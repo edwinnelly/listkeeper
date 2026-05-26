@@ -46,6 +46,7 @@ import {
   Undo2,
   Percent,
   PackagePlus,
+  ArrowLeftRight,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -401,8 +402,8 @@ const FilterChip: React.FC<FilterChipProps> = memo(({ label, active, onClick }) 
   <button
     onClick={onClick}
     className={`px-3 py-1.5 text-sm rounded-full transition-colors ${active
-        ? "bg-[#080e16] text-white"
-        : "bg-stone-100 text-black hover:bg-stone-200"
+      ? "bg-[#080e16] text-white"
+      : "bg-stone-100 text-black hover:bg-stone-200"
       }`}
   >
     {label}
@@ -689,8 +690,8 @@ const Pagination: React.FC<PaginationProps> = memo(({
                 <button
                   onClick={() => onPageChange(page as number)}
                   className={`min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                      ? "bg-[#080e16] text-white"
-                      : "text-black hover:bg-stone-100 border border-stone-300"
+                    ? "bg-[#080e16] text-white"
+                    : "text-black hover:bg-stone-100 border border-stone-300"
                     }`}
                 >
                   {page}
@@ -806,8 +807,8 @@ const ProductTableRow: React.FC<ProductTableRowProps> = memo(({
       <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
         <span
           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${product.is_active
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-stone-100 text-black/70 border border-stone-200"
+            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+            : "bg-stone-100 text-black/70 border border-stone-200"
             }`}
         >
           {product.is_active ? "Active" : "Inactive"}
@@ -1107,8 +1108,8 @@ const FilterDrawer: React.FC<FilterDrawerProps> = memo(({
               <button
                 onClick={() => onFilterChange("sortOrder", "asc")}
                 className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${filters.sortOrder === "asc"
-                    ? "bg-[#080e16] text-white border-[#080e16]"
-                    : "bg-white text-black border-stone-300 hover:bg-stone-50"
+                  ? "bg-[#080e16] text-white border-[#080e16]"
+                  : "bg-white text-black border-stone-300 hover:bg-stone-50"
                   }`}
               >
                 Asc
@@ -1116,8 +1117,8 @@ const FilterDrawer: React.FC<FilterDrawerProps> = memo(({
               <button
                 onClick={() => onFilterChange("sortOrder", "desc")}
                 className={`flex-1 px-3 py-2 text-sm rounded-lg border transition ${filters.sortOrder === "desc"
-                    ? "bg-[#080e16] text-white border-[#080e16]"
-                    : "bg-white text-black border-stone-300 hover:bg-stone-50"
+                  ? "bg-[#080e16] text-white border-[#080e16]"
+                  : "bg-white text-black border-stone-300 hover:bg-stone-50"
                   }`}
               >
                 Desc
@@ -1684,12 +1685,22 @@ const ManageProducts = ({ user }: { user?: User }) => {
                 <RefreshCw className="h-5 w-5" />
               </button>
               <Link
-                href="/addproductlocations"
+                href={`/addproductlocations`}
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#080e16]/20"
               >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add Product</span>
               </Link>
+
+              <Link
+                href={`/transfers/${id}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#060b12] text-white text-sm font-medium rounded-lg hover:bg-[#0a1119] transition-all shadow-lg shadow-[#080e16]/20"
+              >
+                <ArrowLeftRight className="h-4 w-4" />
+                <span className="hidden sm:inline">Transfer Product</span>
+              </Link>
+
+
             </div>
           </div>
         </div>
