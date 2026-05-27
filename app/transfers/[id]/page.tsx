@@ -7,25 +7,23 @@ import {
     ArrowLeft,
     Loader2,
     Package,
-    AlertCircle,
     ArrowRightLeft,
     Search,
     Filter,
     ChevronDown,
     Eye,
     Calendar,
-    Warehouse,
     TrendingUp,
-    TrendingDown,
     RefreshCw,
-    Building2,
     Hash,
     Clock,
     CheckCircle2,
     XCircle,
-    AlertTriangle,
-    Download,
     Plus,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -75,6 +73,29 @@ interface StockTransfer {
     };
 }
 
+/** Pagination metadata from API */
+interface PaginationMeta {
+    current_page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+    from: number;
+    to: number;
+    has_more_pages: boolean;
+}
+
+/** Summary data from API */
+interface TransferSummary {
+    total_value: number;
+    current_page_value: number;
+    status_counts: {
+        pending: number;
+        in_transit: number;
+        completed: number;
+        cancelled: number;
+    };
+}
+
 /** Authenticated user object with business settings */
 interface User {
     name?: string;
@@ -104,6 +125,8 @@ const CURRENCY_LOCALE = "en-US";
 const DEFAULT_CURRENCY = "USD";
 const API_STORAGE_BASE_URL =
     process.env.NEXT_PUBLIC_STORAGE_URL || "http://localhost:8000/storage";
+
+const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 const STATUS_CONFIG = {
     pending: {
@@ -166,19 +189,6 @@ const formatDate = (dateStr: string): string => {
 const getImageUrl = (src: string | null): string => {
     if (!src) return "";
     return `${API_STORAGE_BASE_URL}/${src}`;
-};
-
-const extractDataFromResponse = <T,>(
-    response: unknown,
-    paths: string[]
-): T[] => {
-    for (const path of paths) {
-        const data = path
-            .split(".")
-            .reduce((obj: any, key) => obj?.[key], response);
-        if (Array.isArray(data)) return data;
-    }
-    return [];
 };
 
 // ==============================================
@@ -252,7 +262,7 @@ const EmptyState: React.FC<{ filtered: boolean; locationId?: string }> = ({ filt
         {!filtered && (
             <Link
                 href={locationId ? `/itemstransfers/${locationId}` : "/transfers/new"}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#166534] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/20"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#010804] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#010804]/20"
             >
                 <Plus className="h-4 w-4" />
                 Create First Transfer
@@ -280,13 +290,13 @@ const TransferRow: React.FC<TransferRowProps> = ({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03 }}
-            onClick={() => router.push(`/fetch_transfer_stock/${transfer.id}`)}
+            onClick={() => router.push(`/approvetransfers/${transfer.id}`)}
             className="border-b border-gray-100 hover:bg-gray-50/80 cursor-pointer transition-colors group"
         >
             {/* Product */}
             <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-[#166534]/10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="w-9 h-9 bg-[#010804]/10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {transfer.product?.image ? (
                             <img
                                 src={getImageUrl(transfer.product.image)}
@@ -294,11 +304,11 @@ const TransferRow: React.FC<TransferRowProps> = ({
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <Package className="h-4 w-4 text-[#166534]" />
+                            <Package className="h-4 w-4 text-[#010804]" />
                         )}
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-gray-900 group-hover:text-[#166534] transition-colors">
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-[#010804] transition-colors">
                             {transfer.product?.name || "—"}
                         </p>
                         <p className="text-xs text-gray-400 mt-0.5">
@@ -378,13 +388,199 @@ const TransferRow: React.FC<TransferRowProps> = ({
                         e.stopPropagation();
                         router.push(`/transfers/${transfer.id}`);
                     }}
-                    className="p-2 text-gray-400 hover:text-[#166534] hover:bg-[#166534]/10 rounded-lg transition-all"
+                    className="p-2 text-gray-400 hover:text-[#010804] hover:bg-[#010804]/10 rounded-lg transition-all"
                     aria-label="View transfer details"
                 >
                     <Eye className="h-4 w-4" />
                 </button>
             </td>
         </motion.tr>
+    );
+};
+
+/** Pagination component */
+interface PaginationProps {
+    currentPage: number;
+    totalPages: number;
+    itemsPerPage: number;
+    totalItems: number;
+    currentPageValue?: number;
+    totalValue?: number;
+    currencySymbol?: string;
+    onPageChange: (page: number) => void;
+    onItemsPerPageChange: (itemsPerPage: number) => void;
+}
+
+const Pagination: React.FC<PaginationProps> = ({
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems,
+    currentPageValue = 0,
+    totalValue = 0,
+    currencySymbol = "$",
+    onPageChange,
+    onItemsPerPageChange,
+}) => {
+    // Calculate visible page numbers
+    const getVisiblePages = (): (number | string)[] => {
+        if (totalPages <= 7) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+
+        const delta = 2;
+        const range: number[] = [];
+        const rangeWithDots: (number | string)[] = [];
+
+        for (
+            let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++
+        ) {
+            range.push(i);
+        }
+
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, "...");
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        rangeWithDots.push(...range);
+
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push("...", totalPages);
+        } else if (totalPages > 1) {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots;
+    };
+
+    const startItem = totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+    if (totalItems === 0) return null;
+
+    return (
+        <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Items per page selector */}
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Rows per page:</span>
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            onItemsPerPageChange(Number(e.target.value));
+                            onPageChange(1);
+                        }}
+                        className="pl-2 pr-8 py-1 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none cursor-pointer"
+                    >
+                        {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Value info */}
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-gray-500">Page Total:</span>
+                        <span className="font-semibold text-gray-700">
+                            {formatCurrency(currentPageValue, currencySymbol)}
+                        </span>
+                    </div>
+                    <div className="w-px h-4 bg-gray-300"></div>
+                    <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-gray-500">Overall Total:</span>
+                        <span className="font-semibold text-[#010804]">
+                            {formatCurrency(totalValue, currencySymbol)}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Page info and navigation */}
+                <div className="flex items-center gap-4">
+                    <p className="text-xs text-gray-500">
+                        {startItem}-{endItem} of {totalItems}
+                    </p>
+                    <div className="flex items-center gap-1">
+                        {/* First page */}
+                        <button
+                            onClick={() => onPageChange(1)}
+                            disabled={currentPage === 1}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="First page"
+                        >
+                            <ChevronsLeft className="h-4 w-4" />
+                        </button>
+
+                        {/* Previous page */}
+                        <button
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Previous page"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </button>
+
+                        {/* Page numbers */}
+                        <div className="flex items-center gap-0.5">
+                            {getVisiblePages().map((page, index) => {
+                                if (page === "...") {
+                                    return (
+                                        <span
+                                            key={`dots-${index}`}
+                                            className="w-8 h-8 flex items-center justify-center text-xs text-gray-400"
+                                        >
+                                            ...
+                                        </span>
+                                    );
+                                }
+
+                                const pageNum = page as number;
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => onPageChange(pageNum)}
+                                        className={`w-8 h-8 flex items-center justify-center text-xs font-medium rounded-lg transition-all ${
+                                            currentPage === pageNum
+                                                ? "bg-[#010804] text-white shadow-sm"
+                                                : "text-gray-600 hover:bg-gray-100"
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Next page */}
+                        <button
+                            onClick={() => onPageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Next page"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+
+                        {/* Last page */}
+                        <button
+                            onClick={() => onPageChange(totalPages)}
+                            disabled={currentPage === totalPages}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Last page"
+                        >
+                            <ChevronsRight className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 
@@ -395,11 +591,10 @@ const TransferRow: React.FC<TransferRowProps> = ({
 const TransfersPage = ({ user }: { user: User }) => {
     const router = useRouter();
     const params = useParams();
-    
+
     // Extract the location ID from the URL
-    // This handles routes like: /fetch_transfer_stock/[id]
     const locationId = (params?.id as string) || "";
-    
+
     console.log("📍 Location ID from URL:", locationId);
 
     const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
@@ -414,37 +609,100 @@ const TransfersPage = ({ user }: { user: User }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [dateFilter, setDateFilter] = useState<string>("all");
-    const [showFilters, setShowFilters] = useState(false);
+    const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+        current_page: 1,
+        per_page: 25,
+        total: 0,
+        total_pages: 1,
+        from: 0,
+        to: 0,
+        has_more_pages: false,
+    });
+    const [summary, setSummary] = useState<TransferSummary>({
+        total_value: 0,
+        current_page_value: 0,
+        status_counts: {
+            pending: 0,
+            in_transit: 0,
+            completed: 0,
+            cancelled: 0,
+        },
+    });
 
     // ==============================================
     // Data Fetching
     // ==============================================
 
     /**
-     * Fetches stock transfers from the API
-     * If locationId is present, passes it to filter by location
+     * Fetches stock transfers from the API with pagination
+     * @param page - Page number to fetch
+     * @param perPage - Items per page
      * @param silent - If true, uses refreshing state instead of loading state
      */
-    const fetchTransfers = useCallback(async (silent = false) => {
-        if (!silent) setIsLoading(true);
-        else setIsRefreshing(true);
+    const fetchTransfers = useCallback(async (page = 1, perPage = 25, silent = false) => {
+        if (!silent) {
+            setIsLoading(true);
+        } else {
+            setIsRefreshing(true);
+        }
 
         try {
-            // Build the endpoint URL with optional location ID
-            const endpoint = locationId 
-                ? `/fetch_transfer_stock/${locationId}` 
+            const endpoint = locationId
+                ? `/fetch_transfer_stock/${locationId}`
                 : "/fetch_transfer_stock";
+
+            console.log("🔄 Fetching transfers from:", endpoint, { page, perPage });
+
+            const response = await apiGet(endpoint, {
+                page,
+                per_page: perPage,
+            }, false);
+
+            // Handle the response
+            const responseData = response?.data || response;
             
-            console.log("🔄 Fetching transfers from:", endpoint);
-            
-            const response = await apiGet(endpoint, {}, false);
-            const data = extractDataFromResponse<StockTransfer>(response, [
-                "data",
-                "data.data",
-                "data.transfers",
-            ]);
-            setTransfers(data);
-            console.log("✅ Transfers loaded:", data.length);
+            if (responseData?.success) {
+                setTransfers(responseData.data || []);
+                
+                if (responseData.pagination) {
+                    setPaginationMeta(responseData.pagination);
+                }
+                
+                if (responseData.summary) {
+                    setSummary(responseData.summary);
+                }
+                
+                console.log("✅ Transfers loaded:", {
+                    count: responseData.data?.length,
+                    total: responseData.pagination?.total,
+                    totalValue: responseData.summary?.total_value
+                });
+            } else {
+                // Fallback for old API structure
+                const data = Array.isArray(responseData) 
+                    ? responseData 
+                    : responseData?.data || [];
+                setTransfers(data);
+                setPaginationMeta({
+                    current_page: 1,
+                    per_page: perPage,
+                    total: data.length,
+                    total_pages: 1,
+                    from: data.length > 0 ? 1 : 0,
+                    to: data.length,
+                    has_more_pages: false,
+                });
+                setSummary({
+                    total_value: data.reduce((sum: number, t: StockTransfer) => sum + t.total, 0),
+                    current_page_value: data.reduce((sum: number, t: StockTransfer) => sum + t.total, 0),
+                    status_counts: {
+                        pending: data.filter((t: StockTransfer) => t.status === "pending").length,
+                        in_transit: data.filter((t: StockTransfer) => t.status === "in_transit").length,
+                        completed: data.filter((t: StockTransfer) => t.status === "completed").length,
+                        cancelled: data.filter((t: StockTransfer) => t.status === "cancelled").length,
+                    },
+                });
+            }
         } catch (error: any) {
             const message =
                 error?.response?.data?.message || "Failed to load transfers";
@@ -456,8 +714,9 @@ const TransfersPage = ({ user }: { user: User }) => {
         }
     }, [locationId]);
 
+    // Initial fetch
     useEffect(() => {
-        fetchTransfers();
+        fetchTransfers(1, 25);
     }, [fetchTransfers]);
 
     // ==============================================
@@ -466,19 +725,19 @@ const TransfersPage = ({ user }: { user: User }) => {
 
     const stats: TransferStats = useMemo(() => {
         return {
-            total: transfers.length,
-            pending: transfers.filter((t) => t.status === "pending").length,
-            in_transit: transfers.filter((t) => t.status === "in_transit").length,
-            completed: transfers.filter((t) => t.status === "completed").length,
-            cancelled: transfers.filter((t) => t.status === "cancelled").length,
-            total_value: transfers.reduce((sum, t) => sum + t.total, 0),
+            total: paginationMeta.total,
+            pending: summary.status_counts.pending,
+            in_transit: summary.status_counts.in_transit,
+            completed: summary.status_counts.completed,
+            cancelled: summary.status_counts.cancelled,
+            total_value: summary.total_value,
         };
-    }, [transfers]);
+    }, [paginationMeta.total, summary]);
 
+    // Client-side filtering (still useful for search on current page)
     const filteredTransfers = useMemo(() => {
         let result = [...transfers];
 
-        // Search filter
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             result = result.filter(
@@ -491,12 +750,10 @@ const TransfersPage = ({ user }: { user: User }) => {
             );
         }
 
-        // Status filter
         if (statusFilter !== "all") {
             result = result.filter((t) => t.status === statusFilter);
         }
 
-        // Date filter
         if (dateFilter !== "all") {
             const now = new Date();
             const cutoffs: Record<string, Date> = {
@@ -520,6 +777,21 @@ const TransfersPage = ({ user }: { user: User }) => {
         statusFilter !== "all" ||
         dateFilter !== "all";
 
+    // Pagination handlers
+    const handlePageChange = (page: number) => {
+        const validPage = Math.max(1, Math.min(page, paginationMeta.total_pages));
+        fetchTransfers(validPage, paginationMeta.per_page, true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const handleItemsPerPageChange = (perPage: number) => {
+        fetchTransfers(1, perPage, true);
+    };
+
+    const handleRefresh = () => {
+        fetchTransfers(paginationMeta.current_page, paginationMeta.per_page, true);
+    };
+
     // ==============================================
     // Render: Loading
     // ==============================================
@@ -528,7 +800,7 @@ const TransfersPage = ({ user }: { user: User }) => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#166534] mx-auto mb-4" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[#010804] mx-auto mb-4" />
                     <p className="text-gray-500">Loading transfers...</p>
                 </div>
             </div>
@@ -541,9 +813,7 @@ const TransfersPage = ({ user }: { user: User }) => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* ============================================== */}
             {/* Header */}
-            {/* ============================================== */}
             <header className="bg-white border-b border-gray-200 top-0 z-30 mt-[-13px] w-full">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between gap-4">
@@ -568,7 +838,7 @@ const TransfersPage = ({ user }: { user: User }) => {
 
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={() => fetchTransfers(true)}
+                                onClick={handleRefresh}
                                 disabled={isRefreshing}
                                 className="p-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all disabled:opacity-50"
                                 aria-label="Refresh transfers"
@@ -578,8 +848,8 @@ const TransfersPage = ({ user }: { user: User }) => {
                                 />
                             </button>
                             <Link
-                                href={locationId ? `/itemstransfers/new/${locationId}` : "/transfers/new"}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#166534] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25"
+                                href={`/locationproducts/${locationId}`}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#020904] text-white text-sm font-semibold rounded-xl hover:bg-[#020a05] transition-all shadow-lg shadow-[#010804]/25"
                             >
                                 <Plus className="h-4 w-4" />
                                 New Transfer
@@ -591,15 +861,13 @@ const TransfersPage = ({ user }: { user: User }) => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-                {/* ============================================== */}
                 {/* Stats Row */}
-                {/* ============================================== */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                     <StatCard
                         label="Total"
                         value={stats.total}
-                        icon={<ArrowRightLeft className="h-5 w-5 text-[#166534]" />}
-                        iconBg="bg-[#166534]/10"
+                        icon={<ArrowRightLeft className="h-5 w-5 text-[#010804]" />}
+                        iconBg="bg-[#010804]/10"
                         delay={0}
                     />
                     <StatCard
@@ -639,9 +907,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                     />
                 </div>
 
-                {/* ============================================== */}
                 {/* Filters & Search */}
-                {/* ============================================== */}
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -649,7 +915,6 @@ const TransfersPage = ({ user }: { user: User }) => {
                     className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
                 >
                     <div className="p-4 flex flex-col sm:flex-row gap-3">
-                        {/* Search */}
                         <div className="relative flex-1">
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
@@ -657,16 +922,15 @@ const TransfersPage = ({ user }: { user: User }) => {
                                 placeholder="Search by product, SKU, location, or reference..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                                className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-sm transition-all"
                             />
                         </div>
 
-                        {/* Status Filter */}
                         <div className="relative">
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="appearance-none pl-4 pr-9 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm bg-white transition-all"
+                                className="appearance-none pl-4 pr-9 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-sm bg-white transition-all"
                             >
                                 <option value="all">All Statuses</option>
                                 <option value="pending">Pending</option>
@@ -677,12 +941,11 @@ const TransfersPage = ({ user }: { user: User }) => {
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                         </div>
 
-                        {/* Date Filter */}
                         <div className="relative">
                             <select
                                 value={dateFilter}
                                 onChange={(e) => setDateFilter(e.target.value)}
-                                className="appearance-none pl-4 pr-9 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm bg-white transition-all"
+                                className="appearance-none pl-4 pr-9 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-sm bg-white transition-all"
                             >
                                 <option value="all">All Time</option>
                                 <option value="today">Today</option>
@@ -692,7 +955,6 @@ const TransfersPage = ({ user }: { user: User }) => {
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                         </div>
 
-                        {/* Active filter indicator */}
                         {isFiltered && (
                             <button
                                 onClick={() => {
@@ -707,7 +969,6 @@ const TransfersPage = ({ user }: { user: User }) => {
                         )}
                     </div>
 
-                    {/* Active filter pill row */}
                     <AnimatePresence>
                         {isFiltered && (
                             <motion.div
@@ -718,19 +979,19 @@ const TransfersPage = ({ user }: { user: User }) => {
                             >
                                 <span className="text-xs text-gray-500">Active filters:</span>
                                 {searchQuery && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#166534]/10 text-[#166534] text-xs font-medium rounded-full">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#010804]/10 text-[#010804] text-xs font-medium rounded-full">
                                         <Search className="h-3 w-3" />
                                         "{searchQuery}"
                                     </span>
                                 )}
                                 {statusFilter !== "all" && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#166534]/10 text-[#166534] text-xs font-medium rounded-full">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#010804]/10 text-[#010804] text-xs font-medium rounded-full">
                                         <Filter className="h-3 w-3" />
                                         {STATUS_CONFIG[statusFilter as keyof typeof STATUS_CONFIG]?.label}
                                     </span>
                                 )}
                                 {dateFilter !== "all" && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#166534]/10 text-[#166534] text-xs font-medium rounded-full">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#010804]/10 text-[#010804] text-xs font-medium rounded-full">
                                         <Calendar className="h-3 w-3" />
                                         {dateFilter === "today"
                                             ? "Today"
@@ -748,9 +1009,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                     </AnimatePresence>
                 </motion.div>
 
-                {/* ============================================== */}
                 {/* Transfers Table */}
-                {/* ============================================== */}
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -760,74 +1019,63 @@ const TransfersPage = ({ user }: { user: User }) => {
                     {filteredTransfers.length === 0 ? (
                         <EmptyState filtered={isFiltered} locationId={locationId} />
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-200">
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Product
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Route
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Quantity
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Value
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Date
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Reference
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">
-                                            {/* Actions */}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredTransfers.map((transfer, index) => (
-                                        <TransferRow
-                                            key={transfer.id}
-                                            transfer={transfer}
-                                            currencySymbol={currencySymbol}
-                                            index={index}
-                                        />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="bg-gray-50 border-b border-gray-200">
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                Product
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                Route
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                Quantity
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                Value
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                Date
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                Reference
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">
+                                                {/* Actions */}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredTransfers.map((transfer, index) => (
+                                            <TransferRow
+                                                key={transfer.id}
+                                                transfer={transfer}
+                                                currencySymbol={currencySymbol}
+                                                index={index}
+                                            />
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    {/* Table footer */}
-                    {filteredTransfers.length > 0 && (
-                        <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                            <p className="text-xs text-gray-500">
-                                Showing{" "}
-                                <span className="font-semibold text-gray-700">
-                                    {filteredTransfers.length}
-                                </span>{" "}
-                                of{" "}
-                                <span className="font-semibold text-gray-700">
-                                    {transfers.length}
-                                </span>{" "}
-                                transfers
-                            </p>
-                            <p className="text-xs text-gray-500">
-                                Total value:{" "}
-                                <span className="font-semibold text-gray-700">
-                                    {formatCurrency(
-                                        filteredTransfers.reduce((s, t) => s + t.total, 0),
-                                        currencySymbol
-                                    )}
-                                </span>
-                            </p>
-                        </div>
+                            {/* Pagination Footer with Value Summary */}
+                            <Pagination
+                                currentPage={paginationMeta.current_page}
+                                totalPages={paginationMeta.total_pages}
+                                itemsPerPage={paginationMeta.per_page}
+                                totalItems={paginationMeta.total}
+                                currentPageValue={summary.current_page_value}
+                                totalValue={summary.total_value}
+                                currencySymbol={currencySymbol}
+                                onPageChange={handlePageChange}
+                                onItemsPerPageChange={handleItemsPerPageChange}
+                            />
+                        </>
                     )}
                 </motion.div>
             </main>

@@ -28,7 +28,7 @@ import {
     Plus,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -236,7 +236,7 @@ const StatCard: React.FC<StatCardProps> = ({
 );
 
 /** Empty state component */
-const EmptyState: React.FC<{ filtered: boolean }> = ({ filtered }) => (
+const EmptyState: React.FC<{ filtered: boolean; locationId?: string }> = ({ filtered, locationId }) => (
     <div className="text-center py-16">
         <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <ArrowRightLeft className="h-8 w-8 text-gray-400" />
@@ -251,7 +251,7 @@ const EmptyState: React.FC<{ filtered: boolean }> = ({ filtered }) => (
         </p>
         {!filtered && (
             <Link
-                href="/transfers/new"
+                href={locationId ? `/itemstransfers/${locationId}` : "/transfers/new"}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#166534] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/20"
             >
                 <Plus className="h-4 w-4" />
@@ -394,6 +394,13 @@ const TransferRow: React.FC<TransferRowProps> = ({
 
 const TransfersPage = ({ user }: { user: User }) => {
     const router = useRouter();
+    const params = useParams();
+
+    // Extract the location ID from the URL
+    // This handles routes like: /fetch_transfer_stock/[id]
+    const locationId = (params?.id as string) || "";
+
+    console.log("📍 Location ID from URL:", locationId);
 
     const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
 
@@ -413,27 +420,41 @@ const TransfersPage = ({ user }: { user: User }) => {
     // Data Fetching
     // ==============================================
 
+    /**
+     * Fetches stock transfers from the API
+     * If locationId is present, passes it to filter by location
+     * @param silent - If true, uses refreshing state instead of loading state
+     */
     const fetchTransfers = useCallback(async (silent = false) => {
         if (!silent) setIsLoading(true);
         else setIsRefreshing(true);
 
         try {
-            const response = await apiGet("/fetch_transfer_stock", {}, false);
+            // Build the endpoint URL with optional location ID
+            const endpoint = locationId
+                ? `/fetch_transfer_stock/${locationId}`
+                : "/fetch_transfer_stock";
+
+            console.log("🔄 Fetching transfers from:", endpoint);
+
+            const response = await apiGet(endpoint, {}, false);
             const data = extractDataFromResponse<StockTransfer>(response, [
                 "data",
                 "data.data",
                 "data.transfers",
             ]);
             setTransfers(data);
+            console.log("✅ Transfers loaded:", data.length);
         } catch (error: any) {
             const message =
                 error?.response?.data?.message || "Failed to load transfers";
             toast.error(message);
+            console.error("❌ Failed to fetch transfers:", error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    }, []);
+    }, [locationId]);
 
     useEffect(() => {
         fetchTransfers();
@@ -539,6 +560,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                                     Stock Transfers
                                 </h1>
                                 <p className="text-sm text-gray-500">
+                                    {locationId && "Filtered by location • "}
                                     {stats.total} transfer{stats.total !== 1 ? "s" : ""} total
                                 </p>
                             </div>
@@ -556,8 +578,8 @@ const TransfersPage = ({ user }: { user: User }) => {
                                 />
                             </button>
                             <Link
-                                href="/transfers/new"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#166534] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25"
+                                href={locationId ? `/itemstransfers/new/${locationId}` : "/transfers/new"}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#020904] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25"
                             >
                                 <Plus className="h-4 w-4" />
                                 New Transfer
@@ -736,7 +758,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                     className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
                 >
                     {filteredTransfers.length === 0 ? (
-                        <EmptyState filtered={isFiltered} />
+                        <EmptyState filtered={isFiltered} locationId={locationId} />
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full">

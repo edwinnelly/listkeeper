@@ -1530,9 +1530,7 @@ const ManageProducts = ({ user }: { user?: User }) => {
       if (serverPage && serverPage !== currentPage) setCurrentPage(serverPage);
       setCategories(newCategories);
     } catch (err: unknown) {
-      const error = err as ApiError;
-      console.error("Error loading data:", error);
-      toast.error("Failed to load data");
+      router.push('/pagenotfound');
     } finally {
       setIsLoading(false);
     }

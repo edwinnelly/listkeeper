@@ -289,7 +289,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
     <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#166534] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-[#010804] flex items-center justify-center">
             {icon}
           </div>
           <div>
@@ -429,7 +429,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
 
   // Get currency symbol from user's business settings
   const currencySymbol = user?.businesses_one?.[0]?.currency || "$";
-  
+
   // Get business key for API requests
   const businessKey = user?.businesses_one?.[0]?.business_key || "";
 
@@ -692,17 +692,17 @@ const NewTransferPage = ({ user }: { user: User }) => {
       expected_delivery_date: formData.expected_delivery_date || null,
       notes: formData.notes || null,
       reference_number: formData.reference_number || null,
-      
+
       // Product details (stored directly on the transfer record)
       product_id: transferItem.product_id,
       stock_quantity: transferItem.stock_quantity,
       stock_quantity_before: preloadedProduct?.stock_quantity || 0,
       unit_cost: transferItem.unit_cost,
       total: transferItem.total, // Calculated: quantity × unit_cost
-      
+
       // Business context (from authenticated user)
       business_key: businessKey,
-      
+
       // Optional: User who created the transfer
       postby: user?.name || null,
     };
@@ -741,13 +741,13 @@ const NewTransferPage = ({ user }: { user: User }) => {
         status: error?.response?.status,
         payload,
       });
-      
+
       // Handle validation errors from Laravel
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         "Failed to create stock transfer";
-        
+
       // If there are validation errors, display them
       if (error?.response?.data?.errors) {
         const validationErrors = Object.values(
@@ -770,7 +770,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#166534] mx-auto mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#010804] mx-auto mb-4" />
           <p className="text-gray-500">Loading product details...</p>
         </div>
       </div>
@@ -802,7 +802,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
             </button>
             <button
               onClick={() => router.push("/locations")}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#166534] text-white rounded-xl hover:bg-[#14532d] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#010804] text-white rounded-xl hover:bg-[#010804] transition-colors"
             >
               <Warehouse className="h-4 w-4" />
               View Locations
@@ -856,7 +856,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
             {/* Action buttons */}
             <div className="flex items-center gap-3">
               <Link
-                href="/transfers"
+                href={`/transfers/${sourceLocationId}`}
                 className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
               >
                 View Transfers
@@ -866,7 +866,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#166534] text-white text-sm font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#010804] text-white text-sm font-semibold rounded-xl hover:bg-[#010804] transition-all shadow-lg shadow-[#010804]/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -896,7 +896,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
             <div className="p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 {/* Product image thumbnail */}
-                <div className="w-20 h-20 bg-[#166534]/10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div className="w-20 h-20 bg-[#010804]/10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {preloadedProduct?.product?.image ? (
                     <img
                       src={getImageUrl(preloadedProduct.product.image)}
@@ -905,7 +905,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                       loading="lazy"
                     />
                   ) : (
-                    <Package className="h-10 w-10 text-[#166534]" />
+                    <Package className="h-10 w-10 text-[#010804]" />
                   )}
                 </div>
 
@@ -931,7 +931,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                         preloadedProduct?.cost_price || 0,
                         currencySymbol
                       )}
-                      valueClassName="text-[#166534] font-semibold"
+                      valueClassName="text-[#010804] font-semibold"
                     />
                     <DetailItem
                       label="Sale Price"
@@ -983,7 +983,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                 {/* Source Location (read-only) */}
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <Warehouse className="h-4 w-4 text-[#166534]" />
+                    <Warehouse className="h-4 w-4 text-[#010804]" />
                     Source Location
                   </label>
                   <div className="px-4 py-3 bg-gray-100 border-2 border-gray-300 rounded-xl text-sm text-gray-800 font-medium">
@@ -1007,7 +1007,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                 {/* Destination Location (selectable) */}
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <Building2 className="h-4 w-4 text-[#166534]" />
+                    <Building2 className="h-4 w-4 text-[#010804]" />
                     Destination Location <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -1016,11 +1016,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
                       onChange={(e) =>
                         updateField("to_location_id", e.target.value)
                       }
-                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm appearance-none bg-white transition-all ${
-                        errors.to_location_id
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-200"
-                      }`}
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-sm appearance-none bg-white transition-all ${errors.to_location_id
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-200"
+                        }`}
                       aria-label="Select destination location"
                     >
                       <option value="">
@@ -1064,7 +1063,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                 <FormField
                   label="Transfer Date"
                   required
-                  icon={<Calendar className="h-4 w-4 text-[#166534]" />}
+                  icon={<Calendar className="h-4 w-4 text-[#010804]" />}
                   error={errors.transfer_date}
                 >
                   <input
@@ -1074,14 +1073,14 @@ const NewTransferPage = ({ user }: { user: User }) => {
                       updateField("transfer_date", e.target.value)
                     }
                     min={formatDateForInput(new Date())}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-sm transition-all"
                   />
                 </FormField>
 
                 {/* Expected Delivery Date */}
                 <FormField
                   label="Expected Delivery"
-                  icon={<Calendar className="h-4 w-4 text-[#166534]" />}
+                  icon={<Calendar className="h-4 w-4 text-[#010804]" />}
                 >
                   <input
                     type="date"
@@ -1093,14 +1092,14 @@ const NewTransferPage = ({ user }: { user: User }) => {
                       formData.transfer_date ||
                       formatDateForInput(new Date())
                     }
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-sm transition-all"
                   />
                 </FormField>
 
                 {/* Reference Number */}
                 <FormField
                   label="Reference Number"
-                  icon={<Hash className="h-4 w-4 text-[#166534]" />}
+                  icon={<Hash className="h-4 w-4 text-[#010804]" />}
                 >
                   <input
                     type="text"
@@ -1109,7 +1108,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                       updateField("reference_number", e.target.value)
                     }
                     placeholder="e.g., TRF-2024-001"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-sm transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-sm transition-all"
                   />
                 </FormField>
               </div>
@@ -1122,9 +1121,8 @@ const NewTransferPage = ({ user }: { user: User }) => {
           <SectionCard
             icon={<Package className="h-5 w-5 text-white" />}
             title="Transfer Quantity"
-            description={`Available stock: ${
-              preloadedProduct?.stock_quantity || 0
-            } units`}
+            description={`Available stock: ${preloadedProduct?.stock_quantity || 0
+              } units`}
             delay={0.1}
             action={
               preloadedProduct?.stock_quantity === 0 && (
@@ -1137,11 +1135,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
             <div className="p-6">
               {item && preloadedProduct && preloadedProduct.stock_quantity > 0 ? (
                 <div
-                  className={`p-6 rounded-xl border-2 transition-all ${
-                    isOverStock
-                      ? "border-red-200 bg-red-50"
-                      : "border-gray-100 bg-gray-50"
-                  }`}
+                  className={`p-6 rounded-xl border-2 transition-all ${isOverStock
+                    ? "border-red-200 bg-red-50"
+                    : "border-gray-100 bg-gray-50"
+                    }`}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     {/* Quantity Input with percentage shortcuts */}
@@ -1163,11 +1160,10 @@ const NewTransferPage = ({ user }: { user: User }) => {
                               Math.max(1, parseInt(e.target.value) || 1)
                             )
                           }
-                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#166534]/20 outline-none text-lg font-medium transition-all ${
-                            isOverStock
-                              ? "border-red-300 focus:border-red-500 bg-white"
-                              : "border-gray-200 focus:border-[#166534] bg-white"
-                          }`}
+                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#010804]/20 outline-none text-lg font-medium transition-all ${isOverStock
+                            ? "border-red-300 focus:border-red-500 bg-white"
+                            : "border-gray-200 focus:border-[#010804] bg-white"
+                            }`}
                           aria-label="Transfer quantity"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
@@ -1224,7 +1220,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                                 )
                               )
                             }
-                            className="hover:text-[#166534] transition-colors"
+                            className="hover:text-[#010804] transition-colors"
                           >
                             {percent === 100 ? "Max" : `${percent}%`}
                           </button>
@@ -1249,7 +1245,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                             Math.max(0, parseFloat(e.target.value) || 0)
                           )
                         }
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none text-lg bg-white"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none text-lg bg-white"
                         aria-label="Unit cost"
                       />
                       <p className="mt-1 text-xs text-gray-500">
@@ -1263,11 +1259,11 @@ const NewTransferPage = ({ user }: { user: User }) => {
 
                     {/* Total Cost Display */}
                     <div className="flex items-end">
-                      <div className="w-full p-5 bg-white rounded-xl border-2 border-[#166534]/20 bg-gradient-to-br from-[#166534]/5 to-white">
+                      <div className="w-full p-5 bg-white rounded-xl border-2 border-[#010804]/20 bg-gradient-to-br from-[#010804]/5 to-white">
                         <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">
                           Total Cost
                         </p>
-                        <p className="text-3xl font-bold text-[#166534]">
+                        <p className="text-3xl font-bold text-[#010804]">
                           {formatCurrency(item.total, currencySymbol)}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
@@ -1309,7 +1305,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
                 onChange={(e) => updateField("notes", e.target.value)}
                 rows={4}
                 placeholder="Add any additional notes or instructions for this stock transfer..."
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#166534]/20 focus:border-[#166534] outline-none resize-none text-sm transition-all"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#010804]/20 focus:border-[#010804] outline-none resize-none text-sm transition-all"
                 aria-label="Additional notes"
               />
             </div>
@@ -1338,7 +1334,7 @@ const NewTransferPage = ({ user }: { user: User }) => {
               disabled={
                 isSubmitting || preloadedProduct?.stock_quantity === 0
               }
-              className="px-8 py-3 bg-[#166534] text-white font-semibold rounded-xl hover:bg-[#14532d] transition-all shadow-lg shadow-[#166534]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 order-1 sm:order-2"
+              className="px-8 py-3 bg-[#010804] text-white font-semibold rounded-xl hover:bg-[#010804] transition-all shadow-lg shadow-[#010804]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 order-1 sm:order-2"
             >
               {isSubmitting ? (
                 <>
