@@ -48,28 +48,30 @@ interface StockTransfer {
     expected_delivery_date: string | null;
     reference_number: string | null;
     notes: string | null;
-    status: "pending" | "in_transit" | "completed" | "cancelled";
+    status: "pending" | "in_transit" | "completed" | "cancelled" | "approved";
     business_key: string;
     postby: string | null;
+    received_by?: string;
     created_at: string;
     updated_at: string;
     from_location?: {
         id: string;
         location_name: string;
         city?: string;
-        head_office?: string;
+        head_office?: string | null;
     };
     to_location?: {
         id: string;
         location_name: string;
         city?: string;
-        head_office?: string;
+        head_office?: string | null;
     };
     product?: {
         id: string;
         name: string;
         sku: string;
         image: string | null;
+        barcode?: string | null;
     };
 }
 
@@ -153,6 +155,14 @@ const STATUS_CONFIG = {
         text: "text-emerald-700",
         dot: "bg-emerald-400",
     },
+    approved: {
+        label: "Approved",
+        icon: CheckCircle2,
+        bg: "bg-green-50",
+        border: "border-green-200",
+        text: "text-green-700",
+        dot: "bg-green-400",
+    },
     cancelled: {
         label: "Cancelled",
         icon: XCircle,
@@ -167,13 +177,32 @@ const STATUS_CONFIG = {
 // Utility Functions
 // ==============================================
 
-const formatCurrency = (amount: number, symbol: string = "$"): string => {
+/**
+ * Normalizes transfer data from API response
+ * Converts string monetary values to numbers
+ * Returns null if transfer is falsy
+ */
+const normalizeTransfer = (transfer: any): StockTransfer | null => {
+    if (!transfer) return null;
+    
+    return {
+        ...transfer,
+        unit_cost: typeof transfer.unit_cost === 'string' ? parseFloat(transfer.unit_cost) : transfer.unit_cost,
+        total: typeof transfer.total === 'string' ? parseFloat(transfer.total) : transfer.total,
+    };
+};
+
+const formatCurrency = (amount: number | string, symbol: string = "$"): string => {
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    if (isNaN(numericAmount)) return `${symbol}0.00`;
+    
     return new Intl.NumberFormat(CURRENCY_LOCALE, {
         style: "currency",
         currency: DEFAULT_CURRENCY,
         minimumFractionDigits: 2,
     })
-        .format(amount)
+        .format(numericAmount)
         .replace(/^\$/, symbol);
 };
 
@@ -300,8 +329,18 @@ const TransferRow: React.FC<TransferRowProps> = ({
                         {transfer.product?.image ? (
                             <img
                                 src={getImageUrl(transfer.product.image)}
-                                alt={transfer.product.name}
+                                alt={transfer.product.name || "Product"}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    // Show fallback icon
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                        const icon = document.createElement('div');
+                                        icon.innerHTML = '<svg class="h-4 w-4 text-[#010804]">...</svg>';
+                                    }
+                                }}
                             />
                         ) : (
                             <Package className="h-4 w-4 text-[#010804]" />
@@ -313,6 +352,7 @@ const TransferRow: React.FC<TransferRowProps> = ({
                         </p>
                         <p className="text-xs text-gray-400 mt-0.5">
                             {transfer.product?.sku || "—"}
+                            {transfer.product?.barcode && ` • ${transfer.product.barcode}`}
                         </p>
                     </div>
                 </div>
@@ -384,15 +424,28 @@ const TransferRow: React.FC<TransferRowProps> = ({
             {/* Action */}
             <td className="px-6 py-4">
                 <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/transfers/${transfer.id}`);
-                    }}
-                    className="p-2 text-gray-400 hover:text-[#010804] hover:bg-[#010804]/10 rounded-lg transition-all"
-                    aria-label="View transfer details"
-                >
-                    <Eye className="h-4 w-4" />
-                </button>
+    onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/approvetransfers/${transfer.id}`);
+    }}
+    className="
+        inline-flex items-center gap-2
+        px-3 py-2
+        border border-gray-200
+        bg-white
+        text-gray-700
+        text-sm font-medium
+        rounded-xl
+        hover:bg-gray-50
+        hover:border-[#010804]/20
+        hover:text-[#010804]
+        transition-all duration-200
+    "
+    aria-label="View transfer details"
+>
+    <Eye className="h-4 w-4" />
+    <span>View</span>
+</button>
             </td>
         </motion.tr>
     );
@@ -628,6 +681,7 @@ const TransfersPage = ({ user }: { user: User }) => {
             cancelled: 0,
         },
     });
+    const [locationName, setLocationName] = useState<string>("");
 
     // ==============================================
     // Data Fetching
@@ -635,6 +689,7 @@ const TransfersPage = ({ user }: { user: User }) => {
 
     /**
      * Fetches stock transfers from the API with pagination
+     * Uses the full endpoint: /fetch_transfer_stock or /fetch_transfer_stock/{locationId}
      * @param page - Page number to fetch
      * @param perPage - Items per page
      * @param silent - If true, uses refreshing state instead of loading state
@@ -647,12 +702,14 @@ const TransfersPage = ({ user }: { user: User }) => {
         }
 
         try {
+            // Build the endpoint with location ID if available
             const endpoint = locationId
                 ? `/fetch_transfer_stock/${locationId}`
                 : "/fetch_transfer_stock";
 
             console.log("🔄 Fetching transfers from:", endpoint, { page, perPage });
 
+            // Make the API call with query parameters
             const response = await apiGet(endpoint, {
                 page,
                 per_page: perPage,
@@ -660,9 +717,15 @@ const TransfersPage = ({ user }: { user: User }) => {
 
             // Handle the response
             const responseData = response?.data || response;
-            
+
+            console.log("📦 Raw API Response:", responseData);
+
             if (responseData?.success) {
-                setTransfers(responseData.data || []);
+                // Normalize the data to handle string monetary values
+                const normalizedData = (responseData.data || [])
+                    .map(normalizeTransfer)
+                    .filter((item: StockTransfer | null): item is StockTransfer => item !== null);
+                setTransfers(normalizedData);
                 
                 if (responseData.pagination) {
                     setPaginationMeta(responseData.pagination);
@@ -672,47 +735,100 @@ const TransfersPage = ({ user }: { user: User }) => {
                     setSummary(responseData.summary);
                 }
                 
+                // Extract location name from first transfer if available
+                if (normalizedData.length > 0 && !locationName) {
+                    const firstTransfer = normalizedData[0];
+                    setLocationName(
+                        firstTransfer.from_location?.location_name || 
+                        firstTransfer.to_location?.location_name || 
+                        ""
+                    );
+                }
+                
                 console.log("✅ Transfers loaded:", {
-                    count: responseData.data?.length,
+                    count: normalizedData.length,
                     total: responseData.pagination?.total,
-                    totalValue: responseData.summary?.total_value
+                    totalValue: responseData.summary?.total_value,
+                    sampleTransfer: normalizedData[0]
                 });
             } else {
-                // Fallback for old API structure
+                // Fallback for old API structure (array response)
                 const data = Array.isArray(responseData) 
                     ? responseData 
                     : responseData?.data || [];
-                setTransfers(data);
+                
+                const normalizedData = data
+                    .map(normalizeTransfer)
+                    .filter((item: StockTransfer | null): item is StockTransfer => item !== null);
+                setTransfers(normalizedData);
+                
+                // Calculate pagination and summary from the raw data
+                const totalValue = normalizedData.reduce((sum: number, t: StockTransfer) => 
+                    sum + t.total, 0
+                );
+                
                 setPaginationMeta({
                     current_page: 1,
                     per_page: perPage,
-                    total: data.length,
-                    total_pages: 1,
-                    from: data.length > 0 ? 1 : 0,
-                    to: data.length,
+                    total: normalizedData.length,
+                    total_pages: Math.ceil(normalizedData.length / perPage),
+                    from: normalizedData.length > 0 ? 1 : 0,
+                    to: normalizedData.length,
                     has_more_pages: false,
                 });
+                
                 setSummary({
-                    total_value: data.reduce((sum: number, t: StockTransfer) => sum + t.total, 0),
-                    current_page_value: data.reduce((sum: number, t: StockTransfer) => sum + t.total, 0),
+                    total_value: totalValue,
+                    current_page_value: totalValue,
                     status_counts: {
-                        pending: data.filter((t: StockTransfer) => t.status === "pending").length,
-                        in_transit: data.filter((t: StockTransfer) => t.status === "in_transit").length,
-                        completed: data.filter((t: StockTransfer) => t.status === "completed").length,
-                        cancelled: data.filter((t: StockTransfer) => t.status === "cancelled").length,
+                        pending: normalizedData.filter((t: StockTransfer) => 
+                            t.status === "pending"
+                        ).length,
+                        in_transit: normalizedData.filter((t: StockTransfer) => 
+                            t.status === "in_transit"
+                        ).length,
+                        completed: normalizedData.filter((t: StockTransfer) => 
+                            t.status === "completed" || t.status === "approved"
+                        ).length,
+                        cancelled: normalizedData.filter((t: StockTransfer) => 
+                            t.status === "cancelled"
+                        ).length,
                     },
+                });
+                
+                // Extract location name from first transfer if available
+                if (normalizedData.length > 0 && !locationName) {
+                    const firstTransfer = normalizedData[0];
+                    setLocationName(
+                        firstTransfer.from_location?.location_name || 
+                        firstTransfer.to_location?.location_name || 
+                        ""
+                    );
+                }
+                
+                console.log("✅ Transfers loaded (fallback):", {
+                    count: normalizedData.length,
+                    totalValue
                 });
             }
         } catch (error: any) {
             const message =
-                error?.response?.data?.message || "Failed to load transfers";
+                error?.response?.data?.message || 
+                error?.message || 
+                "Failed to load transfers";
             toast.error(message);
-            console.error("❌ Failed to fetch transfers:", error);
+            console.error("❌ Failed to fetch transfers:", {
+                error,
+                endpoint: locationId 
+                    ? `/fetch_transfer_stock/${locationId}` 
+                    : "/fetch_transfer_stock",
+                params: { page, per_page: perPage }
+            });
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    }, [locationId]);
+    }, [locationId, locationName]);
 
     // Initial fetch
     useEffect(() => {
@@ -734,7 +850,7 @@ const TransfersPage = ({ user }: { user: User }) => {
         };
     }, [paginationMeta.total, summary]);
 
-    // Client-side filtering (still useful for search on current page)
+    // Client-side filtering (for search on current page)
     const filteredTransfers = useMemo(() => {
         let result = [...transfers];
 
@@ -830,7 +946,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                                     Stock Transfers
                                 </h1>
                                 <p className="text-sm text-gray-500">
-                                    {locationId && "Filtered by location • "}
+                                    {locationId && locationName ? `Location: ${locationName} • ` : ""}
                                     {stats.total} transfer{stats.total !== 1 ? "s" : ""} total
                                 </p>
                             </div>
@@ -848,7 +964,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                                 />
                             </button>
                             <Link
-                                href={`/locationproducts/${locationId}`}
+                                href={locationId ? `/locationproducts/${locationId}` : "/transfers/new"}
                                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#020904] text-white text-sm font-semibold rounded-xl hover:bg-[#020a05] transition-all shadow-lg shadow-[#010804]/25"
                             >
                                 <Plus className="h-4 w-4" />
@@ -936,6 +1052,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                                 <option value="pending">Pending</option>
                                 <option value="in_transit">In Transit</option>
                                 <option value="completed">Completed</option>
+                                <option value="approved">Approved</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -987,7 +1104,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                                 {statusFilter !== "all" && (
                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#010804]/10 text-[#010804] text-xs font-medium rounded-full">
                                         <Filter className="h-3 w-3" />
-                                        {STATUS_CONFIG[statusFilter as keyof typeof STATUS_CONFIG]?.label}
+                                        {STATUS_CONFIG[statusFilter as keyof typeof STATUS_CONFIG]?.label || statusFilter}
                                     </span>
                                 )}
                                 {dateFilter !== "all" && (

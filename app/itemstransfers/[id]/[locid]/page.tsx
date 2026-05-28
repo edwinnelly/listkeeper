@@ -707,41 +707,12 @@ const NewTransferPage = ({ user }: { user: User }) => {
       postby: user?.name || null,
     };
 
-    // Log payload for debugging
-    console.log(
-      "🚀 Submitting stock transfer payload:",
-      JSON.stringify(payload, null, 2)
-    );
-    console.log("📦 Payload details:", {
-      sourceLocation: payload.from_location_id,
-      destinationLocation: payload.to_location_id,
-      transferDate: payload.transfer_date,
-      expectedDelivery: payload.expected_delivery_date,
-      productId: payload.product_id,
-      quantity: payload.stock_quantity,
-      quantityBefore: payload.stock_quantity_before,
-      unitCost: payload.unit_cost,
-      total: payload.total,
-      businessKey: payload.business_key,
-      postBy: payload.postby,
-      hasNotes: !!payload.notes,
-      hasReference: !!payload.reference_number,
-    });
-
     try {
       const response = await apiPost("/stock-transfers", payload);
-      console.log("✅ Transfer created successfully:", response);
       toast.success("Stock transfer created successfully!");
-      router.push("/transfers");
       router.refresh();
     } catch (error: any) {
-      console.error("❌ Transfer creation failed:", {
-        error: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status,
-        payload,
-      });
-
+   
       // Handle validation errors from Laravel
       const message =
         error?.response?.data?.message ||
