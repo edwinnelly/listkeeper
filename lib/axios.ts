@@ -2,27 +2,37 @@ import axios, { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from "ax
 import Cookies from "js-cookie";
 
 /* =========================
-   CONFIG
+   CONFIGURATION
 ========================= */
-const CACHE_TTL = 1000 * 60 * 1;
+
+export const API_CONFIG = {
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  STORAGE_URL: process.env.NEXT_PUBLIC_STORAGE_URL || "http://localhost:8000/storage",
+} as const;
+
+// Cache configuration
+const CACHE_TTL = 1000 * 60 * 1; // 1 minute
 const MAX_CACHE_SIZE = 100;
 
+// CSRF configuration
 const CSRF_FETCH_TIMEOUT = 15000;
 const CSRF_RETRY_DELAY = 1000;
 const MAX_CSRF_RETRIES = 3;
 
 /* =========================
-   CACHE (LRU + TTL)
+   CACHE MANAGEMENT
 ========================= */
+
 const getCache = new Map<string, AxiosResponse>();
 const cacheExpiry = new Map<string, number>();
 
-const buildCacheKey = (url: string, config?: Record<string, unknown>) =>
+const buildCacheKey = (url: string, config?: Record<string, unknown>): string =>
   `${url}:${JSON.stringify(config || {})}`;
 
-const cleanCache = () => {
+const cleanCache = (): void => {
   const now = Date.now();
 
+  // Remove expired entries
   for (const [key, expiry] of cacheExpiry.entries()) {
     if (expiry < now) {
       cacheExpiry.delete(key);
@@ -30,7 +40,7 @@ const cleanCache = () => {
     }
   }
 
-  // LRU trim
+  // LRU trim if cache exceeds max size
   if (getCache.size > MAX_CACHE_SIZE) {
     const firstKey = getCache.keys().next().value;
     if (firstKey) {
@@ -40,24 +50,33 @@ const cleanCache = () => {
   }
 };
 
-// periodic cleanup
+// Clean cache every minute
 setInterval(cleanCache, 60000);
+
+const invalidateCache = (urls: string[]): void => {
+  urls.forEach((url) => {
+    for (const key of getCache.keys()) {
+      if (key.startsWith(url)) {
+        getCache.delete(key);
+        cacheExpiry.delete(key);
+      }
+    }
+  });
+};
 
 /* =========================
    AXIOS INSTANCES
 ========================= */
+
 export const api = axios.create({
-  // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://snowviewssl.net/api",
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  baseURL: API_CONFIG.BASE_URL,
   withCredentials: true,
   timeout: 60000,
   headers: { "Content-Type": "application/json" },
 });
 
 const sanctumApi = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-    "http://localhost:8000",
+  baseURL: API_CONFIG.BASE_URL.replace("/api", ""),
   withCredentials: true,
   timeout: 60000,
 });
@@ -65,16 +84,16 @@ const sanctumApi = axios.create({
 /* =========================
    CSRF HANDLING
 ========================= */
+
 let csrfFetchInProgress: Promise<void> | null = null;
 
-// wait until cookie exists (deterministic)
-const waitForCookie = async (name: string, timeout = 2000) => {
+const waitForCookie = async (name: string, timeout = 2000): Promise<string | null> => {
   const start = Date.now();
 
   while (Date.now() - start < timeout) {
     const value = Cookies.get(name);
     if (value) return value;
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
   return null;
@@ -82,9 +101,7 @@ const waitForCookie = async (name: string, timeout = 2000) => {
 
 export const ensureCsrfToken = async (retry = 0): Promise<void> => {
   if (csrfFetchInProgress) return csrfFetchInProgress;
-
-  const existing = Cookies.get("XSRF-TOKEN");
-  if (existing) return;
+  if (Cookies.get("XSRF-TOKEN")) return;
 
   csrfFetchInProgress = (async () => {
     try {
@@ -96,12 +113,11 @@ export const ensureCsrfToken = async (retry = 0): Promise<void> => {
       ]);
 
       const token = await waitForCookie("XSRF-TOKEN");
-
       if (!token) throw new Error("CSRF cookie not set");
     } catch (err) {
       if (retry < MAX_CSRF_RETRIES) {
-        await new Promise((r) =>
-          setTimeout(r, CSRF_RETRY_DELAY * Math.pow(2, retry))
+        await new Promise((resolve) =>
+          setTimeout(resolve, CSRF_RETRY_DELAY * Math.pow(2, retry))
         );
         csrfFetchInProgress = null;
         return ensureCsrfToken(retry + 1);
@@ -115,30 +131,30 @@ export const ensureCsrfToken = async (retry = 0): Promise<void> => {
   return csrfFetchInProgress;
 };
 
-export const clearCsrfState = () => {
+export const clearCsrfState = (): void => {
   Cookies.remove("XSRF-TOKEN");
   csrfFetchInProgress = null;
 };
 
 /* =========================
-   REQUEST INTERCEPTOR (CSRF)
+   REQUEST INTERCEPTOR
 ========================= */
-api.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    await ensureCsrfToken();
 
-    const token = Cookies.get("XSRF-TOKEN");
-    if (token) {
-      config.headers["X-XSRF-TOKEN"] = token;
-    }
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  await ensureCsrfToken();
 
-    return config;
+  const token = Cookies.get("XSRF-TOKEN");
+  if (token) {
+    config.headers["X-XSRF-TOKEN"] = token;
   }
-);
+
+  return config;
+});
 
 /* =========================
-   ERROR HANDLING
+   RESPONSE INTERCEPTOR
 ========================= */
+
 interface ApiErrorResponse {
   message?: string;
   errors?: Record<string, string[]>;
@@ -150,71 +166,68 @@ interface ExtendedAxiosError extends AxiosError {
 }
 
 api.interceptors.response.use(
-  (res) => res,
+  (response) => response,
   async (error: AxiosError) => {
     const err = error as ExtendedAxiosError;
 
+    // Network or timeout errors
     if (!err.response) {
       err.userMessage =
         err.code === "ECONNABORTED"
-          ? "Request timed out. Check your connection."
-          : "Network error. Please check your internet.";
+          ? "Request timed out. Please check your connection."
+          : "Network error. Please check your internet connection.";
       return Promise.reject(err);
     }
 
     const { status, data } = err.response;
     const resData = data as ApiErrorResponse;
 
+    // Session expired
     if (status === 419) {
       clearCsrfState();
-      err.userMessage = "Session expired. Please retry.";
+      err.userMessage = "Session expired. Please try again.";
       return Promise.reject(err);
     }
 
-    switch (status) {
-      case 401:
-        clearCsrfState();
-        if (typeof window !== "undefined") {
-          window.location.href = "/auth?expired=true";
-        }
-        break;
-
-      case 422:
-        err.validationErrors = resData?.errors || null;
-        err.userMessage = resData?.message || "Validation failed.";
-        break;
-
-      default:
-        err.userMessage =
-          resData?.message || "An unexpected error occurred.";
+    // Unauthorized
+    if (status === 401) {
+      clearCsrfState();
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth?expired=true";
+      }
+      return Promise.reject(err);
     }
 
+    // Validation errors
+    if (status === 422) {
+      err.validationErrors = resData?.errors || null;
+      err.userMessage = resData?.message || "Validation failed. Please check your input.";
+      return Promise.reject(err);
+    }
+
+    // Other errors
+    err.userMessage = resData?.message || "An unexpected error occurred. Please try again.";
     return Promise.reject(err);
   }
 );
 
 /* =========================
-   WITH CSRF RETRY WRAPPER
+   CSRF RETRY WRAPPER
 ========================= */
+
 export const withCsrf = async <T>(
   fn: () => Promise<T>,
   retry = 0
 ): Promise<T> => {
   try {
     return await fn();
-  } catch (err: unknown) {
+  } catch (err) {
     const error = err as ExtendedAxiosError;
-    const shouldRetry =
-      (!error.response || error.response?.status === 419) &&
-      retry < MAX_CSRF_RETRIES;
+    const shouldRetry = (!error.response || error.response?.status === 419) && retry < MAX_CSRF_RETRIES;
 
     if (shouldRetry) {
       clearCsrfState();
-
-      await new Promise((r) =>
-        setTimeout(r, CSRF_RETRY_DELAY * Math.pow(2, retry))
-      );
-
+      await new Promise((resolve) => setTimeout(resolve, CSRF_RETRY_DELAY * Math.pow(2, retry)));
       return withCsrf(fn, retry + 1);
     }
 
@@ -223,46 +236,33 @@ export const withCsrf = async <T>(
 };
 
 /* =========================
-   CACHE INVALIDATION
-========================= */
-const invalidateCache = (urls: string[]) => {
-  urls.forEach((url) => {
-    for (const key of getCache.keys()) {
-      if (key.startsWith(url)) {
-        getCache.delete(key);
-        cacheExpiry.delete(key);
-      }
-    }
-  });
-};
-
-/* =========================
    API METHODS
 ========================= */
+
 export const apiGet = async (
   url: string,
   config: Record<string, unknown> = {},
   useCache = true
 ): Promise<AxiosResponse> =>
   withCsrf(async () => {
-    const key = buildCacheKey(url, config);
+    const cacheKey = buildCacheKey(url, config);
 
     if (useCache) {
-      const expiry = cacheExpiry.get(key);
+      const expiry = cacheExpiry.get(cacheKey);
       if (expiry && expiry > Date.now()) {
-        const cachedResponse = getCache.get(key);
+        const cachedResponse = getCache.get(cacheKey);
         if (cachedResponse) return cachedResponse;
       }
     }
 
-    const res = await api.get(url, config);
+    const response = await api.get(url, config);
 
     if (useCache) {
-      getCache.set(key, res);
-      cacheExpiry.set(key, Date.now() + CACHE_TTL);
+      getCache.set(cacheKey, response);
+      cacheExpiry.set(cacheKey, Date.now() + CACHE_TTL);
     }
 
-    return res;
+    return response;
   });
 
 export const apiPost = async <T>(
@@ -270,11 +270,11 @@ export const apiPost = async <T>(
   data: T,
   config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
-) =>
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
-    const res = await api.post(url, data, config);
+    const response = await api.post(url, data, config);
     invalidateCache(invalidateUrls);
-    return res;
+    return response;
   });
 
 export const apiPut = async <T>(
@@ -282,11 +282,11 @@ export const apiPut = async <T>(
   data: T,
   config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
-) =>
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
-    const res = await api.put(url, data, config);
+    const response = await api.put(url, data, config);
     invalidateCache(invalidateUrls);
-    return res;
+    return response;
   });
 
 export const apiPatch = async <T>(
@@ -294,22 +294,22 @@ export const apiPatch = async <T>(
   data: T,
   config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
-) =>
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
-    const res = await api.patch(url, data, config);
+    const response = await api.patch(url, data, config);
     invalidateCache(invalidateUrls);
-    return res;
+    return response;
   });
 
 export const apiDelete = async (
   url: string,
   config: Record<string, unknown> = {},
   invalidateUrls: string[] = []
-) =>
+): Promise<AxiosResponse> =>
   withCsrf(async () => {
-    const res = await api.delete(url, config);
+    const response = await api.delete(url, config);
     invalidateCache(invalidateUrls);
-    return res;
+    return response;
   });
 
 export default api;

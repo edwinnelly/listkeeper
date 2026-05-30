@@ -305,12 +305,14 @@ interface TransferRowProps {
     transfer: StockTransfer;
     currencySymbol: string;
     index: number;
+    locationId?: string; // Added locationId prop
 }
 
 const TransferRow: React.FC<TransferRowProps> = ({
     transfer,
     currencySymbol,
     index,
+    locationId, // Destructure locationId
 }) => {
     const router = useRouter();
 
@@ -319,7 +321,13 @@ const TransferRow: React.FC<TransferRowProps> = ({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03 }}
-            onClick={() => router.push(`/approvetransfers/${transfer.id}`)}
+            onClick={() => {
+                // Navigate to the transfer details with or without locationId
+                const url = locationId 
+                    ? `/approvetransfers/${transfer.id}/${locationId}`
+                    : `/approvetransfers/${transfer.id}`;
+                router.push(url);
+            }}
             className="border-b border-gray-100 hover:bg-gray-50/80 cursor-pointer transition-colors group"
         >
             {/* Product */}
@@ -334,12 +342,6 @@ const TransferRow: React.FC<TransferRowProps> = ({
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
-                                    // Show fallback icon
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                        const icon = document.createElement('div');
-                                        icon.innerHTML = '<svg class="h-4 w-4 text-[#010804]">...</svg>';
-                                    }
                                 }}
                             />
                         ) : (
@@ -424,28 +426,32 @@ const TransferRow: React.FC<TransferRowProps> = ({
             {/* Action */}
             <td className="px-6 py-4">
                 <button
-    onClick={(e) => {
-        e.stopPropagation();
-        router.push(`/approvetransfers/${transfer.id}`);
-    }}
-    className="
-        inline-flex items-center gap-2
-        px-3 py-2
-        border border-gray-200
-        bg-white
-        text-gray-700
-        text-sm font-medium
-        rounded-xl
-        hover:bg-gray-50
-        hover:border-[#010804]/20
-        hover:text-[#010804]
-        transition-all duration-200
-    "
-    aria-label="View transfer details"
->
-    <Eye className="h-4 w-4" />
-    <span>View</span>
-</button>
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        // Use locationId if available, otherwise just navigate to transfer
+                        const url = locationId 
+                            ? `/approvetransfers/${transfer.id}/${locationId}`
+                            : `/approvetransfers/${transfer.id}`;
+                        router.push(url);
+                    }}
+                    className="
+                        inline-flex items-center gap-2
+                        px-3 py-2
+                        border border-gray-200
+                        bg-white
+                        text-gray-700
+                        text-sm font-medium
+                        rounded-xl
+                        hover:bg-gray-50
+                        hover:border-[#010804]/20
+                        hover:text-[#010804]
+                        transition-all duration-200
+                    "
+                    aria-label="View transfer details"
+                >
+                    <Eye className="h-4 w-4" />
+                    <span>View</span>
+                </button>
             </td>
         </motion.tr>
     );
@@ -817,13 +823,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                 error?.message || 
                 "Failed to load transfers";
             toast.error(message);
-            console.error("❌ Failed to fetch transfers:", {
-                error,
-                endpoint: locationId 
-                    ? `/fetch_transfer_stock/${locationId}` 
-                    : "/fetch_transfer_stock",
-                params: { page, per_page: perPage }
-            });
+          
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -964,7 +964,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                                 />
                             </button>
                             <Link
-                                href={locationId ? `/locationproducts/${locationId}` : "/transfers/new"}
+                                href={`/locationproducts/${locationId}`}
                                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#020904] text-white text-sm font-semibold rounded-xl hover:bg-[#020a05] transition-all shadow-lg shadow-[#010804]/25"
                             >
                                 <Plus className="h-4 w-4" />
@@ -1174,6 +1174,7 @@ const TransfersPage = ({ user }: { user: User }) => {
                                                 transfer={transfer}
                                                 currencySymbol={currencySymbol}
                                                 index={index}
+                                                locationId={locationId} // Pass locationId to TransferRow
                                             />
                                         ))}
                                     </tbody>
