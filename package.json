@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@types/dompurify": "^3.0.5",
     "axios": "^1.12.2",
+    "cookies-next": "^6.1.1",
     "datatables.net": "^2.3.4",
     "dayjs": "^1.11.19",
     "dompurify": "^3.3.1",

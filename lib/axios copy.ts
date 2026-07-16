@@ -32,6 +32,7 @@ const buildCacheKey = (url: string, config?: Record<string, unknown>): string =>
 const cleanCache = (): void => {
   const now = Date.now();
 
+  // Remove expired entries
   for (const [key, expiry] of cacheExpiry.entries()) {
     if (expiry < now) {
       cacheExpiry.delete(key);
@@ -39,6 +40,7 @@ const cleanCache = (): void => {
     }
   }
 
+  // LRU trim if cache exceeds max size
   if (getCache.size > MAX_CACHE_SIZE) {
     const firstKey = getCache.keys().next().value;
     if (firstKey) {
@@ -48,6 +50,7 @@ const cleanCache = (): void => {
   }
 };
 
+// Clean cache every minute
 setInterval(cleanCache, 60000);
 
 const invalidateCache = (urls: string[]): void => {
@@ -69,11 +72,7 @@ export const api = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   withCredentials: true,
   timeout: 60000,
-  headers: { 
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-Requested-With": "XMLHttpRequest", // Important for Laravel to identify AJAX requests
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
 const sanctumApi = axios.create({
@@ -87,40 +86,25 @@ const sanctumApi = axios.create({
 ========================= */
 
 let csrfFetchInProgress: Promise<void> | null = null;
-let csrfToken: string | null = null;
 
-const waitForCookie = async (name: string, timeout = 3000): Promise<string | null> => {
+const waitForCookie = async (name: string, timeout = 2000): Promise<string | null> => {
   const start = Date.now();
 
   while (Date.now() - start < timeout) {
     const value = Cookies.get(name);
     if (value) return value;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
   return null;
 };
 
 export const ensureCsrfToken = async (retry = 0): Promise<void> => {
-  // If we already have a token in memory, use it
-  if (csrfToken) return;
-
-  // If there's already a fetch in progress, wait for it
   if (csrfFetchInProgress) return csrfFetchInProgress;
-
-  // Check if cookie exists
-  const existingToken = Cookies.get("XSRF-TOKEN");
-  if (existingToken) {
-    csrfToken = existingToken;
-    return;
-  }
+  if (Cookies.get("XSRF-TOKEN")) return;
 
   csrfFetchInProgress = (async () => {
     try {
-      // Clear any existing cookies first
-      Cookies.remove("XSRF-TOKEN");
-      Cookies.remove("laravel_session");
-      
       await Promise.race([
         sanctumApi.get("/sanctum/csrf-cookie"),
         new Promise((_, reject) =>
@@ -130,10 +114,7 @@ export const ensureCsrfToken = async (retry = 0): Promise<void> => {
 
       const token = await waitForCookie("XSRF-TOKEN");
       if (!token) throw new Error("CSRF cookie not set");
-      
-      csrfToken = token;
     } catch (err) {
-      csrfToken = null;
       if (retry < MAX_CSRF_RETRIES) {
         await new Promise((resolve) =>
           setTimeout(resolve, CSRF_RETRY_DELAY * Math.pow(2, retry))
@@ -151,9 +132,7 @@ export const ensureCsrfToken = async (retry = 0): Promise<void> => {
 };
 
 export const clearCsrfState = (): void => {
-  csrfToken = null;
   Cookies.remove("XSRF-TOKEN");
-  Cookies.remove("laravel_session");
   csrfFetchInProgress = null;
 };
 
@@ -162,24 +141,11 @@ export const clearCsrfState = (): void => {
 ========================= */
 
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // Skip CSRF for login and csrf-cookie endpoints
-  const isLoginRequest = config.url?.includes("/login");
-  const isCsrfRequest = config.url?.includes("/sanctum/csrf-cookie");
-  
-  if (!isLoginRequest && !isCsrfRequest) {
-    await ensureCsrfToken();
-    
-    // Use the token from memory or cookie
-    const token = csrfToken || Cookies.get("XSRF-TOKEN");
-    if (token) {
-      config.headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
-    }
-  }
+  await ensureCsrfToken();
 
-  // Add auth token if available
-  const authToken = Cookies.get("auth_token");
-  if (authToken && !config.headers.Authorization) {
-    config.headers.Authorization = `Bearer ${authToken}`;
+  const token = Cookies.get("XSRF-TOKEN");
+  if (token) {
+    config.headers["X-XSRF-TOKEN"] = token;
   }
 
   return config;
@@ -214,60 +180,21 @@ api.interceptors.response.use(
     }
 
     const { status, data } = err.response;
-    const config = err.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const resData = data as ApiErrorResponse;
 
-    // Session expired (419) - Retry with fresh CSRF token
-    if (status === 419 && !config._retry) {
-      config._retry = true;
-      
-      // Clear and re-fetch CSRF token
-      clearCsrfState();
-      await ensureCsrfToken();
-      
-      // Update the token in the request
-      const newToken = csrfToken || Cookies.get("XSRF-TOKEN");
-      if (newToken) {
-        config.headers["X-XSRF-TOKEN"] = decodeURIComponent(newToken);
-      }
-      
-      // Retry the request
-      return api(config);
-    }
-
-    // Session expired - if retry already attempted
+    // Session expired
     if (status === 419) {
       clearCsrfState();
-      err.userMessage = "Session expired. Please refresh the page and try again.";
-      
-      // Don't redirect on login page
-      const isLoginPage = typeof window !== "undefined" && 
-                          window.location.pathname.includes("/login");
-      if (!isLoginPage && typeof window !== "undefined") {
-        Cookies.remove("auth_token");
-        Cookies.remove("user");
-        window.location.replace("/login?expired=true");
-      }
-      
+      err.userMessage = "Session expired. Please try again.";
       return Promise.reject(err);
     }
 
-    // Unauthorized (401)
+    // Unauthorized
     if (status === 401) {
-      const isLoginPage = typeof window !== "undefined" && 
-                          window.location.pathname.includes("/login");
-      const isLoginRequest = config.url?.includes("/login");
-      
-      if (!isLoginPage && !isLoginRequest) {
-        clearCsrfState();
-        Cookies.remove("auth_token");
-        Cookies.remove("user");
-        
-        if (typeof window !== "undefined") {
-          window.location.replace("/login?expired=true");
-        }
+      clearCsrfState();
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth?expired=true";
       }
-      
       return Promise.reject(err);
     }
 

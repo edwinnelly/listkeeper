@@ -29,7 +29,7 @@ export default function ClientLayout({
     NProgress.done();
   }, [pathname]);
 
-  const excludedRoutes = ['/auth', '/logout', '/register','/landing'];
+  const excludedRoutes = ['/auth', '/logout', '/register','/landing','/forgot-password','/reset-password'];
   const hideLayout = excludedRoutes.includes(pathname);
 
   if (hideLayout) return <>{children}</>; // show auth pages without layout

@@ -3,6 +3,7 @@ import React, { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import {
   MailRegular,
   LockClosedRegular,
@@ -12,58 +13,38 @@ import {
   ErrorCircleRegular,
   ArrowRightRegular,
   CheckmarkRegular,
-  CheckboxCheckedRegular,
-  CheckboxUncheckedRegular,
 } from "@fluentui/react-icons";
 import { api, withCsrf } from "@/lib/axios";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
-
 interface ApiError {
   response?: { data?: { message?: string } };
   message?: string;
 }
 
-// ── Fluent Design Tokens: Microsoft Dark Theme ─────────────────────────────
+// ── Fluent Design Tokens ───────────────────────────────────────────────────
 const F = {
-  // Core surfaces (Mica-inspired)
   background: "#0f0f0f",
   surface: "rgba(32,32,32,0.6)",
   surfaceAlt: "rgba(44,44,44,0.7)",
   surfaceHover: "rgba(64,64,64,0.5)",
-  
-  // Borders & dividers
   border: "rgba(255,255,255,0.08)",
   borderFocus: "rgba(0,120,212,0.6)",
   borderHover: "rgba(255,255,255,0.15)",
-  
-  // Brand colors (Microsoft Blue)
   primary: "#0078d4",
   primaryHover: "#1084d8",
   primaryPressed: "#005a9e",
   primaryGlow: "rgba(0,120,212,0.25)",
-  
-  // Typography
   text: "#ffffff",
   textSecondary: "rgba(255,255,255,0.7)",
   textTertiary: "rgba(255,255,255,0.45)",
   textOnPrimary: "#ffffff",
-  
-  // States
   error: "#f1707a",
   errorBg: "rgba(241,112,122,0.12)",
   success: "#6cc24a",
-  
-  // Effects
   elevation1: "0 1.6px 3.2px rgba(0,0,0,0.12), 0 0.4px 1.2px rgba(0,0,0,0.08)",
   elevation2: "0 3.2px 6.4px rgba(0,0,0,0.18), 0 0.8px 2.4px rgba(0,0,0,0.12)",
   elevation4: "0 6.4px 14.4px rgba(0,0,0,0.22), 0 1.6px 4.8px rgba(0,0,0,0.16)",
-  revealHighlight: "inset 0 0 0 1px rgba(255,255,255,0.08)",
 };
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -78,8 +59,6 @@ const FEATURES = [
   "Automated low-stock alerts & reorder triggers",
   "Role-based access with full audit logs",
 ];
-
-const PHOTO = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=85&auto=format&fit=crop";
 
 // ── Animation Variants ─────────────────────────────────────────────────────
 const fadeInUp = {
@@ -111,15 +90,65 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
     try {
-      await withCsrf(() =>
-        api.post("/login", { email, password, remember: rememberMe }, { withCredentials: true })
-      );
-      await api.get<User>("/user", { withCredentials: true });
+      // Your axios instance handles CSRF automatically via interceptor
+      // So just make the login request directly
+      const loginResponse = await api.post("/login", {
+        email,
+        password,
+        remember: rememberMe,
+      });
+
+      console.log("Login successful:", loginResponse.data);
+
+      // Extract token from response
+      const token = loginResponse.data.token;
+
+      if (token) {
+        // Store token in cookie using js-cookie (consistent with your setup)
+        Cookies.set("auth_token", token, {
+          expires: rememberMe ? 30 : 1, // 30 days or 1 day
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "Lax",
+          path: "/",
+        });
+      }
+
+      // Now fetch user data - token will be sent via Authorization header
+      const userResponse = await api.get("/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("User data fetched:", userResponse.data);
+
+      // Store user data in cookie
+      const userData = userResponse.data.data || userResponse.data;
+      Cookies.set("user", JSON.stringify(userData), {
+        expires: rememberMe ? 30 : 1,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        path: "/",
+      });
+
+      // Redirect to dashboard
       router.push("/dashboard");
-    } catch (err: unknown) {
-      const e = err as ApiError;
-      setError(e.response?.data?.message || "Invalid credentials. Please try again.");
+
+    } catch (err: any) {
+      console.error("Login error:", err);
+      
+      // Use the user-friendly message from your axios interceptor
+      const errorMessage = err.userMessage || 
+                          err.response?.data?.message || 
+                          "Invalid credentials. Please try again.";
+      
+      setError(errorMessage);
+
+      // Clean up any partial auth data
+      Cookies.remove("auth_token");
+      Cookies.remove("user");
     } finally {
       setLoading(false);
     }
@@ -129,7 +158,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <>
-      {/* ── Fluent Typography & Base Styles ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap');
 
@@ -141,7 +169,6 @@ const LoginPage: React.FC = () => {
           -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Mica/Acrylic Background Effect ── */
         .fluent-mica {
           background: ${F.surface};
           backdrop-filter: blur(24px) saturate(180%);
@@ -149,7 +176,6 @@ const LoginPage: React.FC = () => {
           border: 1px solid ${F.border};
         }
 
-        /* ── Reveal Highlight Effect (Fluent hover) ── */
         .fluent-reveal {
           position: relative;
           transition: background 0.2s ease, border-color 0.2s ease;
@@ -167,7 +193,6 @@ const LoginPage: React.FC = () => {
         .fluent-reveal:hover::before { opacity: 1; }
         .fluent-reveal:active::before { background: rgba(255,255,255,0.08); }
 
-        /* ── Input Fields ── */
         .fluent-input {
           width: 100%;
           padding: 12px 14px;
@@ -190,7 +215,6 @@ const LoginPage: React.FC = () => {
           cursor: not-allowed;
         }
 
-        /* ── Primary Button (Fluent) ── */
         .fluent-btn {
           width: 100%;
           padding: 11px 20px;
@@ -225,7 +249,6 @@ const LoginPage: React.FC = () => {
           outline-offset: 2px;
         }
 
-        /* ── Secondary/Text Button ── */
         .fluent-link {
           color: ${F.primary};
           text-decoration: none;
@@ -239,7 +262,6 @@ const LoginPage: React.FC = () => {
           border-radius: 2px;
         }
 
-        /* ── Checkbox (Fluent) ── */
         .fluent-checkbox {
           width: 20px;
           height: 20px;
@@ -258,12 +280,7 @@ const LoginPage: React.FC = () => {
           background: ${F.primary};
           border-color: ${F.primary};
         }
-        .fluent-checkbox:focus-visible {
-          outline: 2px solid ${F.primary};
-          outline-offset: 2px;
-        }
 
-        /* ── Error Message ── */
         .fluent-error {
           display: flex;
           align-items: flex-start;
@@ -277,7 +294,6 @@ const LoginPage: React.FC = () => {
           line-height: 1.4;
         }
 
-        /* ── Spinner ── */
         @keyframes fluent-spin { to { transform: rotate(360deg); } }
         .fluent-spinner {
           width: 16px;
@@ -289,7 +305,6 @@ const LoginPage: React.FC = () => {
           flex-shrink: 0;
         }
 
-        /* ── Layout ── */
         .fluent-root {
           min-height: 100dvh;
           display: flex;
@@ -299,7 +314,6 @@ const LoginPage: React.FC = () => {
           .fluent-root { flex-direction: row; }
         }
 
-        /* ── Scrollbar (Fluent) ── */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { 
@@ -308,16 +322,13 @@ const LoginPage: React.FC = () => {
           border: 2px solid transparent;
           background-clip: content-box;
         }
-        ::-webkit-scrollbar-thumb:hover { background: ${F.borderHover}; }
 
-        /* ── Divider ── */
         .fluent-divider {
           height: 1px;
           background: ${F.border};
           margin: 20px 0;
         }
 
-        /* ── Utility ── */
         .text-secondary { color: ${F.textSecondary}; }
         .text-tertiary { color: ${F.textTertiary}; }
         .text-primary { color: ${F.primary}; }
@@ -326,9 +337,7 @@ const LoginPage: React.FC = () => {
 
       <div className="fluent-root">
 
-        {/* ════════════════════════════════════════════════════════════
-            LEFT PANEL — Brand & Visual (Desktop)
-        ════════════════════════════════════════════════════════════ */}
+        {/* LEFT PANEL — Brand & Visual (Desktop) */}
         <motion.aside
           className="hidden lg:flex flex-col relative overflow-hidden"
           style={{ 
@@ -340,21 +349,18 @@ const LoginPage: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Subtle gradient overlay */}
           <div style={{
             position: "absolute", inset: 0,
             background: `radial-gradient(600px circle at 20% 30%, rgba(0,120,212,0.08), transparent 40%),
                          radial-gradient(400px circle at 80% 70%, rgba(0,120,212,0.05), transparent 50%)`
           }} />
 
-          {/* Content */}
           <motion.div
             className="relative flex flex-col h-full p-10"
             variants={staggerContainer}
             initial="initial"
             animate="animate"
           >
-            {/* Logo */}
             <motion.div variants={fadeInUp} className="flex items-center gap-3 mb-auto">
               <div style={{
                 width: 36, height: 36, borderRadius: 4,
@@ -376,7 +382,6 @@ const LoginPage: React.FC = () => {
               </span>
             </motion.div>
 
-            {/* Hero */}
             <motion.div variants={fadeInUp} style={{ marginTop: "auto", marginBottom: 32 }}>
               <p className="font-mono" style={{ 
                 fontSize: "0.7rem", 
@@ -409,7 +414,6 @@ const LoginPage: React.FC = () => {
               </p>
             </motion.div>
 
-            {/* Features */}
             <motion.ul variants={fadeInUp} style={{ 
               listStyle: "none", padding: 0, 
               display: "flex", flexDirection: "column", gap: 12,
@@ -430,7 +434,6 @@ const LoginPage: React.FC = () => {
               ))}
             </motion.ul>
 
-            {/* Stats */}
             <motion.div variants={fadeInUp} style={{ 
               display: "flex", gap: 28, padding: "16px 0",
               borderTop: `1px solid ${F.border}`
@@ -458,7 +461,6 @@ const LoginPage: React.FC = () => {
               ))}
             </motion.div>
 
-            {/* Footer */}
             <motion.p variants={fadeInUp} className="font-mono" style={{ 
               fontSize: "0.7rem", 
               color: F.textTertiary,
@@ -469,9 +471,7 @@ const LoginPage: React.FC = () => {
           </motion.div>
         </motion.aside>
 
-        {/* ════════════════════════════════════════════════════════════
-            RIGHT PANEL — Sign In Form
-        ════════════════════════════════════════════════════════════ */}
+        {/* RIGHT PANEL — Sign In Form */}
         <main className="flex-1 flex items-center justify-center p-6 sm:p-10">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -479,13 +479,11 @@ const LoginPage: React.FC = () => {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             style={{ width: "100%", maxWidth: 420 }}
           >
-            {/* Card Container with Mica effect */}
             <div className="fluent-mica" style={{
               borderRadius: 8,
               padding: "28px 32px",
               boxShadow: F.elevation2
             }}>
-              {/* Header */}
               <div style={{ marginBottom: 28 }}>
                 <p className="font-mono" style={{ 
                   fontSize: "0.7rem", 
@@ -512,7 +510,6 @@ const LoginPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Error Message */}
               <AnimatePresence>
                 {error && (
                   <motion.div
@@ -530,10 +527,7 @@ const LoginPage: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              {/* Form */}
               <form onSubmit={handleLogin} noValidate style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                
-                {/* Email Field */}
                 <div>
                   <label htmlFor="email" style={{ 
                     display: "block", 
@@ -570,7 +564,6 @@ const LoginPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Password Field */}
                 <div>
                   <div style={{ 
                     display: "flex", 
@@ -635,7 +628,6 @@ const LoginPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Remember Me */}
                 <label style={{ 
                   display: "flex", alignItems: "center", gap: 10, 
                   cursor: "pointer", userSelect: "none",
@@ -657,7 +649,6 @@ const LoginPage: React.FC = () => {
                   <span>Keep me signed in</span>
                 </label>
 
-                {/* Submit Button */}
                 <motion.button
                   type="submit"
                   disabled={!canSubmit}
@@ -679,10 +670,8 @@ const LoginPage: React.FC = () => {
                 </motion.button>
               </form>
 
-              {/* Divider */}
               <div className="fluent-divider" />
 
-              {/* Register Link */}
               <p style={{ textAlign: "center", fontSize: "0.9rem", color: F.textSecondary }}>
                 Don't have an account?{" "}
                 <Link href="/register" className="fluent-link">
@@ -690,7 +679,6 @@ const LoginPage: React.FC = () => {
                 </Link>
               </p>
 
-              {/* Security Badge */}
               <div style={{ 
                 display: "flex", alignItems: "center", justifyContent: "center", 
                 gap: 6, marginTop: 20, padding: "8px 12px",
@@ -707,7 +695,6 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Legal Footer */}
             <p style={{ 
               textAlign: "center", 
               fontSize: "0.8rem", 

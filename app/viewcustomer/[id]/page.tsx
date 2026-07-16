@@ -290,7 +290,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Scroll-aware Header */}
       <header 
-        className={`sticky top-0 z-30 transition-all duration-300 ${
+        className={`top-0 z-30 mt-[-13px] w-full transition-all duration-300 ${
           scrolled 
             ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200" 
             : "bg-white border-b border-gray-200"
@@ -333,40 +333,7 @@ const CustomerProfilePage = ({ user }: { user: UserType }) => {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <button
-                  onClick={() => setShowActions(!showActions)}
-                  className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
-                >
-                  <MoreHorizontal className="h-5 w-5" />
-                </button>
-
-                <AnimatePresence>
-                  {showActions && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute right-0 top-12 z-50 w-48 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
-                      >
-                        <button
-                          onClick={() => { toast.success(`Email sent to ${customer.email}`); setShowActions(false); }}
-                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          <Send className="h-4 w-4" /> Send Email
-                        </button>
-                        <Link href={`/customers/${id}/orders`} onClick={() => setShowActions(false)}>
-                          <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
-                            <ShoppingBag className="h-4 w-4" /> View Orders
-                          </button>
-                        </Link>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
+              
 
               <Link href={`/editcustomers/${id}/`}>
                 <motion.button

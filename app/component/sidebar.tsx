@@ -285,7 +285,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, user }) 
 
         <NavSection title="Sales" sectionKey="sales">
           <NavItem href="/sales" label="POS Sales" icon={ShoppingCart} />
-          <NavItem href="/invoices" label="Invoices" icon={FileText} />
+          <NavItem href="/invoice" label="Invoices" icon={FileText} />
           <NavItem href="/customers" label="Customers" icon={Users} />
         </NavSection>
 
