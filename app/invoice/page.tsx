@@ -1164,7 +1164,7 @@ const ManageInvoices = ({ user }: { user: User }) => {
                 className="w-9 h-9 flex items-center justify-center rounded-xl border border-stone-200 text-stone-500 hover:bg-stone-50 transition-colors">
                 <RefreshCw className="h-4 w-4" />
               </button>
-              <Link href="/newinvoice"
+              <Link href="/addinvoice"
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-stone-900 text-white text-sm font-bold rounded-xl hover:bg-stone-800 transition-all shadow-md shadow-stone-900/10">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Create Invoice</span>
@@ -1279,7 +1279,7 @@ const ManageInvoices = ({ user }: { user: User }) => {
             action={
               filters.search || activeFilterCount > 0
                 ? { label: "Clear Filters", onClick: clearFilters }
-                : { label: "Create Invoice", href: "/newinvoice" }
+                : { label: "Create Invoice", href: "/addinvoice" }
             }
           />
         )}
